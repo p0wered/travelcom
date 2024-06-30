@@ -1,9 +1,9 @@
 import {Text, View} from "react-native";
 
-export default function HelpScreen() {
+export default function ChatScreen() {
     return(
         <View>
-            <Text>HELP SCREEN</Text>
+            <Text>CHAT SCREEN</Text>
         </View>
     )
 }
