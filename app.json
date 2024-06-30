@@ -2,7 +2,7 @@
   "expo": {
     "name": "travelcom",
     "slug": "travelcom",
-    "version": "0.1.8",
+    "version": "0.1.8 ",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -24,7 +24,15 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "node_modules/@expo-google-fonts/montserrat/Montserrat_700Bold.ttf",
+            "node_modules/@expo-google-fonts/montserrat/Montserrat_500Medium.ttf"
+          ]
+        }
+      ]
     ]
   }
 }

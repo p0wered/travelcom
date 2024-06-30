@@ -61,18 +61,14 @@ export default function App() {
             })}>
             
             <Tab.Screen name={'Travel'} component={HomeScreen}/>
-            <Tab.Screen name={'Hotels'} component={FlightsScreen}/>
-            <Tab.Screen name={'Flights'} component={HotelsScreen}/>
+            <Tab.Screen name={'Hotels'} component={HotelsScreen}/>
+            <Tab.Screen name={'Flights'} component={FlightsScreen}/>
             <Tab.Screen name={'Chat'} component={ChatScreen}/>
             <Tab.Screen name={'Profile'} component={ProfileScreen}/>
-
         </Tab.Navigator>
       </NavigationContainer>
   );
 }
-
-
-
 
 const styles = StyleSheet.create({
   container: {
