@@ -2,13 +2,13 @@
   "expo": {
     "name": "travelcom",
     "slug": "travelcom",
-    "version": "0.1.8 ",
+    "version": "0.3.0 ",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
     "ios": {
@@ -28,8 +28,9 @@
         "expo-font",
         {
           "fonts": [
-            "node_modules/@expo-google-fonts/montserrat/Montserrat_700Bold.ttf",
-            "node_modules/@expo-google-fonts/montserrat/Montserrat_500Medium.ttf"
+            "./assets/fonts/Montserrat-Bold.ttf",
+            "./assets/fonts/Montserrat-Regular.ttf",
+            "./assets/fonts/Montserrat-Light.ttf"
           ]
         }
       ]

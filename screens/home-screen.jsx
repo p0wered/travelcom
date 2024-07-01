@@ -7,12 +7,14 @@ import {
     Pressable,
     ScrollView,
     StyleSheet,
-    Text,
+    Text, TextInput, TouchableOpacity,
     View
 } from "react-native";
 import Arrow from "../components/icons/arrow-icon";
 import {useEffect, useRef, useState} from "react";
 import ArrowActive from "../components/icons/arrow-icon-active";
+import {SendIcon} from "../components/icons/send-icon";
+import {Footer} from "../components/footer";
 
 export default function HomeScreen() {
     const directionSources = {
@@ -50,7 +52,7 @@ export default function HomeScreen() {
     const faqTitles = [
         'How does Travelcom work?',
         'How do you I find and buy air tickets?',
-        'How do I book a ticket>',
+        'How do I book a ticket?',
         'How can I call you?',
         'How do the website and the app work?',
         'I`m afraid of scammers. Am I sure I won`t be tricked with a ticket?',
@@ -70,9 +72,9 @@ export default function HomeScreen() {
                             For travel arrangements, questions about locations and details,
                             you can write in the chat and our managers will help
                         </Text>
-                        <Pressable style={[styles.formBtn, styles.mainBtn]}>
+                        <TouchableOpacity activeOpacity={0.8} style={[styles.formBtn, styles.mainBtn]}>
                             <Text style={styles.mainText}>Go to the chat</Text>
-                        </Pressable>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </ImageBackground>
@@ -88,9 +90,9 @@ export default function HomeScreen() {
                     )}
                     contentContainerStyle={{gap: 20}}
                 />
-                <Pressable style={styles.mainBtn}>
+                <TouchableOpacity activeOpacity={0.8} style={styles.mainBtn}>
                     <Text style={[styles.mainText, {width: 140, textAlign: 'center'}]}>Know more</Text>
-                </Pressable>
+                </TouchableOpacity>
             </View>
             <View style={styles.blogFlexbox}>
                 <View style={{display: 'flex', alignItems: 'center'}}>
@@ -133,15 +135,48 @@ export default function HomeScreen() {
                     />
                 </ScrollView>
                 <View style={{display: 'flex', alignItems: 'center'}}>
-                    <Pressable style={[styles.mainBtn, {backgroundColor: 'white'}]}>
+                    <TouchableOpacity activeOpacity={0.8} style={[styles.mainBtn, {backgroundColor: 'white'}]}>
                         <Text style={[styles.mainText, {color: '#207FBF', width: 140, textAlign: 'center'}]}>Know more</Text>
-                    </Pressable>
+                    </TouchableOpacity>
                 </View>
             </View>
             <View style={styles.faqFlexbox}>
                 <Text style={styles.faqText}>FAQ</Text>
                 {accordionItems}
             </View>
+            <View style={styles.questionForm}>
+                <View style={{marginBottom: 30, marginTop: 15}}>
+                    <Text style={styles.questionTitle}>Any other question?</Text>
+                    <Text style={styles.questionTitle}>Write to us!</Text>
+                </View>
+                <View style={{display: 'flex', flexDirection: 'column', gap: 14}}>
+                    <TextInput
+                        style={styles.questionInput}
+                        placeholder='Phone'
+                        placeholderTextColor='grey'
+                        autoComplete='tel'
+                        keyboardType='number-pad'
+                    />
+                    <TextInput
+                        style={styles.questionInput}
+                        placeholder='E-mail'
+                        placeholderTextColor='grey'
+                        autoComplete='email'
+                    />
+                    <TextInput
+                        style={[styles.questionInput, {height: 107}]}
+                        placeholder='Your question'
+                        placeholderTextColor='grey'
+                        multiline = {true}
+                        numberOfLines={4}
+                    />
+                </View>
+                <Pressable style={styles.sendBtn}>
+                    <Text style={styles.sendBtnText}>SEND</Text>
+                    <SendIcon/>
+                </Pressable>
+            </View>
+            <Footer/>
         </ScrollView>
     )
 }
@@ -203,7 +238,7 @@ function AccordionItem({ title, content }) {
             }),
             Animated.timing(animatedOpacity, {
                 toValue: isExpanded ? 0 : 1,
-                duration: 150,
+                duration: 200,
                 useNativeDriver: true,
             })
         ]).start();
@@ -231,7 +266,7 @@ function AccordionItem({ title, content }) {
                     <Text style={[styles.mainText, { color: isExpanded ? 'white' : '#207FBF' }]}>{title}</Text>
                     <View style={styles.arrowContainer}>
                         <Animated.View style={[styles.arrowWrapper, { opacity: animatedOpacity }]}>
-                            <ArrowActive color={isExpanded ? 'white' : '#207FBF'} />
+                            <ArrowActive color='white' />
                         </Animated.View>
                         <Animated.View style={[styles.arrowWrapper, { opacity: animatedOpacity.interpolate({
                                 inputRange: [0, 1],
@@ -250,7 +285,7 @@ function AccordionItem({ title, content }) {
                     }}
                 >
                     <View style={styles.separatorAccordion} />
-                    <Text style={{ color: isExpanded ? 'white' : '#207FBF' }}>{content}</Text>
+                    <Text style={{color: isExpanded ? 'white' : '#207FBF', padding: 15}}>{content}</Text>
                 </View>
             </View>
         </Animated.View>
@@ -274,6 +309,7 @@ function generateAccordionItems(faqTitles) {
 
 const styles = StyleSheet.create({
     mainText: {
+        fontFamily: 'Montserrat-Bold',
         fontSize: 14,
         color: 'white'
     },
@@ -287,12 +323,12 @@ const styles = StyleSheet.create({
         marginBottom: 20
     },
     offerTitleText: {
+        fontFamily: 'Montserrat-Bold',
         color: 'white',
         textAlign: 'center',
         fontSize: 32,
         width: 200,
         height: 117,
-        fontWeight: 'bold',
         textTransform: 'uppercase'
     },
     seleneForm: {
@@ -308,6 +344,7 @@ const styles = StyleSheet.create({
     },
     formText: {
         fontSize: 20,
+        fontFamily: 'Montserrat-Regular',
         marginTop: 70,
         marginBottom: 70,
         textAlign: 'center',
@@ -365,6 +402,7 @@ const styles = StyleSheet.create({
         top: -36,
     },
     blogSmallText: {
+        fontFamily: 'Montserrat-Regular',
         fontSize: 11,
         color: 'white'
     },
@@ -373,6 +411,7 @@ const styles = StyleSheet.create({
         borderRadius: 10
     },
     faqText: {
+        fontFamily: 'Montserrat-Bold',
         marginBottom: 15,
         fontSize: 30,
         color: '#207FBF',
@@ -383,7 +422,6 @@ const styles = StyleSheet.create({
     },
     accordionItem: {
         height: 51,
-        padding: 15,
         borderWidth: 1,
         borderColor: '#207FBF',
         borderRadius: 10,
@@ -392,20 +430,18 @@ const styles = StyleSheet.create({
     accordionItemActive: {
         height: 'auto',
         backgroundColor: '#207FBF',
-        padding: 15,
     },
     accordionInner: {
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        margin: 15
     },
     separatorAccordion: {
         width: '100%',
         height: 1,
-        backgroundColor: 'white',
-        marginTop: 13,
-        marginBottom: 13
+        backgroundColor: 'white'
     },
     arrowContainer: {
         position: 'relative',
@@ -417,4 +453,36 @@ const styles = StyleSheet.create({
         top: 0,
         left: 0,
     },
+    questionForm: {
+        padding: 15,
+        backgroundColor: '#207FBF'
+    },
+    questionTitle: {
+        fontSize: 20,
+        fontFamily: 'Montserrat-Bold',
+        color: 'white',
+        textTransform: 'uppercase',
+        textAlign: 'center'
+    },
+    questionInput: {
+        fontSize: 16,
+        fontFamily: 'Montserrat-Bold',
+        height: 64,
+        paddingHorizontal: 25,
+        backgroundColor: 'white',
+        borderRadius: 10
+    },
+    sendBtn: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 20,
+        marginBottom: 10
+    },
+    sendBtnText: {
+        fontFamily: 'Montserrat-Bold',
+        fontSize: 16,
+        color: 'white'
+    }
 });
