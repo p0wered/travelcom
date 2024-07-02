@@ -1,4 +1,6 @@
 import Svg, {Path} from "react-native-svg";
+import {Text, TouchableOpacity} from "react-native";
+import {HotelsIcon, TravelIcon} from "./side-bar-icons";
 
 export default function TabIcons({icon, color}) {
     if (icon === 'home-icon') {

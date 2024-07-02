@@ -83,6 +83,7 @@ export default function HomeScreen() {
                     <Text style={[styles.mainText, {textAlign: 'center'}]}>TRENDING DIRECTIONS</Text>
                 </View>
                 <FlatList
+                    scrollEnabled={false}
                     data={Object.keys(directionSources)}
                     keyExtractor={(item) => item}
                     renderItem={({ item }) => (
@@ -96,9 +97,9 @@ export default function HomeScreen() {
             </View>
             <View style={styles.blogFlexbox}>
                 <View style={{display: 'flex', alignItems: 'center'}}>
-                    <Pressable style={[styles.mainBtn, styles.blogBtn]}>
+                    <View style={[styles.mainBtn, styles.blogBtn]}>
                         <Text style={[styles.mainText, {color: '#207FBF'}]}>A BLOG FOR INSPIRATION</Text>
-                    </Pressable>
+                    </View>
                 </View>
                 <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{marginTop: 18}}>
                     <BlogItem
@@ -176,7 +177,7 @@ export default function HomeScreen() {
                     <SendIcon/>
                 </Pressable>
             </View>
-            <Footer/>
+            <Footer color='white'/>
         </ScrollView>
     )
 }

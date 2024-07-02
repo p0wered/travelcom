@@ -1,189 +1,170 @@
-import {StyleSheet, Text, View} from "react-native";
+import {Button, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from "react-native";
+import ArrowActive from "../components/icons/arrow-icon-active";
+import {SearchIcon} from "../components/icons/search-icon";
+import {FilterIcon} from "../components/icons/filter-icon";
+import {CheckIcon} from "../components/icons/check-icon";
+import {FavoriteIcon} from "../components/icons/favorite-icon";
+import {Footer} from "../components/footer";
+import {TransferIcon} from "../components/icons/transfer-icon";
+import {FlightCard, TransferFlightCard} from "../components/flight-cards";
+
+const airlinesImg = require('../assets/airlines.png');
 
 export default function FlightsScreen() {
     return(
-        <View>
-            <Text>FLIGHTS SCREEN</Text>
-        </View>
+        <ScrollView>
+            <View style={styles.flightsInputForm}>
+                <TextInput
+                    style={styles.locationInput}
+                    placeholder='From'
+                    placeholderTextColor='#C4E7FA'
+                />
+                <TextInput
+                    style={styles.locationInput}
+                    placeholder='Where'
+                    placeholderTextColor='#C4E7FA'
+                />
+                <View style={styles.selector}>
+                    <Pressable style={{marginVertical: 7}}>
+                        <Text style={styles.selectorText}>2/03/24</Text>
+                    </Pressable>
+                    <View style={styles.separator}/>
+                    <Pressable style={{marginVertical: 7}}>
+                        <Text style={styles.selectorText}>16/04/24</Text>
+                    </Pressable>
+                </View>
+                <Pressable style={[styles.selector, {marginBottom: 10}]}>
+                    <View>
+                        <Text style={styles.selectorText}>1 passenger</Text>
+                        <Text style={styles.selectorTextGrey}>Business class</Text>
+                    </View>
+                    <View style={{transform: 'rotate(-90deg)'}}>
+                        <ArrowActive color='#207FBF'/>
+                    </View>
+                </Pressable>
+                <View style={styles.flexCenter}>
+                    <TouchableOpacity activeOpacity={0.8} style={[styles.searchBtn, styles.flexCenter]}>
+                        <View style={[styles.flexCenter, {gap: 4}]}>
+                            <SearchIcon/>
+                            <Text style={styles.btnText}>Search</Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+            </View>
+            <View style={styles.flightsList}>
+                <Pressable style={{marginTop: 10, marginBottom: 8}}>
+                    <FilterIcon/>
+                </Pressable>
+                <FlightCard/>
+                <TransferFlightCard/>
+                <FlightCard/>
+                <TransferFlightCard/>
+                <TouchableOpacity activeOpacity={0.8} style={[styles.showMoreBtn, {paddingVertical: 18}]}>
+                    <Text style={styles.btnText}>Show more</Text>
+                </TouchableOpacity>
+            </View>
+            <Footer/>
+        </ScrollView>
     )
 }
 
 const styles = StyleSheet.create({
     mainText: {
         fontFamily: 'Montserrat-Bold',
-        fontSize: 14,
-        color: 'white'
+        fontSize: 15,
+        color: 'black'
     },
-    offerTravel: {
-        paddingTop: 20,
-    },
-    offerTitle: {
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 20
-    },
-    offerTitleText: {
+    largeText: {
+        fontSize: 24,
         fontFamily: 'Montserrat-Bold',
-        color: 'white',
-        textAlign: 'center',
-        fontSize: 32,
-        width: 200,
-        height: 117,
-        textTransform: 'uppercase'
+        marginBottom: 14,
+        textAlign: 'right'
     },
-    seleneForm: {
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        backgroundColor: 'white',
-        paddingTop: 17,
-        paddingLeft: 14,
-        paddingRight: 14,
-        paddingBottom: 45
+    smallText: {
+        fontSize: 12,
+        fontFamily: 'Montserrat-Regular'
     },
-    formText: {
-        fontSize: 20,
-        fontFamily: 'Montserrat-Regular',
-        marginTop: 70,
-        marginBottom: 70,
-        textAlign: 'center',
+    smallTextBlue: {
+        fontSize: 12,
+        color: '#207FBF',
+        fontFamily: 'Montserrat-Bold'
     },
-    mainBtn: {
-        padding: 15,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 10,
-        backgroundColor: '#207FBF',
-    },
-    formBtn: {
-        bottom: -22,
-        position: 'absolute',
-    },
-    directionTitle: {
-        position: 'absolute',
-        width: 200,
-        top: -40,
-        height: 100,
-        paddingLeft: 12,
-        paddingRight: 12,
-        paddingTop: 20,
-        paddingBottom: 20,
-        borderRadius: 10,
-        backgroundColor: '#207FBF',
-    },
-    directionItem: {
-        width: 320,
-        height: 222,
-        borderRadius: 10,
-        overflow: "hidden"
-    },
-    directionFlexbox: {
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: 14,
-        gap: 20,
-        marginBottom: 50
-    },
-    blogFlexbox: {
-        position: 'relative',
-        backgroundColor: '#207FBF',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: 14,
-        gap: 20
-    },
-    blogBtn: {
-        position: 'absolute',
-        backgroundColor: 'white',
-        top: -36,
-    },
-    blogSmallText: {
+    greyText: {
         fontFamily: 'Montserrat-Regular',
         fontSize: 11,
-        color: 'white'
+        color: '#B3B3B3',
+        maxWidth: 130
     },
-    blogImg: {
-        width: 300,
-        borderRadius: 10
+    flightsInputForm : {
+        position: "relative",
+        backgroundColor: 'white',
+        padding: 15,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 15
     },
-    faqText: {
-        fontFamily: 'Montserrat-Bold',
-        marginBottom: 15,
-        fontSize: 30,
-        color: '#207FBF',
-        textAlign: 'center'
-    },
-    faqFlexbox: {
-        padding: 14
-    },
-    accordionItem: {
-        height: 51,
-        borderWidth: 1,
-        borderColor: '#207FBF',
-        borderRadius: 10,
-        marginBottom: 12
-    },
-    accordionItemActive: {
-        height: 'auto',
-        backgroundColor: '#207FBF',
-    },
-    accordionInner: {
+    flexCenter: {
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        margin: 15
+        justifyContent: 'center',
     },
-    separatorAccordion: {
-        width: '100%',
-        height: 1,
-        backgroundColor: 'white'
-    },
-    arrowContainer: {
-        position: 'relative',
-        width: 15,
-        height: 15,
-    },
-    arrowWrapper: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-    },
-    questionForm: {
-        padding: 15,
-        backgroundColor: '#207FBF'
-    },
-    questionTitle: {
-        fontSize: 20,
-        fontFamily: 'Montserrat-Bold',
-        color: 'white',
-        textTransform: 'uppercase',
-        textAlign: 'center'
-    },
-    questionInput: {
+    locationInput: {
         fontSize: 16,
         fontFamily: 'Montserrat-Bold',
         height: 64,
         paddingHorizontal: 25,
         backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: '#207FBF',
         borderRadius: 10
     },
-    sendBtn: {
+    selector: {
         display: 'flex',
-        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 20,
-        marginBottom: 10
+        flexDirection: 'row',
+        overflow: "hidden",
+        justifyContent: 'space-between',
+        height: 64,
+        paddingHorizontal: 25,
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: '#207FBF',
+        borderRadius: 10
     },
-    sendBtnText: {
+    selectorText: {
         fontFamily: 'Montserrat-Bold',
-        fontSize: 16,
-        color: 'white'
-    }
+        color: '#207FBF'
+    },
+    separator: {
+        width: 86,
+        height: 1,
+        backgroundColor: '#207FBF'
+    },
+    selectorTextGrey: {
+        fontSize: 11,
+        fontFamily: 'Montserrat-Regular',
+        color: '#9B9B9A'
+    },
+    searchBtn: {
+        position: 'absolute',
+        bottom: -38,
+        width: 166,
+        padding: 12,
+        borderRadius: 10,
+        backgroundColor: '#207FBF',
+    },
+    btnText: {
+        fontFamily: 'Montserrat-Bold',
+        color: 'white',
+        textAlign: 'center'
+    },
+    flightsList: {
+        padding: 15,
+    },
+    showMoreBtn: {
+        padding: 12,
+        borderRadius: 10,
+        backgroundColor: '#207FBF',
+    },
 });

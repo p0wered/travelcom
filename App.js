@@ -1,5 +1,5 @@
-import { NavigationContainer } from '@react-navigation/native'
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
+import {NavigationContainer} from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from "./screens/home-screen";
 import FlightsScreen from "./screens/flights-screen";
 import HotelsScreen from "./screens/hotels-screen";
@@ -10,15 +10,33 @@ import Logo from "./components/icons/logo";
 import MenuIcon from "./components/icons/menu-icon";
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import {useEffect} from 'react';
+import {useEffect, useRef, useState} from 'react';
+import {Modal, StyleSheet, Text, Animated, TouchableOpacity, View, Dimensions, Button} from "react-native";
+import CloseIcon from "./components/icons/close-icon";
+import {
+    AboutIcon,
+    ContactsIcon,
+    FlightsIcon,
+    HelpIcon,
+    HotelsIcon,
+    NewsIcon,
+    TravelIcon
+} from "./components/icons/side-bar-icons";
+import HelpScreen from "./screens/help-screen";
+import AboutScreen from "./screens/about-screen";
 
 SplashScreen.preventAutoHideAsync();
 
 const Tab = createBottomTabNavigator();
+const {width} = Dimensions.get('window');
 
-export default function App() {
+export default function App({}) {
+    const [menuVisible, setMenuVisible] = useState(false);
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(width)).current;
     const [loaded, error] = useFonts({
         'Montserrat-Bold': require('./assets/fonts/Montserrat-Bold.ttf'),
+        'Montserrat-Medium': require('./assets/fonts/Montserrat-Medium.ttf'),
         'Montserrat-Regular': require('./assets/fonts/Montserrat-Regular.ttf'),
         'Montserrat-Light': require('./assets/fonts/Montserrat-Light.ttf'),
     });
@@ -33,10 +51,41 @@ export default function App() {
         return null;
     }
 
+    const toggleMenu = () => {
+        if (menuVisible) {
+            Animated.parallel([
+                Animated.timing(slideAnim, {
+                    toValue: width,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(fadeAnim, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true,
+                })
+            ]).start(() => setMenuVisible(false));
+        } else {
+            setMenuVisible(true);
+            Animated.parallel([
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 300,
+                    useNativeDriver: true,
+                })
+            ]).start();
+        }
+    };
+
     return (
         <NavigationContainer>
             <Tab.Navigator
-                initialRouteName={'Hotels'}
+                initialRouteName={'Home'}
                 screenOptions={({route}) => ({
                     tabBarIcon: ({color}) => {
                         let iconName;
@@ -75,17 +124,110 @@ export default function App() {
                     ),
                     headerLeftContainerStyle: {padding: 14},
                     headerRight: () => (
-                        <MenuIcon/>
+                        <TouchableOpacity style={{padding: 18}} onPress={toggleMenu}>
+                            <MenuIcon/>
+                        </TouchableOpacity>
                     ),
-                    headerRightContainerStyle: {padding: 14},
                 })}>
-
                 <Tab.Screen name={'Travel'} component={HomeScreen}/>
                 <Tab.Screen name={'Hotels'} component={HotelsScreen}/>
                 <Tab.Screen name={'Flights'} component={FlightsScreen}/>
                 <Tab.Screen name={'Chat'} component={ChatScreen}/>
                 <Tab.Screen name={'Profile'} component={ProfileScreen}/>
             </Tab.Navigator>
+            <Modal transparent={true} visible={menuVisible} onRequestClose={toggleMenu}>
+                <Animated.View style={[styles.modalOverlay, {opacity: fadeAnim}]}>
+                    <TouchableOpacity
+                        style={StyleSheet.absoluteFill}
+                        activeOpacity={1}
+                        onPress={toggleMenu}
+                    />
+                </Animated.View>
+                <Animated.View style={[styles.menuContainer, {transform: [{ translateX: slideAnim }]}]}>
+                    <TouchableOpacity style={styles.menuContent} activeOpacity={1}>
+                        <View>
+                            <View style={styles.closeBtn}>
+                                <TouchableOpacity onPress={toggleMenu} style={{padding: 24}}>
+                                    <CloseIcon/>
+                                </TouchableOpacity>
+                            </View>
+                            <View>
+                                <TouchableOpacity style={styles.sideBarBtn}>
+                                    <FlightsIcon/>
+                                    <Text style={styles.btnText}>Flights</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.sideBarBtn}>
+                                    <HotelsIcon/>
+                                    <Text style={styles.btnText}>Hotels</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.sideBarBtn}>
+                                    <TravelIcon/>
+                                    <Text style={styles.btnText}>Travel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.sideBarBtn}>
+                                    <HelpIcon/>
+                                    <Text style={styles.btnText}>Help</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.sideBarBtn}>
+                                    <NewsIcon/>
+                                    <Text style={styles.btnText}>News</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.sideBarBtn}>
+                                    <View style={{paddingVertical: 6, paddingHorizontal: 3}}>
+                                        <AboutIcon/>
+                                    </View>
+                                    <Text style={styles.btnText}>About Us</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.sideBarBtn}>
+                                    <ContactsIcon/>
+                                    <Text style={styles.btnText}>Contacts</Text>
+                                </TouchableOpacity>
+                                <Button
+                                    title="TEST"
+                                    onPress={() => navigationRef.current?.navigate('Profile')}
+                                />
+                            </View>
+                        </View>
+                    </TouchableOpacity>
+                </Animated.View>
+            </Modal>
         </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+    modalOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    menuContainer: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        width: 287,
+        backgroundColor: 'white',
+    },
+    menuContent: {
+        flex: 1,
+    },
+    closeBtn: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        width: '100%'
+    },
+    sideBarBtn: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        paddingHorizontal: 50,
+        paddingVertical: 10
+    },
+    btnText: {
+        fontSize: 24,
+        fontFamily: 'Montserrat-Bold',
+        color: '#207FBF'
+    }
+});

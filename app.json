@@ -30,7 +30,8 @@
           "fonts": [
             "./assets/fonts/Montserrat-Bold.ttf",
             "./assets/fonts/Montserrat-Regular.ttf",
-            "./assets/fonts/Montserrat-Light.ttf"
+            "./assets/fonts/Montserrat-Light.ttf",
+            "./assets/fonts/Montserrat-Medium.ttf"
           ]
         }
       ]
