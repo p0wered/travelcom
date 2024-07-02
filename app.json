@@ -2,7 +2,7 @@
   "expo": {
     "name": "travelcom",
     "slug": "travelcom",
-    "version": "0.3.0 ",
+    "version": "0.5.2 ",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -18,7 +18,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.p0wered.travelcom"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -35,6 +36,11 @@
           ]
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "21ea4172-fe4f-4625-9bfd-d72b9c46dfa6"
+      }
+    }
   }
 }

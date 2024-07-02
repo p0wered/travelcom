@@ -1,4 +1,4 @@
-import {NavigationContainer} from '@react-navigation/native';
+import {NavigationContainer, useNavigation} from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from "./screens/home-screen";
 import FlightsScreen from "./screens/flights-screen";
@@ -11,7 +11,7 @@ import MenuIcon from "./components/icons/menu-icon";
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import {useEffect, useRef, useState} from 'react';
-import {Modal, StyleSheet, Text, Animated, TouchableOpacity, View, Dimensions, Button} from "react-native";
+import {Modal, StyleSheet, Text, Animated, TouchableOpacity, View, Dimensions} from "react-native";
 import CloseIcon from "./components/icons/close-icon";
 import {
     AboutIcon,
@@ -24,32 +24,19 @@ import {
 } from "./components/icons/side-bar-icons";
 import HelpScreen from "./screens/help-screen";
 import AboutScreen from "./screens/about-screen";
+import NewsScreen from "./screens/news-screen";
+import ContactsScreen from "./screens/contacts-screen";
 
 SplashScreen.preventAutoHideAsync();
 
 const Tab = createBottomTabNavigator();
 const {width} = Dimensions.get('window');
 
-export default function App({}) {
+function AppContent(){
+    const navigation = useNavigation();
     const [menuVisible, setMenuVisible] = useState(false);
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(width)).current;
-    const [loaded, error] = useFonts({
-        'Montserrat-Bold': require('./assets/fonts/Montserrat-Bold.ttf'),
-        'Montserrat-Medium': require('./assets/fonts/Montserrat-Medium.ttf'),
-        'Montserrat-Regular': require('./assets/fonts/Montserrat-Regular.ttf'),
-        'Montserrat-Light': require('./assets/fonts/Montserrat-Light.ttf'),
-    });
-
-    useEffect(() => {
-        if (loaded || error) {
-            SplashScreen.hideAsync();
-        }
-    }, [loaded, error]);
-
-    if (!loaded && !error) {
-        return null;
-    }
 
     const toggleMenu = () => {
         if (menuVisible) {
@@ -82,8 +69,21 @@ export default function App({}) {
         }
     };
 
-    return (
-        <NavigationContainer>
+    const createNavigationFunction = (screenName) => () => {
+        toggleMenu();
+        navigation.navigate(screenName);
+    };
+
+    const navigateToTravel = createNavigationFunction('Travel');
+    const navigateToFlights = createNavigationFunction('Flights');
+    const navigateToHotels = createNavigationFunction('Hotels');
+    const navigateToHelp = createNavigationFunction('Help');
+    const navigateToNews = createNavigationFunction('News');
+    const navigateToAbout = createNavigationFunction('About');
+    const navigateToContacts = createNavigationFunction('Contacts');
+
+    return(
+        <>
             <Tab.Navigator
                 initialRouteName={'Home'}
                 screenOptions={({route}) => ({
@@ -134,6 +134,10 @@ export default function App({}) {
                 <Tab.Screen name={'Flights'} component={FlightsScreen}/>
                 <Tab.Screen name={'Chat'} component={ChatScreen}/>
                 <Tab.Screen name={'Profile'} component={ProfileScreen}/>
+                <Tab.Screen name={'Help'} component={HelpScreen} options={{tabBarButton: () => null}}/>
+                <Tab.Screen name={'News'} component={NewsScreen} options={{tabBarButton: () => null}}/>
+                <Tab.Screen name={'About'} component={AboutScreen} options={{tabBarButton: () => null}}/>
+                <Tab.Screen name={'Contacts'} component={ContactsScreen} options={{tabBarButton: () => null}}/>
             </Tab.Navigator>
             <Modal transparent={true} visible={menuVisible} onRequestClose={toggleMenu}>
                 <Animated.View style={[styles.modalOverlay, {opacity: fadeAnim}]}>
@@ -152,45 +156,66 @@ export default function App({}) {
                                 </TouchableOpacity>
                             </View>
                             <View>
-                                <TouchableOpacity style={styles.sideBarBtn}>
+                                <TouchableOpacity style={styles.sideBarBtn} onPress={navigateToFlights}>
                                     <FlightsIcon/>
                                     <Text style={styles.btnText}>Flights</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.sideBarBtn}>
+                                <TouchableOpacity style={styles.sideBarBtn} onPress={navigateToHotels}>
                                     <HotelsIcon/>
                                     <Text style={styles.btnText}>Hotels</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.sideBarBtn}>
+                                <TouchableOpacity style={styles.sideBarBtn} onPress={navigateToTravel}>
                                     <TravelIcon/>
                                     <Text style={styles.btnText}>Travel</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.sideBarBtn}>
+                                <TouchableOpacity style={styles.sideBarBtn} onPress={navigateToHelp}>
                                     <HelpIcon/>
                                     <Text style={styles.btnText}>Help</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.sideBarBtn}>
+                                <TouchableOpacity style={styles.sideBarBtn} onPress={navigateToNews}>
                                     <NewsIcon/>
                                     <Text style={styles.btnText}>News</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.sideBarBtn}>
+                                <TouchableOpacity style={styles.sideBarBtn} onPress={navigateToAbout}>
                                     <View style={{paddingVertical: 6, paddingHorizontal: 3}}>
                                         <AboutIcon/>
                                     </View>
                                     <Text style={styles.btnText}>About Us</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.sideBarBtn}>
+                                <TouchableOpacity style={styles.sideBarBtn} onPress={navigateToContacts}>
                                     <ContactsIcon/>
                                     <Text style={styles.btnText}>Contacts</Text>
                                 </TouchableOpacity>
-                                <Button
-                                    title="TEST"
-                                    onPress={() => navigationRef.current?.navigate('Profile')}
-                                />
                             </View>
                         </View>
                     </TouchableOpacity>
                 </Animated.View>
             </Modal>
+        </>
+    )
+}
+
+export default function App() {
+    const [loaded, error] = useFonts({
+        'Montserrat-Bold': require('./assets/fonts/Montserrat-Bold.ttf'),
+        'Montserrat-Medium': require('./assets/fonts/Montserrat-Medium.ttf'),
+        'Montserrat-Regular': require('./assets/fonts/Montserrat-Regular.ttf'),
+        'Montserrat-Light': require('./assets/fonts/Montserrat-Light.ttf'),
+    });
+
+    useEffect(() => {
+        if (loaded || error) {
+            SplashScreen.hideAsync();
+        }
+    }, [loaded, error]);
+
+    if (!loaded && !error) {
+        return null;
+    }
+
+    return (
+        <NavigationContainer>
+            <AppContent/>
         </NavigationContainer>
   );
 }
