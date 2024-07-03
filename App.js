@@ -26,13 +26,15 @@ import HelpScreen from "./screens/help-screen";
 import AboutScreen from "./screens/about-screen";
 import NewsScreen from "./screens/news-screen";
 import ContactsScreen from "./screens/contacts-screen";
+import {createNativeStackNavigator} from "@react-navigation/native-stack";
+import {FaqScreen, PrivacyScreen, RefundsScreen, TermsScreen} from "./screens/footer-screens";
 
 SplashScreen.preventAutoHideAsync();
 
 const Tab = createBottomTabNavigator();
 const {width} = Dimensions.get('window');
 
-function AppContent(){
+function MainTabs(){
     const navigation = useNavigation();
     const [menuVisible, setMenuVisible] = useState(false);
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -193,6 +195,25 @@ function AppContent(){
             </Modal>
         </>
     )
+}
+
+const Stack = createNativeStackNavigator();
+
+function AppContent() {
+    return (
+        <Stack.Navigator
+            screenOptions={() => ({
+                headerStyle: {backgroundColor: '#207FBF'},
+                headerTintColor: 'white'
+            })}
+        >
+            <Stack.Screen name="MainTabs" component={MainTabs} options={{headerShown: false}}/>
+            <Stack.Screen name="Privacy"  component={PrivacyScreen}/>
+            <Stack.Screen name="Terms"  component={TermsScreen}/>
+            <Stack.Screen name="Refunds"  component={RefundsScreen}/>
+            <Stack.Screen name="FAQ"  component={FaqScreen}/>
+        </Stack.Navigator>
+    );
 }
 
 export default function App() {

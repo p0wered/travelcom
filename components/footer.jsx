@@ -1,43 +1,59 @@
-import {TouchableOpacity, StyleSheet, Text, View} from "react-native";
+import {TouchableOpacity, StyleSheet, Text, View, Linking} from "react-native";
 import {InstagramIcon} from "./icons/instagram-icon";
 import {FacebookIcon} from "./icons/facebook-icon";
 import {TwitterIcon} from "./icons/twitter-icon";
 import {LinkedinIcon} from "./icons/linkedin";
 import Logo from "./icons/logo";
+import {useNavigation} from "@react-navigation/native";
 
-export function Footer({color}){
+export function FooterRaw({color, navigation}){
     return(
         <View style={[styles.footerMain, {backgroundColor: color}]}>
             <View style={styles.iconRow}>
-                <InstagramIcon/>
-                <FacebookIcon/>
-                <TwitterIcon/>
-                <LinkedinIcon/>
+                <TouchableOpacity>
+                    <InstagramIcon/>
+                </TouchableOpacity>
+                <TouchableOpacity>
+                    <FacebookIcon/>
+                </TouchableOpacity>
+                <TouchableOpacity>
+                    <TwitterIcon/>
+                </TouchableOpacity>
+                <TouchableOpacity>
+                    <LinkedinIcon/>
+                </TouchableOpacity>
             </View>
             <Logo color='#207FBF' width={140} height={60}/>
-            <TouchableOpacity>
+            <View>
                 <Text style={styles.footerLinkBlue}>Rumors Limited</Text>
-            </TouchableOpacity>
-            <TouchableOpacity>
+            </View>
+            <TouchableOpacity onPress={() => Linking.openURL('mailto:info@travelcom.com') }>
                 <Text style={styles.footerLinkBlue}>info@travelcom.com</Text>
             </TouchableOpacity>
             <TouchableOpacity>
                 <Text style={styles.footerLinkBlue}>International House, 55 Longsmith Street, Gloucester, UKВ </Text>
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Privacy')}>
                 <Text style={styles.footerLink}>Privacy Policy</Text>
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Terms')}>
                 <Text style={styles.footerLink}>Terms & Conditions</Text>
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Refunds')}>
                 <Text style={styles.footerLink}>Cancellations & Refunds</Text>
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('FAQ')}>
                 <Text style={styles.footerLink}>FAQ</Text>
             </TouchableOpacity>
             <Text style={styles.footerSmallText}>Copyright ©Travelcom. All Rights Reserved </Text>
         </View>
+    )
+}
+
+export function Footer({color}){
+    const navigation = useNavigation();
+    return(
+        <FooterRaw color={color} navigation={navigation}/>
     )
 }
 

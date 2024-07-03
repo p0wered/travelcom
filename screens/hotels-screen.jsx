@@ -1,6 +1,5 @@
 import {
     FlatList,
-    Image,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -14,7 +13,6 @@ import {StarIcon} from "../components/icons/star-icon";
 import {useState} from "react";
 import {SearchIcon} from "../components/icons/search-icon";
 import {FilterIcon} from "../components/icons/filter-icon";
-import {FavoriteIcon} from "../components/icons/favorite-icon";
 import {Footer} from "../components/footer";
 import {RoomItem} from "../components/room-item";
 
