@@ -1,47 +1,31 @@
-import {Button, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from "react-native";
+import {Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from "react-native";
 import ArrowActive from "../components/icons/arrow-icon-active";
 import {SearchIcon} from "../components/icons/search-icon";
 import {FilterIcon} from "../components/icons/filter-icon";
-import {CheckIcon} from "../components/icons/check-icon";
-import {FavoriteIcon} from "../components/icons/favorite-icon";
 import {Footer} from "../components/footer";
-import {TransferIcon} from "../components/icons/transfer-icon";
 import {FlightCard, TransferFlightCard} from "../components/flight-cards";
+import {AutoCompleteInput} from "../components/autocomplete-input";
+import {DateInput} from "../components/input-date";
+import {PassengerDropdown} from "../components/passengers-selector";
 
-const airlinesImg = require('../assets/airlines.png');
+const cities = ['London', 'Los Angeles', 'Lombok', 'Lucknow', 'Moscow', 'Prague', 'Paris'];
 
 export default function FlightsScreen() {
     return(
         <ScrollView>
             <View style={styles.flightsInputForm}>
-                <TextInput
-                    style={styles.locationInput}
-                    placeholder='From'
-                    placeholderTextColor='#C4E7FA'
-                />
-                <TextInput
-                    style={styles.locationInput}
-                    placeholder='Where'
-                    placeholderTextColor='#C4E7FA'
-                />
+                <AutoCompleteInput title='From' airportsData={cities}/>
+                <AutoCompleteInput title='Where' airportsData={cities}/>
                 <View style={styles.selector}>
-                    <Pressable style={{marginVertical: 7}}>
-                        <Text style={styles.selectorText}>2/03/24</Text>
-                    </Pressable>
+                    <View style={{marginVertical: 7}}>
+                        <DateInput/>
+                    </View>
                     <View style={styles.separator}/>
                     <Pressable style={{marginVertical: 7}}>
-                        <Text style={styles.selectorText}>16/04/24</Text>
+                        <DateInput/>
                     </Pressable>
                 </View>
-                <Pressable style={[styles.selector, {marginBottom: 10}]}>
-                    <View>
-                        <Text style={styles.selectorText}>1 passenger</Text>
-                        <Text style={styles.selectorTextGrey}>Business class</Text>
-                    </View>
-                    <View style={{transform: 'rotate(-90deg)'}}>
-                        <ArrowActive color='#207FBF'/>
-                    </View>
-                </Pressable>
+                <PassengerDropdown/>
                 <View style={styles.flexCenter}>
                     <TouchableOpacity activeOpacity={0.8} style={[styles.searchBtn, styles.flexCenter]}>
                         <View style={[styles.flexCenter, {gap: 4}]}>
@@ -52,13 +36,13 @@ export default function FlightsScreen() {
                 </View>
             </View>
             <View style={styles.flightsList}>
-                <Pressable style={{marginTop: 10, marginBottom: 8}}>
+                <Pressable style={{marginBottom: 8}}>
                     <FilterIcon/>
                 </Pressable>
-                <FlightCard/>
-                <TransferFlightCard/>
-                <FlightCard/>
-                <TransferFlightCard/>
+                <FlightCard btnShown={true}/>
+                <TransferFlightCard btnShown={true}/>
+                <FlightCard btnShown={true}/>
+                <TransferFlightCard btnShown={true}/>
                 <TouchableOpacity activeOpacity={0.8} style={[styles.showMoreBtn, {paddingVertical: 18}]}>
                     <Text style={styles.btnText}>Show more</Text>
                 </TouchableOpacity>
@@ -109,16 +93,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    locationInput: {
-        fontSize: 16,
-        fontFamily: 'Montserrat-Bold',
-        height: 64,
-        paddingHorizontal: 25,
-        backgroundColor: 'white',
-        borderWidth: 1,
-        borderColor: '#207FBF',
-        borderRadius: 10
-    },
     selector: {
         display: 'flex',
         alignItems: 'center',
@@ -147,8 +121,6 @@ const styles = StyleSheet.create({
         color: '#9B9B9A'
     },
     searchBtn: {
-        position: 'absolute',
-        bottom: -38,
         width: 166,
         padding: 12,
         borderRadius: 10,

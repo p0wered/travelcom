@@ -88,11 +88,12 @@ const styles = StyleSheet.create({
     imageWrap: {
         position: 'relative',
         width: '100%',
+        padding: 5
     },
     image: {
         width: '100%',
         height: undefined,
-        borderRadius: 10,
+        borderRadius: 8,
         aspectRatio: 4/3,
     },
     priceMerger: {
@@ -127,8 +128,7 @@ const styles = StyleSheet.create({
         maxWidth: 150
     },
     hotelNameMerger: {
-        display: 'flex',
-
+        display: 'flex'
     },
     detailsBtn: {
         padding: 12,

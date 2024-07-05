@@ -7,8 +7,11 @@ import {FavoriteIcon} from "../components/icons/favorite-icon";
 import {NotificationIcon} from "../components/icons/notification-icon";
 import ExitIcon from "../components/icons/exit-icon";
 import {Footer} from "../components/footer";
+import {useNavigation} from "@react-navigation/native";
 
 export default function ProfileScreen({navigation}) {
+    const navigate = useNavigation();
+
     return(
         <ScrollView>
             <View style={styles.profileBlock}>
@@ -32,21 +35,37 @@ export default function ProfileScreen({navigation}) {
             </View>
             <View style={{padding: 15}}>
                 <View style={styles.profileMenu}>
-                    <TouchableOpacity style={styles.menuButton} activeOpacity={0.6}>
+                    <TouchableOpacity
+                        style={styles.menuButton}
+                        activeOpacity={0.6}
+                        onPress={() => navigation.navigate('Orders')}
+                    >
                         <OrdersIcon/>
                         <Text style={styles.mediumText}>Orders</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.menuButton} activeOpacity={0.6}>
+                    <TouchableOpacity
+                        style={styles.menuButton}
+                        activeOpacity={0.6}
+                        onPress={() => navigation.navigate('Cart')}
+                    >
                         <ShoppingCart/>
                         <Text style={styles.mediumText}>Shopping Cart</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.menuButton} activeOpacity={0.6}>
+                    <TouchableOpacity
+                        style={styles.menuButton}
+                        activeOpacity={0.6}
+                        onPress={() => navigation.navigate('Favourites')}
+                    >
                         <View style={styles.favouriteIcon}>
                             <FavoriteIcon color='#207FBF' stroke='#207FBF'/>
                         </View>
                         <Text style={styles.mediumText}>Favourites</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.menuButton} activeOpacity={0.6}>
+                    <TouchableOpacity
+                        style={styles.menuButton}
+                        activeOpacity={0.6}
+                        onPress={() => navigation.navigate('Notifications')}
+                    >
                         <NotificationIcon/>
                         <Text style={styles.mediumText}>Notifications</Text>
                     </TouchableOpacity>

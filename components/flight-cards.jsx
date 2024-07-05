@@ -4,7 +4,7 @@ import {CheckIcon} from "./icons/check-icon";
 import {FavoriteIcon} from "./icons/favorite-icon";
 import {TransferIcon} from "./icons/transfer-icon";
 
-export function FlightCard(){
+export function FlightCard({btnShown}){
     return(
         <View style={styles.flightsCard}>
             <View style={[styles.cardBlock, {marginBottom: 16}]}>
@@ -23,7 +23,7 @@ export function FlightCard(){
                     <View style={styles.textMerger}>
                         <Text style={styles.smallText}>Baggage</Text>
                         <Text style={styles.smallTextBlue}>+50€</Text>
-                        <CheckIcon/>
+                        <CheckIcon color="grey" width={16} height={16}/>
                     </View>
                 </View>
             </View>
@@ -50,7 +50,7 @@ export function FlightCard(){
                         </View>
                     </View>
                 </View>
-                <View style={styles.chooseBtnWrap}>
+                <View style={[styles.chooseBtnWrap, btnShown ? {display: 'flex'} : {display: 'none'}]}>
                     <FavoriteIcon color='white' stroke='black'/>
                     <TouchableOpacity style={styles.chooseBtn} activeOpacity={0.8}>
                         <Text style={styles.btnText}>Choose</Text>
@@ -61,7 +61,7 @@ export function FlightCard(){
     )
 }
 
-export function TransferFlightCard(){
+export function TransferFlightCard({btnShown}){
     return(
         <View style={styles.flightsCard}>
             <View style={[styles.cardBlock, {marginBottom: 16}]}>
@@ -84,7 +84,7 @@ export function TransferFlightCard(){
                     <View style={styles.textMerger}>
                         <Text style={styles.smallText}>Baggage</Text>
                         <Text style={styles.smallTextBlue}>+50€</Text>
-                        <CheckIcon/>
+                        <CheckIcon color="grey" width={16} height={16}/>
                     </View>
                 </View>
             </View>
@@ -142,7 +142,7 @@ export function TransferFlightCard(){
                         </View>
                     </View>
                 </View>
-                <View style={styles.chooseBtnWrap}>
+                <View style={[styles.chooseBtnWrap, btnShown ? {display: 'flex'} : {display: 'none'}]}>
                     <FavoriteIcon color='white' stroke='black'/>
                     <TouchableOpacity style={styles.chooseBtn} activeOpacity={0.8}>
                         <Text style={styles.btnText}>Choose</Text>
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     },
     flightsCard: {
         backgroundColor: 'white',
-        paddingVertical: 24,
+        paddingVertical: 18,
         borderRadius: 10,
         overflow: 'hidden',
         marginBottom: 20
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingHorizontal: 24
+        paddingHorizontal: 18
     },
     chooseBtn: {
         paddingHorizontal: 18,
@@ -236,7 +236,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#207FBF'
     },
     chooseBtnWrap: {
-        display: 'flex',
         gap: 10,
         alignItems: 'flex-end',
         justifyContent: 'flex-end'

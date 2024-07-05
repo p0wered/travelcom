@@ -28,6 +28,10 @@ import NewsScreen from "./screens/news-screen";
 import ContactsScreen from "./screens/contacts-screen";
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import {FaqScreen, PrivacyScreen, RefundsScreen, TermsScreen} from "./screens/footer-screens";
+import OrdersScreen from "./screens/orders-screen";
+import CartScreen from "./screens/cart-screen";
+import FavouritesScreen from "./screens/favourites-screen";
+import NotificationScreen from "./screens/notification-screen";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -140,6 +144,10 @@ function MainTabs(){
                 <Tab.Screen name={'News'} component={NewsScreen} options={{tabBarButton: () => null}}/>
                 <Tab.Screen name={'About'} component={AboutScreen} options={{tabBarButton: () => null}}/>
                 <Tab.Screen name={'Contacts'} component={ContactsScreen} options={{tabBarButton: () => null}}/>
+                <Tab.Screen name={'Orders'} component={OrdersScreen} options={{tabBarButton: () => null}}/>
+                <Tab.Screen name={'Cart'} component={CartScreen} options={{tabBarButton: () => null}}/>
+                <Tab.Screen name={'Favourites'} component={FavouritesScreen} options={{tabBarButton: () => null}}/>
+                <Tab.Screen name={'Notifications'} component={NotificationScreen} options={{tabBarButton: () => null}}/>
             </Tab.Navigator>
             <Modal transparent={true} visible={menuVisible} onRequestClose={toggleMenu}>
                 <Animated.View style={[styles.modalOverlay, {opacity: fadeAnim}]}>
