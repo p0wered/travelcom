@@ -1,11 +1,12 @@
 import Svg, {Path} from "react-native-svg";
 
-export function PersonIcon(){
+
+export function PersonIcon({color, width, height}){
     return (
-        <Svg width="36" height="35" viewBox="0 0 36 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <Svg width={width} height={height} viewBox="0 0 36 35" fill="none" xmlns="http://www.w3.org/2000/svg">
             <Path
                 d="M18.2651 17.5002C21.488 17.5002 24.0984 14.8897 24.0984 11.6668C24.0984 8.44391 21.488 5.8335 18.2651 5.8335C15.0421 5.8335 12.4317 8.44391 12.4317 11.6668C12.4317 14.8897 15.0421 17.5002 18.2651 17.5002ZM18.2651 20.4168C14.3713 20.4168 6.59839 22.371 6.59839 26.2502V27.7085C6.59839 28.5106 7.25464 29.1668 8.05672 29.1668H28.4734C29.2755 29.1668 29.9317 28.5106 29.9317 27.7085V26.2502C29.9317 22.371 22.1588 20.4168 18.2651 20.4168Z"
-                fill="#207FBF"/>
+                fill={color}/>
         </Svg>
 
     )

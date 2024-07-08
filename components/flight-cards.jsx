@@ -1,25 +1,26 @@
 import {Image, StyleSheet, Text, TouchableOpacity, View} from "react-native";
-import airlinesImg from "../assets/airlines.png";
 import {CheckIcon} from "./icons/check-icon";
 import {FavoriteIcon} from "./icons/favorite-icon";
 import {TransferIcon} from "./icons/transfer-icon";
 
-export function FlightCard({btnShown}){
+export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalCity, depAirport, arrivalAirport,
+                               flightTime, depTime, arrivalTime, depDate, arrivalDate, btnShown})
+{
     return(
         <View style={styles.flightsCard}>
             <View style={[styles.cardBlock, {marginBottom: 16}]}>
                 <View>
                     <View style={{marginBottom: 10}}>
-                        <Text style={styles.mainText}>London - Paris</Text>
-                        <Text style={styles.greyText}>5 h, 10 min on the way</Text>
+                        <Text style={styles.mainText}>{depCity} - {arrivalCity}</Text>
+                        <Text style={styles.greyText}>{flightTime} on the way</Text>
                     </View>
                     <View style={styles.textMerger}>
                         <Image style={styles.airlinesImg} source={airlinesImg}/>
-                        <Text style={styles.smallText}>Aegean Airlines</Text>
+                        <Text style={styles.smallText}>{airlinesTitle}</Text>
                     </View>
                 </View>
                 <View>
-                    <Text style={styles.largeText}>200 €</Text>
+                    <Text style={styles.largeText}>{price} €</Text>
                     <View style={styles.textMerger}>
                         <Text style={styles.smallText}>Baggage</Text>
                         <Text style={styles.smallTextBlue}>+50€</Text>
@@ -31,22 +32,22 @@ export function FlightCard({btnShown}){
                 <View style={{display: 'flex', flexDirection: 'row'}}>
                     <View style={{marginRight: 26}}>
                         <View style={{marginBottom: 16}}>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>11:10</Text>
-                            <Text style={styles.greyText}>2/03/24</Text>
+                            <Text style={[styles.mainText, {fontSize: 13}]}>{depTime}</Text>
+                            <Text style={styles.greyText}>{depDate}</Text>
                         </View>
                         <View>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>13:15</Text>
-                            <Text style={styles.greyText}>2/03/24</Text>
+                            <Text style={[styles.mainText, {fontSize: 13}]}>{arrivalTime}</Text>
+                            <Text style={styles.greyText}>{arrivalDate}</Text>
                         </View>
                     </View>
                     <View>
                         <View style={{marginBottom: 16}}>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>London</Text>
-                            <Text style={styles.greyText}>Luton Airport, LTN </Text>
+                            <Text style={[styles.mainText, {fontSize: 13}]}>{depCity}</Text>
+                            <Text style={styles.greyText}>{depAirport}</Text>
                         </View>
                         <View>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>London</Text>
-                            <Text style={styles.greyText}>Luton Airport, LTN </Text>
+                            <Text style={[styles.mainText, {fontSize: 13}]}>{arrivalCity}</Text>
+                            <Text style={styles.greyText}>{arrivalAirport}</Text>
                         </View>
                     </View>
                 </View>
@@ -61,26 +62,28 @@ export function FlightCard({btnShown}){
     )
 }
 
-export function TransferFlightCard({btnShown}){
+export function TransferFlightCard({price, transferTime, airlinesTitle1, airlinesTitle2, airlinesImg1, airlinesImg2, depCity1,
+                                       arrivalCity1, depAirport1, arrivalAirport1, flightTime1, depTime1, arrivalTime1,
+                                       depDate1, arrivalDate1, btnShown, arrivalCity2, arrivalAirport2, depTime2, depDate2, arrivalDate2, arrivalTime2}){
     return(
         <View style={styles.flightsCard}>
             <View style={[styles.cardBlock, {marginBottom: 16}]}>
                 <View>
                     <View style={{marginBottom: 10}}>
-                        <Text style={styles.mainText}>London - Paris</Text>
-                        <Text style={styles.greyText}>5 h, 10 min on the way</Text>
+                        <Text style={styles.mainText}>{depCity1} - {arrivalCity1}</Text>
+                        <Text style={styles.greyText}>{flightTime1} on the way</Text>
                     </View>
                     <View style={[styles.textMerger, {marginBottom: 8}]}>
-                        <Image style={styles.airlinesImg} source={airlinesImg}/>
-                        <Text style={styles.smallText}>Aegean Airlines</Text>
+                        <Image style={styles.airlinesImg} source={airlinesImg1}/>
+                        <Text style={styles.smallText}>{airlinesTitle1}</Text>
                     </View>
                     <View style={styles.textMerger}>
-                        <Image style={styles.airlinesImg} source={airlinesImg}/>
-                        <Text style={styles.smallText}>Aegean Airlines</Text>
+                        <Image style={styles.airlinesImg} source={airlinesImg2}/>
+                        <Text style={styles.smallText}>{airlinesTitle2}</Text>
                     </View>
                 </View>
                 <View>
-                    <Text style={styles.largeText}>200 €</Text>
+                    <Text style={styles.largeText}>{price} €</Text>
                     <View style={styles.textMerger}>
                         <Text style={styles.smallText}>Baggage</Text>
                         <Text style={styles.smallTextBlue}>+50€</Text>
@@ -92,22 +95,22 @@ export function TransferFlightCard({btnShown}){
                 <View style={{display: 'flex', flexDirection: 'row'}}>
                     <View style={{marginRight: 26}}>
                         <View style={{marginBottom: 16}}>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>11:10</Text>
-                            <Text style={styles.greyText}>2/03/24</Text>
+                            <Text style={[styles.mainText, {fontSize: 13}]}>{depTime1}</Text>
+                            <Text style={styles.greyText}>{depDate1}</Text>
                         </View>
                         <View>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>13:15</Text>
-                            <Text style={styles.greyText}>2/03/24</Text>
+                            <Text style={[styles.mainText, {fontSize: 13}]}>{arrivalTime1}</Text>
+                            <Text style={styles.greyText}>{arrivalDate1}</Text>
                         </View>
                     </View>
                     <View>
                         <View style={{marginBottom: 16}}>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>London</Text>
-                            <Text style={styles.greyText}>Luton Airport, LTN </Text>
+                            <Text style={[styles.mainText, {fontSize: 13}]}>{depCity1}</Text>
+                            <Text style={styles.greyText}>{depAirport1}</Text>
                         </View>
                         <View>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>London</Text>
-                            <Text style={styles.greyText}>Luton Airport, LTN </Text>
+                            <Text style={[styles.mainText, {fontSize: 13}]}>{arrivalCity1}</Text>
+                            <Text style={styles.greyText}>{arrivalAirport1}</Text>
                         </View>
                     </View>
                 </View>
@@ -115,30 +118,30 @@ export function TransferFlightCard({btnShown}){
             <View style={[styles.textMerger, styles.transferBlock]}>
                 <TransferIcon/>
                 <View>
-                    <Text style={styles.smallText}>Transfer to Barcelona</Text>
-                    <Text style={styles.greyText}>1 h, 10 min</Text>
+                    <Text style={styles.smallText}>Transfer in {arrivalCity1}</Text>
+                    <Text style={styles.greyText}>{transferTime}</Text>
                 </View>
             </View>
             <View style={styles.cardBlock}>
                 <View style={{display: 'flex', flexDirection: 'row'}}>
                     <View style={{marginRight: 26}}>
                         <View style={{marginBottom: 16}}>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>11:10</Text>
-                            <Text style={styles.greyText}>2/03/24</Text>
+                            <Text style={[styles.mainText, {fontSize: 13}]}>{depTime2}</Text>
+                            <Text style={styles.greyText}>{depDate2}</Text>
                         </View>
                         <View>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>19:30</Text>
-                            <Text style={styles.greyText}>2/03/24</Text>
+                            <Text style={[styles.mainText, {fontSize: 13}]}>{arrivalTime2}</Text>
+                            <Text style={styles.greyText}>{arrivalDate2}</Text>
                         </View>
                     </View>
                     <View>
                         <View style={{marginBottom: 16}}>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>London</Text>
-                            <Text style={styles.greyText}>Luton Airport, LTN </Text>
+                            <Text style={[styles.mainText, {fontSize: 13}]}>{arrivalCity1}</Text>
+                            <Text style={styles.greyText}>{arrivalAirport1}</Text>
                         </View>
                         <View>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>Barcelona</Text>
-                            <Text style={styles.greyText}>Roissy-Charles-de-Gaulle, CDG  </Text>
+                            <Text style={[styles.mainText, {fontSize: 13}]}>{arrivalCity2}</Text>
+                            <Text style={styles.greyText}>{arrivalAirport2}</Text>
                         </View>
                     </View>
                 </View>

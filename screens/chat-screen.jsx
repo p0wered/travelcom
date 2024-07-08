@@ -1,4 +1,4 @@
-import {Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from "react-native";
+import {Pressable, ScrollView, StyleSheet, Text, TextInput, View} from "react-native";
 import Logo from "../components/icons/logo";
 import {useState} from "react";
 import {ChatSendIcon} from "../components/icons/chat-send-icon";

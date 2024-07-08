@@ -42,7 +42,7 @@ export default function BookedRoomItem(){
                 </View>
                 <View style={styles.merger}>
                     <View style={[styles.merger, {gap: 0}]}>
-                        <PersonIcon/>
+                        <PersonIcon color='#207FBF' width={36} height={35}/>
                         <Text style={styles.smBlueText}>+2</Text>
                     </View>
                     <Text style={styles.smText}>Up to 3 people</Text>

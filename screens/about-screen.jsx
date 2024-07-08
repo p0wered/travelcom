@@ -45,7 +45,7 @@ export default function AboutScreen() {
                 </View>
                 <View>
                     <View style={styles.merger}>
-                        <MailIcon/>
+                        <MailIcon color='#207FBF'/>
                         <Text style={styles.blueText}>E-mail</Text>
                     </View>
                     <TouchableOpacity onPress={() => Linking.openURL('mailto:info@travelcom.com')}>
