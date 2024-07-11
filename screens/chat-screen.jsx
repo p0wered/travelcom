@@ -1,209 +1,429 @@
-import {Pressable, ScrollView, StyleSheet, Text, TextInput, View} from "react-native";
-import Logo from "../components/icons/logo";
-import {useState} from "react";
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Dimensions, Linking, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Pusher from 'pusher-js/react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import {ChatSendIcon} from "../components/icons/chat-send-icon";
 import {PaperclipIcon} from "../components/icons/paperclip-icon";
 
-export default function ChatScreen() {
-    const [message, setMessage] = useState('');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const MAX_IMAGE_WIDTH = SCREEN_WIDTH * 0.7;
 
-    return(
-        <View style={{flex: 1}}>
-            <View style={styles.chatMerger}>
-                <View style={styles.logoCircle}>
-                    <Logo color='white' width={42} height={42}/>
-                </View>
-                <Text style={styles.mainText}>Chat with a Travelcom manager</Text>
-            </View>
-            <ScrollView style={styles.chatBody}>
-                <Text style={[styles.msgTime, {paddingTop: 8, paddingBottom: 5}]}>Chat started</Text>
-                <View style={styles.messageInWrap}>
-                    <View style={styles.messageIncoming}>
-                        <Text style={styles.msgText}>
-                            Lorem ipsum dolor sit amet, consectetuer adipiscing elit.
-                            Aenean commodo ligula eget dolor. Aenean massa. Cum sociis
-                            natoque penatibus et magnis dis parturient montes, nascetur
-                            ridiculus mus. Donec quam felis, ultricies nec, pellentesque
-                            eu, pretium quis, sem. Nulla consequat massa quis enim. Donec
-                            pede justo, fringilla vel, aliquet nec, vulputate eget.
-                        </Text>
-                    </View>
-                    <Text style={styles.msgTime}>18:00</Text>
-                </View>
-                <View style={styles.messageInWrap}>
-                    <View style={styles.messageIncoming}>
-                        <Text style={styles.msgText}>
-                            Lorem ipsum dolor sit amet, consectetuer adipiscing elit.
-                            Aenean commodo ligula eget dolor. Aenean massa.
-                        </Text>
-                    </View>
-                    <Text style={styles.msgTime}>18:00</Text>
-                </View>
-                <View style={styles.messageOutWrap}>
-                    <View style={styles.messageOutgoing}>
-                        <Text style={styles.msgText}>
-                            Lorem ipsum dolor sit amet, consectetuer adipiscing elit.
-                            Aenean commodo ligula eget dolor. Aenean massa.
-                        </Text>
-                    </View>
-                    <Text style={styles.msgTime}>18:00</Text>
-                </View>
-                <View style={styles.messageOutWrap}>
-                    <View style={styles.messageOutgoing}>
-                        <Text style={styles.msgText}>
-                            Lorem ipsum dolor sit amet, consectetuer
-                        </Text>
-                    </View>
-                    <Text style={styles.msgTime}>18:00</Text>
-                </View>
-                <View style={styles.messageOutWrap}>
-                    <View style={styles.messageOutgoing}>
-                        <Text style={styles.msgText}>
-                            Lorem ipsum dolor sit amet, consectetuer
-                        </Text>
-                    </View>
-                    <Text style={styles.msgTime}>18:00</Text>
-                </View>
-            </ScrollView>
-            <View style={styles.inputContainer}>
-                <View style={styles.inputMerger}>
-                    <TextInput
-                        style={styles.input}
-                        value={message}
-                        multiline={true}
-                        onChangeText={setMessage}
-                        placeholder="Type a message..."
-                        placeholderTextColor='#a9a9a9'
-                    />
-                    <Pressable style={styles.paperclipPos}>
-                        <PaperclipIcon/>
-                    </Pressable>
-                </View>
-                <Pressable style={styles.sendButton}>
-                    <ChatSendIcon/>
-                </Pressable>
-            </View>
+const MessageContent = ({ content }) => {
+    const [imageSize, setImageSize] = useState({width: 250, height: 250});
+
+    if (content.startsWith('<img')) {
+        const srcMatch = content.match(/src="([^"]*)"/);
+        const widthMatch = content.match(/width="(\d+)2px"/);
+
+        if (srcMatch && srcMatch[1]) {
+            const imageUrl = `https://travelcom.online${srcMatch[1]}`;
+            const specifiedWidth = widthMatch && widthMatch[1] ? parseInt(widthMatch[1]) : MAX_IMAGE_WIDTH;
+
+            useEffect(() => {
+                Image.getSize(imageUrl, (width, height) => {
+                    const aspectRatio = width / height;
+                    let newWidth = Math.min(specifiedWidth, MAX_IMAGE_WIDTH);
+                    let newHeight = newWidth / aspectRatio;
+                    setImageSize({ width: newWidth, height: newHeight });
+                }, (error) => console.error('Error getting image size:', error));
+            }, [imageUrl, specifiedWidth]);
+
+            return <Image source={{ uri: imageUrl }} style={[styles.messageImage, imageSize]} />;
+        }
+    } else if (content.startsWith('<a')) {
+        const hrefMatch = content.match(/href="([^"]*)"/);
+        const imgSrcMatch = content.match(/src="([^"]*)"/);
+        if (hrefMatch && hrefMatch[1] && imgSrcMatch && imgSrcMatch[1]) {
+            return (
+                <TouchableOpacity onPress={() => Linking.openURL(`https://travelcom.online${hrefMatch[1]}`)}>
+                    <Image source={{ uri: imgSrcMatch[1] }} style={styles.documentIcon} />
+                    <Text style={styles.documentText}>Open document</Text>
+                </TouchableOpacity>
+            );
+        }
+    }
+    return <Text style={styles.messageText}>{content}</Text>;
+};
+
+const IncomingMessage = ({ message, time }) => (
+    <View style={styles.incomingMessageContainer}>
+        <View style={styles.incomingMessageBubble}>
+            <MessageContent content={message} />
+            <Text style={styles.messageTime}>{time}</Text>
         </View>
-    )
-}
+    </View>
+);
+
+const OutgoingMessage = ({ message, time }) => (
+    <View style={styles.outgoingMessageContainer}>
+        <View style={styles.outgoingMessageBubble}>
+            <MessageContent content={message} />
+            <Text style={styles.messageTime}>{time}</Text>
+        </View>
+    </View>
+);
+
+
+export default function ChatScreen(){
+    const [messages, setMessages] = useState([]);
+    const [inputMessage, setInputMessage] = useState('');
+    const [userData, setUserData] = useState(null);
+    const [userToken, setUserToken] = useState(null);
+    const [chatId, setChatId] = useState(null);
+    const [isPickerVisible, setIsPickerVisible] = useState(false);
+    const flatListRef = useRef();
+
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            await sendFile(result.assets[0], 'image');
+        }
+    };
+
+    const pickDocument = async () => {
+        let result = await DocumentPicker.getDocumentAsync({
+            type: '*/*',
+            copyToCacheDirectory: true,
+        });
+
+        if (result.type === 'success') {
+            await sendFile(result, 'document');
+        }
+    };
+
+    const sendFile = async (file, type) => {
+        if (!userData || !userToken || !chatId) {
+            console.error('Missing required data:', { userData, userToken, chatId });
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('chat_id', chatId);
+        formData.append('user_id', userData.id);
+
+        if (type === 'image') {
+            formData.append('file', {
+                uri: file.uri,
+                type: 'image/jpeg',
+                name: 'image.jpg',
+            });
+        } else {
+            formData.append('file', {
+                uri: file.uri,
+                type: file.mimeType,
+                name: file.name,
+            });
+        }
+
+        console.log('Sending file with formData:', JSON.stringify(formData));
+
+        try {
+            console.log('Sending POST request to:', 'https://travelcom.online/api/chat/send_message');
+            console.log('Headers:', {
+                'Authorization': `Bearer ${userToken}`,
+                'Content-Type': 'multipart/form-data',
+            });
+
+            const response = await fetch('https://travelcom.online/api/chat/send_message', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${userToken}`,
+                    'Content-Type': 'multipart/form-data',
+                },
+                body: formData,
+            });
+
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error(`Failed to send file: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('Response data:', data);
+
+            if (data && data.message) {
+                setMessages(prevMessages => [...prevMessages, data.message]);
+                flatListRef.current?.scrollToEnd({animated: true});
+            } else {
+                console.warn('Unexpected response format:', data);
+            }
+        } catch (error) {
+            console.error('Error sending file:', error);
+        }
+    };
+
+    const togglePicker = () => {
+        setIsPickerVisible(!isPickerVisible);
+    };
+
+    useEffect(() => {
+        getUserData();
+    }, []);
+
+    useEffect(() => {
+        if (userData && userToken) {
+            fetchMessages();
+            initializePusher();
+        }
+    }, [userData, userToken]);
+
+    const getUserData = async () => {
+        try {
+            const userDataString = await AsyncStorage.getItem('@user');
+            const token = await AsyncStorage.getItem('@token');
+            if (userDataString && token) {
+                setUserData(JSON.parse(userDataString));
+                setUserToken(token);
+            }
+        } catch (e) {
+            console.error('Failed to get user data', e);
+        }
+    };
+
+    const initializePusher = useCallback(() => {
+        const pusher = new Pusher('9e6dd00ba6c994e5ebfe', {
+            cluster: 'eu'
+        });
+
+        const channel = pusher.subscribe(`chat_${userData.id}`);
+        channel.bind('new-message', (data) => {
+            setMessages(prevMessages => {
+                if (!prevMessages.some(msg => msg.id === data.id)) {
+                    return [...prevMessages, data];
+                }
+                return prevMessages;
+            });
+            flatListRef.current?.scrollToEnd({animated: true});
+        });
+    }, [userData]);
+
+    const fetchMessages = useCallback(async () => {
+        if (!userToken) return;
+
+        try {
+            const response = await fetch('https://travelcom.online/api/chat/get_messages', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${userToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            const data = await response.json();
+            if (data && Array.isArray(data.messages)) {
+                setMessages(data.messages);
+                setChatId(data.id);
+                setTimeout(() => flatListRef.current?.scrollToEnd({animated: false}), 100);
+            } else {
+                console.error('Unexpected data format:', data);
+                setMessages([]);
+            }
+        } catch (error) {
+            console.error('Error fetching messages:', error);
+        }
+    }, [userToken]);
+
+    const sendMessage = async () => {
+        if (inputMessage.trim() === '' || !userData || !userToken || !chatId) return;
+
+        try {
+            const response = await fetch('https://travelcom.online/api/chat/send_message', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${userToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: inputMessage,
+                    userId: userData.id,
+                    chatId: chatId,
+                }),
+            });
+
+            if (response.ok) {
+                setInputMessage('');
+            } else {
+                console.error('Failed to send message');
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
+    };
+
+    const formatTime = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const renderMessage = ({ item }) => {
+        const isOutgoing = item.user_id === userData.id;
+        const MessageComponent = isOutgoing ? OutgoingMessage : IncomingMessage;
+
+        return (
+            <MessageComponent
+                message={item.text}
+                time={formatTime(item.created_at)}
+            />
+        );
+    };
+
+    if (!userData || !userToken) {
+        return <Text>Loading...</Text>;
+    }
+
+    return (
+        <View style={styles.container}>
+            <FlatList
+                ref={flatListRef}
+                data={messages}
+                renderItem={renderMessage}
+                keyExtractor={(item) => item.id.toString()}
+                onContentSizeChange={() => flatListRef.current?.scrollToEnd({animated: true})}
+            />
+            <View style={styles.inputContainer}>
+                <TextInput
+                    style={styles.input}
+                    value={inputMessage}
+                    onChangeText={setInputMessage}
+                    placeholder="Type a message..."
+                    placeholderTextColor='#d0d0d0'
+                    multiline={true}
+                    numberOfLines={2}
+                />
+                <TouchableOpacity style={styles.attachButton} onPress={togglePicker}>
+                    <View>
+                        <PaperclipIcon/>
+                    </View>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+                    <ChatSendIcon/>
+                </TouchableOpacity>
+            </View>
+            {isPickerVisible && (
+                <View style={styles.pickerContainer}>
+                    <TouchableOpacity style={styles.pickerOption} onPress={pickImage}>
+                        <Text style={styles.blueText}>Image</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.pickerOption} onPress={pickDocument}>
+                        <Text style={styles.blueText}>Document</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+        </View>
+    );
+};
+
 
 const styles = StyleSheet.create({
-    mainText: {
-        fontFamily: 'Montserrat-Bold',
-        fontSize: 14,
-        color: 'black'
+    container: {
+        flex: 1
     },
-    msgText: {
-      fontSize: 11,
-      fontFamily: 'Montserrat-Light'
-    },
-    msgTime: {
-        fontSize: 11,
-        color: '#9B9B9A',
-        fontFamily: 'Montserrat-Light',
-        marginBottom: 5,
-        textAlign: 'center'
-    },
-    logoCircle: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 50,
-        height: 50,
-        borderRadius: 100,
-        backgroundColor: '#207FBF'
-    },
-    chatMerger: {
-        width: '100%',
-        display: 'flex',
+    incomingMessageContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
-        gap: 20,
-        borderBottomStartRadius: 10,
-        borderBottomEndRadius: 10,
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        backgroundColor: 'white',
-        zIndex: 1,
+        justifyContent: 'flex-start',
+        marginVertical: 5,
+        marginHorizontal: 10,
     },
-    chatBody: {
-        flex: 1,
-        paddingHorizontal: 15
-    },
-    messageInWrap: {
-        width: '100%',
-        display: 'flex',
-        alignItems: 'flex-end',
+    outgoingMessageContainer: {
         flexDirection: 'row',
-        gap: 6,
-        marginBottom: 10
+        justifyContent: 'flex-end',
+        marginVertical: 5,
+        marginHorizontal: 10,
     },
-    messageIncoming: {
-        borderBottomEndRadius: 10,
-        borderTopLeftRadius: 10,
-        borderTopRightRadius: 10,
-        backgroundColor: 'white',
-        padding: 15,
-        width: 'auto',
-        maxWidth: 275
+    incomingMessageBubble: {
+        backgroundColor: '#ffffff',
+        borderRadius: 15,
+        padding: 10,
+        maxWidth: '80%',
     },
-    messageOutWrap: {
-        width: '100%',
-        display: 'flex',
-        alignItems: 'flex-end',
-        flexDirection: 'row-reverse',
-        gap: 6,
-        marginBottom: 10
+    outgoingMessageBubble: {
+        backgroundColor: '#d0ecff',
+        borderRadius: 15,
+        padding: 10,
+        maxWidth: '80%',
     },
-    messageOutgoing: {
-        borderBottomEndRadius: 10,
-        borderBottomStartRadius: 10,
-        borderTopLeftRadius: 10,
-        backgroundColor: 'white',
-        padding: 15,
-        width: 'auto',
-        maxWidth: 275
+    messageText: {
+        fontSize: 16,
+        fontFamily: 'Montserrat-Regular'
+    },
+    messageTime: {
+        fontSize: 12,
+        color: '#888',
+        alignSelf: 'flex-end',
+        marginTop: 5,
     },
     inputContainer: {
-        display: 'flex',
         flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
         padding: 10,
-        borderTopWidth: 1,
-        borderTopColor: '#e0e0e0',
+        backgroundColor: '#FFFFFF',
     },
-    inputMerger: {
-        position: 'relative',
-        width: '100%',
+    input: {
         flex: 1,
-        display: 'flex',
+        borderWidth: 1,
+        borderColor: '#d0d0d0',
+        borderRadius: 10,
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+    },
+    sendButton: {
+        borderRadius: 100,
+        justifyContent: 'center',
+    },
+    sendButtonText: {
+        color: '#FFFFFF',
+        fontWeight: 'bold',
+    },
+    messageImage: {
+        height: 250,
+        resizeMode: 'contain',
+        borderRadius: 6
+    },
+    documentIcon: {
+        width: 50,
+        height: 50,
+        resizeMode: 'contain',
+    },
+    documentText: {
+        color: '#007AFF',
+        marginTop: 5,
+    },
+    attachButton: {
+        padding: 10,
+        marginRight: 5,
         flexDirection: 'row',
         alignItems: 'center'
     },
-    paperclipPos: {
-        right: 6,
+    pickerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        gap: 10,
+        paddingHorizontal: 10,
+        paddingBottom: 10,
+        backgroundColor: '#fff'
+    },
+    pickerOption: {
+        width: '50%',
         padding: 10,
-        position: 'absolute'
-    },
-    input: {
-        width: '100%',
         borderRadius: 10,
-        backgroundColor: 'white',
-        paddingLeft: 15,
-        paddingRight: 44,
-        paddingVertical: 12,
-        fontSize: 11,
-        fontFamily: 'Montserrat-Regular'
+        borderColor: '#207FBF',
+        borderWidth: 1,
+        backgroundColor: '#fff',
     },
-    sendButton: {
-        width: 40,
-        height: 40,
-        marginRight: 6,
-        marginLeft: 12
-    },
-    sendButtonText: {
-        color: 'white',
-        fontSize: 20,
-    },
+    blueText: {
+        color: '#207FBF',
+        fontSize: 14,
+        fontFamily: 'Montserrat-Regular',
+        textAlign: 'center'
+    }
 });

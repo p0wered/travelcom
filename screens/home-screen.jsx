@@ -12,40 +12,10 @@ import {Footer} from "../components/footer";
 import {BlogItem} from "../components/blog-item";
 import {generateAccordionItems} from "../components/accordion-list";
 import {QuestionForm} from "../components/question-form";
+import {useEffect, useState} from "react";
+import axios from "axios";
 
 export default function HomeScreen() {
-    const directionSources = {
-        'ROME': {
-            bg: require('../assets/directions/image-1.png'),
-            country: require('../assets/countries/rome.png'),
-        },
-        'PARIS': {
-            bg: require('../assets/directions/image-2.png'),
-            country: require('../assets/countries/paris.png'),
-        },
-        'LONDON': {
-            bg: require('../assets/directions/image-3.png'),
-            country: require('../assets/countries/london.png'),
-        },
-        'MALDIVES': {
-            bg: require('../assets/directions/image-4.png'),
-            country: require('../assets/countries/maldives.png'),
-        },
-        'BALI': {
-            bg: require('../assets/directions/image-5.png'),
-            country: require('../assets/countries/bali.png'),
-        },
-        'RIO DE JANEIRO': {
-            bg: require('../assets/directions/image-6.png'),
-            country: require('../assets/countries/rio.png'),
-        },
-    };
-    const blogSources = [
-        require('../assets/blog/blog-1.png'),
-        require('../assets/blog/blog-2.png'),
-        require('../assets/blog/blog-3.png'),
-        require('../assets/blog/blog-4.png'),
-    ];
     const faqTitles = [
         'How does Travelcom work?',
         'How do you I find and buy air tickets?',
@@ -75,77 +45,8 @@ export default function HomeScreen() {
                     </View>
                 </View>
             </ImageBackground>
-            <View style={styles.directionFlexbox}>
-                <View style={styles.directionTitle}>
-                    <Text style={[styles.mainText, {textAlign: 'center'}]}>TRENDING DIRECTIONS</Text>
-                </View>
-                <FlatList
-                    scrollEnabled={false}
-                    data={Object.keys(directionSources)}
-                    keyExtractor={(item) => item}
-                    renderItem={({ item }) => (
-                        <DirectionItem title={item} list={directionSources} />
-                    )}
-                    contentContainerStyle={{gap: 20}}
-                />
-                <TouchableOpacity activeOpacity={0.8} style={styles.mainBtn}>
-                    <Text style={[styles.mainText, {width: 140, textAlign: 'center'}]}>Know more</Text>
-                </TouchableOpacity>
-            </View>
-            <View style={styles.blogFlexbox}>
-                <View style={{display: 'flex', alignItems: 'center'}}>
-                    <View style={[styles.mainBtn, styles.blogBtn]}>
-                        <Text style={[styles.mainText, {color: '#207FBF'}]}>A BLOG FOR INSPIRATION</Text>
-                    </View>
-                </View>
-                <ScrollView
-                    horizontal={true}
-                    showsHorizontalScrollIndicator={false}
-                    style={{marginBottom: 18 , marginTop: 24}}
-                >
-                    <BlogItem
-                        title='SKI RESORTS IN EUROPE'
-                        desc='Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-                        Accusamus fuga ipsa maxime nostrum.'
-                        date='4/05/2024'
-                        textColor='white'
-                        img={blogSources[0]}
-                    />
-                    <BlogItem
-                        title='THE BEST SUMMER HOUSES IN SANTORINI'
-                        desc='Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-                        Accusamus fuga ipsa maxime nostrum.'
-                        date='29/04/2024'
-                        textColor='white'
-                        img={blogSources[2]}
-                    />
-                </ScrollView>
-                <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{marginBottom: 18}}>
-                    <BlogItem
-                        title='GASTRO GUIDE TO SERBIA'
-                        desc='Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-                        Accusamus fuga ipsa maxime nostrum.'
-                        date='4/05/2024'
-                        textColor='white'
-                        img={blogSources[1]}
-                        small={true}
-                    />
-                    <BlogItem
-                        title='GUIDE TO THE ISLANDS OF GREECE'
-                        desc='Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-                        Accusamus fuga ipsa maxime nostrum.'
-                        date='29/04/2024'
-                        textColor='white'
-                        img={blogSources[3]}
-                        small={true}
-                    />
-                </ScrollView>
-                <View style={{display: 'flex', alignItems: 'center'}}>
-                    <TouchableOpacity activeOpacity={0.8} style={[styles.mainBtn, {backgroundColor: 'white'}]}>
-                        <Text style={[styles.mainText, {color: '#207FBF', width: 140, textAlign: 'center'}]}>Know more</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
+            <DirectionsList/>
+            <BlogList/>
             <View style={styles.faqFlexbox}>
                 <Text style={styles.faqText}>FAQ</Text>
                 {accordionItems}
@@ -156,19 +57,125 @@ export default function HomeScreen() {
     )
 }
 
-function DirectionItem({title, list}){
+function DirectionItem({title, backgroundImg, countryFlag}){
     return(
-        <Pressable style={styles.directionItem}>
-            <ImageBackground source={list[title].bg} style={{width: 320, height: 222, padding: 15}}>
-                <View style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
-                    <Text style={styles.mainText}>
-                        {title}⠀
-                    </Text>
-                    <Image source={list[title].country} style={{width: 20, height: 20}}/>
-                </View>
-            </ImageBackground>
-        </Pressable>
+        <TouchableOpacity  activeOpacity={0.8} style={styles.directionItem}>
+            <Image source={backgroundImg} style={{width: '100%', height: 222, padding: 15}}/>
+            <View style={styles.directionInner}>
+                <Text style={[styles.mainText, {textTransform: 'uppercase'}]}>
+                    {title}⠀
+                </Text>
+                <Image source={countryFlag} style={{width: 20, height: 20}}/>
+            </View>
+        </TouchableOpacity>
     )
+}
+
+function DirectionsList() {
+    const [directions, setDirections] = useState([]);
+
+    useEffect(() => {
+        fetchDirections();
+    }, []);
+
+    const fetchDirections = async () => {
+        try {
+            const response = await axios.get('https://travelcom.online/api/country/get-for-main-page');
+            setDirections(response.data);
+        } catch (error) {
+            console.error('Error fetching directions:', error);
+        }
+    };
+
+    return (
+        <View style={styles.directionFlexbox}>
+            <View style={{display: 'flex', alignItems: 'center'}}>
+                <View style={styles.directionTitle}>
+                    <Text style={[styles.mainText, {textAlign: 'center'}]}>TRENDING DIRECTIONS</Text>
+                </View>
+            </View>
+            <FlatList
+                scrollEnabled={false}
+                data={directions}
+                renderItem={({ item }) => (
+                    <DirectionItem
+                        title={item.name}
+                        backgroundImg={{uri: `https://travelcom.online/storage/${item.mainImage}`}}
+                        countryFlag={{uri: `https://travelcom.online/storage/${item.icon}`}}
+                    />
+                )}
+                keyExtractor={item => item.id.toString()}
+            />
+            <TouchableOpacity activeOpacity={0.8} style={styles.mainBtn}>
+                <Text style={[styles.mainText, {width: 140, textAlign: 'center'}]}>Know more</Text>
+            </TouchableOpacity>
+        </View>
+    );
+}
+
+function BlogList() {
+    const [news, setNews] = useState([]);
+
+    useEffect(() => {
+        fetchNews();
+    }, []);
+
+    const fetchNews = async () => {
+        try {
+            const response = await axios.get('https://travelcom.online/api/news/get-for-main-page');
+            setNews(response.data);
+        } catch (error) {
+            console.error('Error fetching news:', error);
+        }
+    };
+
+    return (
+        <View style={styles.blogFlexbox}>
+            <View style={{display: 'flex', alignItems: 'center'}}>
+                <View style={[styles.mainBtn, styles.blogBtn]}>
+                    <Text style={[styles.mainText, {color: '#207FBF'}]}>A BLOG FOR INSPIRATION</Text>
+                </View>
+            </View>
+            <ScrollView
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}
+                style={{marginBottom: 18 , marginTop: 24}}
+            >
+                {news.map((item) => (
+                    <BlogItem
+                        key={item.id}
+                        title={item.name.toUpperCase()}
+                        desc={item.text.replace(/<[^>]+>/g, '').slice(0, 100) + '...'}
+                        date={new Date(item.created_at).toLocaleDateString()}
+                        textColor='white'
+                        img={{ uri: `https://travelcom.online/storage/${item.mainImage}` }}
+                    />
+                ))}
+            </ScrollView>
+            <ScrollView
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}
+                style={{marginBottom: 18 , marginTop: 24}}
+            >
+                {news.map((item) => (
+                    <BlogItem
+                        key={item.id}
+                        title={item.name.toUpperCase()}
+                        desc={item.text.replace(/<[^>]+>/g, '').slice(0, 100) + '...'}
+                        date={new Date(item.created_at).toLocaleDateString()}
+                        textColor='white'
+                        img={{uri: `https://travelcom.online/storage/${item.mainImage}`}}
+                        small={true}
+                    />
+                ))}
+            </ScrollView>
+            <View style={{display: 'flex', alignItems: 'center'}}>
+                <TouchableOpacity activeOpacity={0.8} style={[styles.mainBtn, {backgroundColor: 'white'}]}>
+                    <Text style={[styles.mainText, {color: '#207FBF', width: 140, textAlign: 'center'}]}>Know more</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
@@ -228,29 +235,38 @@ const styles = StyleSheet.create({
     directionTitle: {
         position: 'absolute',
         width: 200,
-        top: -40,
+        top: -55,
         height: 100,
         paddingLeft: 12,
         paddingRight: 12,
         paddingTop: 20,
         paddingBottom: 20,
         borderRadius: 10,
-        backgroundColor: '#207FBF',
+        backgroundColor: '#207FBF'
     },
     directionItem: {
-        width: 320,
+        width: '100%',
         height: 222,
         borderRadius: 10,
-        overflow: "hidden"
+        overflow: "hidden",
+        marginBottom: 15,
+        position: 'relative'
+    },
+    directionInner: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        position: 'absolute',
+        top: 12,
+        left: 12
     },
     directionFlexbox: {
+        width: '100%',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
         padding: 14,
-        gap: 20,
-        marginBottom: 50
+        marginBottom: 50,
     },
     blogFlexbox: {
         position: 'relative',

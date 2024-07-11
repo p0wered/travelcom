@@ -2,14 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Arrow from "./icons/arrow-icon";
 
-export const PassengerDropdown = () => {
+export function PassengerDropdown ({passengers, setPassengers}){
     const [isOpen, setIsOpen] = useState(false);
-    const [passengers, setPassengers] = useState({
-        adults: 1,
-        children: 1,
-        infants: 0,
-    });
-
     const totalPassengers = Object.values(passengers).reduce((a, b) => a + b, 0);
 
     const updatePassenger = (type, increment) => {

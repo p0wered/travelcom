@@ -1,11 +1,11 @@
 import {Image, StyleSheet, Text, TouchableOpacity, View} from "react-native";
-import {CheckIcon} from "./icons/check-icon";
-import {FavoriteIcon} from "./icons/favorite-icon";
-import {TransferIcon} from "./icons/transfer-icon";
 
 export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalCity, depAirport, arrivalAirport,
-                               flightTime, depTime, arrivalTime, depDate, arrivalDate, btnShown})
+                               flightTime, depTime, arrivalTime, depDate, arrivalDate, btnText, onPress})
 {
+    let btnShow;
+    btnText === undefined ? btnShow = false : btnShow = true;
+
     return(
         <View style={styles.flightsCard}>
             <View style={[styles.cardBlock, {marginBottom: 16}]}>
@@ -20,12 +20,7 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                     </View>
                 </View>
                 <View>
-                    <Text style={styles.largeText}>{price} €</Text>
-                    <View style={styles.textMerger}>
-                        <Text style={styles.smallText}>Baggage</Text>
-                        <Text style={styles.smallTextBlue}>+50€</Text>
-                        <CheckIcon color="grey" width={16} height={16}/>
-                    </View>
+                    <Text style={styles.largeText}>{price} ₽</Text>
                 </View>
             </View>
             <View style={styles.cardBlock}>
@@ -51,106 +46,15 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                         </View>
                     </View>
                 </View>
-                <View style={[styles.chooseBtnWrap, btnShown ? {display: 'flex'} : {display: 'none'}]}>
-                    <FavoriteIcon color='white' stroke='black'/>
-                    <TouchableOpacity style={styles.chooseBtn} activeOpacity={0.8}>
-                        <Text style={styles.btnText}>Choose</Text>
-                    </TouchableOpacity>
-                </View>
             </View>
-        </View>
-    )
-}
-
-export function TransferFlightCard({price, transferTime, airlinesTitle1, airlinesTitle2, airlinesImg1, airlinesImg2, depCity1,
-                                       arrivalCity1, depAirport1, arrivalAirport1, flightTime1, depTime1, arrivalTime1,
-                                       depDate1, arrivalDate1, btnShown, arrivalCity2, arrivalAirport2, depTime2, depDate2, arrivalDate2, arrivalTime2}){
-    return(
-        <View style={styles.flightsCard}>
-            <View style={[styles.cardBlock, {marginBottom: 16}]}>
-                <View>
-                    <View style={{marginBottom: 10}}>
-                        <Text style={styles.mainText}>{depCity1} - {arrivalCity1}</Text>
-                        <Text style={styles.greyText}>{flightTime1} on the way</Text>
-                    </View>
-                    <View style={[styles.textMerger, {marginBottom: 8}]}>
-                        <Image style={styles.airlinesImg} source={airlinesImg1}/>
-                        <Text style={styles.smallText}>{airlinesTitle1}</Text>
-                    </View>
-                    <View style={styles.textMerger}>
-                        <Image style={styles.airlinesImg} source={airlinesImg2}/>
-                        <Text style={styles.smallText}>{airlinesTitle2}</Text>
-                    </View>
-                </View>
-                <View>
-                    <Text style={styles.largeText}>{price} €</Text>
-                    <View style={styles.textMerger}>
-                        <Text style={styles.smallText}>Baggage</Text>
-                        <Text style={styles.smallTextBlue}>+50€</Text>
-                        <CheckIcon color="grey" width={16} height={16}/>
-                    </View>
-                </View>
-            </View>
-            <View style={[styles.cardBlock, {marginBottom: 16}]}>
-                <View style={{display: 'flex', flexDirection: 'row'}}>
-                    <View style={{marginRight: 26}}>
-                        <View style={{marginBottom: 16}}>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>{depTime1}</Text>
-                            <Text style={styles.greyText}>{depDate1}</Text>
-                        </View>
-                        <View>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>{arrivalTime1}</Text>
-                            <Text style={styles.greyText}>{arrivalDate1}</Text>
-                        </View>
-                    </View>
-                    <View>
-                        <View style={{marginBottom: 16}}>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>{depCity1}</Text>
-                            <Text style={styles.greyText}>{depAirport1}</Text>
-                        </View>
-                        <View>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>{arrivalCity1}</Text>
-                            <Text style={styles.greyText}>{arrivalAirport1}</Text>
-                        </View>
-                    </View>
-                </View>
-            </View>
-            <View style={[styles.textMerger, styles.transferBlock]}>
-                <TransferIcon/>
-                <View>
-                    <Text style={styles.smallText}>Transfer in {arrivalCity1}</Text>
-                    <Text style={styles.greyText}>{transferTime}</Text>
-                </View>
-            </View>
-            <View style={styles.cardBlock}>
-                <View style={{display: 'flex', flexDirection: 'row'}}>
-                    <View style={{marginRight: 26}}>
-                        <View style={{marginBottom: 16}}>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>{depTime2}</Text>
-                            <Text style={styles.greyText}>{depDate2}</Text>
-                        </View>
-                        <View>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>{arrivalTime2}</Text>
-                            <Text style={styles.greyText}>{arrivalDate2}</Text>
-                        </View>
-                    </View>
-                    <View>
-                        <View style={{marginBottom: 16}}>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>{arrivalCity1}</Text>
-                            <Text style={styles.greyText}>{arrivalAirport1}</Text>
-                        </View>
-                        <View>
-                            <Text style={[styles.mainText, {fontSize: 13}]}>{arrivalCity2}</Text>
-                            <Text style={styles.greyText}>{arrivalAirport2}</Text>
-                        </View>
-                    </View>
-                </View>
-                <View style={[styles.chooseBtnWrap, btnShown ? {display: 'flex'} : {display: 'none'}]}>
-                    <FavoriteIcon color='white' stroke='black'/>
-                    <TouchableOpacity style={styles.chooseBtn} activeOpacity={0.8}>
-                        <Text style={styles.btnText}>Choose</Text>
-                    </TouchableOpacity>
-                </View>
+            <View style={[styles.chooseBtnWrap, btnShow ? {display: 'flex'} : {display: 'none'}]}>
+                <TouchableOpacity
+                    style={styles.chooseBtn}
+                    activeOpacity={0.8}
+                    onPress={onPress}
+                >
+                    <Text style={styles.btnText}>{btnText}</Text>
+                </TouchableOpacity>
             </View>
         </View>
     )
@@ -180,8 +84,7 @@ const styles = StyleSheet.create({
     greyText: {
         fontFamily: 'Montserrat-Regular',
         fontSize: 11,
-        color: '#B3B3B3',
-        maxWidth: 130
+        color: '#B3B3B3'
     },
     flightsInputForm : {
         position: "relative",
@@ -233,20 +136,18 @@ const styles = StyleSheet.create({
         paddingHorizontal: 18
     },
     chooseBtn: {
-        paddingHorizontal: 18,
+        paddingHorizontal: 28,
         paddingVertical: 10,
         borderRadius: 10,
         backgroundColor: '#207FBF'
     },
     chooseBtnWrap: {
-        gap: 10,
-        alignItems: 'flex-end',
-        justifyContent: 'flex-end'
-    },
-    transferBlock: {
-        backgroundColor: '#e7e7e7',
-        paddingHorizontal: 24,
-        paddingVertical: 16,
-        marginBottom: 16
+        display: 'flex',
+        flexDirection: 'row-reverse',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        marginTop: 16,
+        paddingHorizontal: 16,
+        gap: 16
     }
 });

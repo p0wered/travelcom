@@ -1,16 +1,34 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {View, TextInput, FlatList, Text, StyleSheet, ScrollView} from 'react-native';
 
-export function AutoCompleteInput ({airportsData, title}){
-    const [inputText, setInputText] = useState('');
-    const [suggestions, setSuggestions] = useState([]);
+export function AutoCompleteInput({ title, inputText, setInputText, suggestions, setSuggestions}) {
+    const fetchSuggestions = async (text) => {
+        if (text.length < 2) {
+            setSuggestions([]);
+            return;
+        }
+        try {
+            const response = await fetch('https://travelcom.online/api/crpo/complete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    req: text
+                }),
+            });
+            const data = await response.json();
+            if (data && Array.isArray(data)) {
+                setSuggestions(data);
+            }
+        } catch (error) {
+            console.error('Error fetching suggestions:', error);
+        }
+    };
 
     const handleTextChange = (text) => {
         setInputText(text);
-        const filteredSuggestions = airportsData.filter((city) =>
-            city.toLowerCase().startsWith(text.toLowerCase())
-        );
-        setSuggestions(filteredSuggestions);
+        fetchSuggestions(text);
     };
 
     const handleSuggestionPress = (suggestion) => {
@@ -23,7 +41,8 @@ export function AutoCompleteInput ({airportsData, title}){
             <TextInput
                 style={[
                     styles.locationInput,
-                    suggestions.length > 0 ? {borderBottomStartRadius: 10, borderBottomEndRadius: 10,} : {borderRadius: 10}]}
+                    suggestions.length > 0 ? {borderBottomStartRadius: 10, borderBottomEndRadius: 10} : {borderRadius: 10}
+                ]}
                 value={inputText}
                 onChangeText={handleTextChange}
                 placeholder={title}
@@ -45,7 +64,7 @@ export function AutoCompleteInput ({airportsData, title}){
             )}
         </View>
     );
-};
+}
 
 const styles = StyleSheet.create({
     locationInput: {

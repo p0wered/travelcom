@@ -1,63 +1,94 @@
-import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
-import {useState} from "react";
-import BookedRoomItem from "../components/booked-room-item";
+import React, {useCallback, useState} from 'react';
+import {Text, ScrollView, Alert, StyleSheet, View, TouchableOpacity} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {FlightCard} from "../components/flight-cards";
+import airlinesImg from '../assets/airlines.png'
+import {useFocusEffect} from "@react-navigation/native";
 import {Footer} from "../components/footer";
 
-export default function CartScreen() {
-    const [selectedType, setSelectedType] = useState('All');
-    const types = ['All', 'Flights', 'Hotels'];
+export default function CartScreen({navigation}) {
+    const [cartItems, setCartItems] = useState([]);
+    const [userId, setUserId] = useState(null);
 
-    const renderContent = () => {
-        switch (selectedType) {
-            case 'Flights':
-                return <FlightCard btnShown={true}/>;
-            case 'Hotels':
-                return <BookedRoomItem />;
-            case 'All':
-                return (
-                    <>
-                        <FlightCard btnShown={true}/>
-                        <BookedRoomItem />
-                    </>
-                );
-            case 'Awaiting payment':
-                return <Text style={styles.mainText}>There is nothing yet</Text>
-            default:
-                return null;
+    const loadCartItems = useCallback(async () => {
+        try {
+            const userString = await AsyncStorage.getItem('@user');
+            if (userString) {
+                const user = JSON.parse(userString);
+                setUserId(user.id);
+                const cartKey = `@cart_${user.id}`;
+                const cartString = await AsyncStorage.getItem(cartKey);
+                console.log('Loaded cart string:', cartString);
+                if (cartString) {
+                    const loadedCart = JSON.parse(cartString);
+                    console.log('Loaded cart:', loadedCart);
+                    setCartItems(loadedCart);
+                } else {
+                    console.log('Cart is empty');
+                    setCartItems([]);
+                }
+            } else {
+                console.log('User not found');
+                setCartItems([]);
+            }
+        } catch (error) {
+            console.error('Failed to load cart items', error);
+            setCartItems([]);
+        }
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadCartItems();
+        }, [loadCartItems])
+    );
+
+    const removeFromCart = async (flightId) => {
+        try {
+            const updatedCart = cartItems.filter(item => item.id !== flightId);
+            const cartKey = `@cart_${userId}`;
+            await AsyncStorage.setItem(cartKey, JSON.stringify(updatedCart));
+            setCartItems(updatedCart);
+            console.log('Updated cart:', updatedCart);
+            Alert.alert('Success', 'Flight removed from cart');
+        } catch (error) {
+            console.error('Failed to remove flight from cart', error);
+            Alert.alert('Error', 'Failed to remove flight from cart');
         }
     };
 
     return (
         <ScrollView>
             <View style={{padding: 15}}>
-                <Text style={styles.titleText}>Shopping Cart</Text>
-                <View style={styles.buttonsContainer}>
-                    {types.map((type) => (
-                        <TouchableOpacity
-                            key={type}
-                            style={[
-                                styles.button,
-                                selectedType === type && styles.selectedButton,
-                            ]}
-                            onPress={() => setSelectedType(type)}
-                        >
-                            <Text
-                                style={[
-                                    styles.buttonText,
-                                    selectedType === type && styles.selectedButtonText,
-                                ]}
-                                numberOfLines={2}
-                                adjustsFontSizeToFit={true}
-                            >
-                                {type}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-                {renderContent()}
+                <Text style={styles.titleText}>Shopping cart</Text>
+                {cartItems.length === 0 ? (
+                    <Text style={[styles.mainText, {paddingBottom: 100}]}>Your cart is empty</Text>
+                ) : (
+                    cartItems.map((flight, index) => (
+                        <FlightCard
+                            key={flight.id || index}
+                            price={flight.price}
+                            flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
+                            depCity={flight.depCity.title}
+                            depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
+                            depTime={flight.depTime}
+                            depDate={flight.depDate}
+                            arrivalCity={flight.arriveCity.title}
+                            arrivalTime={flight.arriveTime}
+                            arrivalDate={flight.arriveDate}
+                            arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
+                            airlinesTitle={flight.provider.supplier.title}
+                            airlinesImg={airlinesImg}
+                            btnText="Remove from cart"
+                            onPress={() => removeFromCart(flight.id)}
+                        />
+                    ))
+                )}
+                <TouchableOpacity activeOpacity={0.8} style={styles.showMoreBtn}>
+                    <Text style={styles.btnText}>Checkout</Text>
+                </TouchableOpacity>
             </View>
-            <Footer color='white'/>
+            <Footer/>
         </ScrollView>
     );
 }
@@ -69,39 +100,19 @@ const styles = StyleSheet.create({
         color: '#207FBF',
         marginBottom: 15
     },
-    buttonsContainer: {
-        maxWidth: 230,
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        backgroundColor: 'white',
-        borderRadius: 10,
-        marginBottom: 15
-    },
-    button: {
-        display: 'flex',
-        justifyContent: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 10,
-        maxWidth: 110
-    },
-    selectedButton: {
-        backgroundColor: '#207FBF',
-    },
-    buttonText: {
-        fontFamily: 'Montserrat-Medium',
-        color: '#333',
-        fontSize: 12,
-        textAlign: 'center'
-    },
-    selectedButtonText: {
-        fontFamily: 'Montserrat-Bold',
-        color: 'white',
-    },
     mainText: {
-        fontFamily: 'Montserrat-Regular',
+        fontFamily: 'Montserrat-Bold',
         fontSize: 15,
         color: 'black'
+    },
+    showMoreBtn: {
+        padding: 18,
+        borderRadius: 10,
+        backgroundColor: '#207FBF',
+    },
+    btnText: {
+        fontFamily: 'Montserrat-Bold',
+        color: 'white',
+        textAlign: 'center'
     },
 })

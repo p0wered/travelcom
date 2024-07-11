@@ -1,10 +1,10 @@
 import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import {useState} from "react";
-import BookedRoomItem from "../components/booked-room-item";
-import {FlightCard, TransferFlightCard} from "../components/flight-cards";
+import {FlightCard} from "../components/flight-cards";
 import {Footer} from "../components/footer";
 import {RoomItem} from "../components/room-item";
 import {FlightDirection} from "../components/flight-direction-item";
+import airlinesImg from '../assets/airlines.png';
 
 export default function FavouritesScreen() {
     const [selectedType, setSelectedType] = useState('All');
@@ -15,7 +15,21 @@ export default function FavouritesScreen() {
             case 'Flights':
                 return (
                     <>
-                        <FlightCard btnShown={true}/>
+                        <FlightCard
+                            price={200}
+                            flightTime='5h, 20min'
+                            depCity='London'
+                            depAirport='Luton Airport, LTN'
+                            depTime='11:10'
+                            depDate='2/03/2024'
+                            arrivalCity='Paris'
+                            arrivalTime='16:30'
+                            arrivalDate='2/03/2024'
+                            arrivalAirport='Paris Airport, CGA'
+                            airlinesTitle='Aegean Airlines'
+                            airlinesImg={airlinesImg}
+                            btnShown={true}
+                        />
                         <FlightDirection
                             image={require('../assets/country-image.png')}
                             direction='London - Paris'
@@ -61,7 +75,21 @@ export default function FavouritesScreen() {
                             reviewsAmount='84'
                             hotelStars='3'
                         />
-                        <FlightCard btnShown={true}/>
+                        <FlightCard
+                            price={200}
+                            flightTime='5h, 20min'
+                            depCity='London'
+                            depAirport='Luton Airport, LTN'
+                            depTime='11:10'
+                            depDate='2/03/2024'
+                            arrivalCity='Paris'
+                            arrivalTime='16:30'
+                            arrivalDate='2/03/2024'
+                            arrivalAirport='Paris Airport, CGA'
+                            airlinesTitle='Aegean Airlines'
+                            airlinesImg={airlinesImg}
+                            btnShown={true}
+                        />
                         <RoomItem
                             image={require('../assets/hotels/room-image-2.png')}
                             name='Hotel Alane'

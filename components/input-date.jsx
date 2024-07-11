@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import {StyleSheet, View, TextInput, TouchableOpacity, Text } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-export const DateInput = () => {
-    const [date, setDate] = useState(new Date());
+export const DateInput = ({date, setDate}) => {
     const [showDatePicker, setShowDatePicker] = useState(false);
 
     const handleDatePicker = (event, selectedDate) => {
@@ -13,7 +12,11 @@ export const DateInput = () => {
     };
 
     const formatDate = () => {
-        return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+        if (date !== null){
+            return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+        } else {
+            return null;
+        }
     };
 
     return (

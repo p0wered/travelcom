@@ -1,4 +1,5 @@
 import {
+    ActivityIndicator, Alert,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -10,65 +11,164 @@ import airlinesImg from "../assets/airlines.png";
 import {SearchIcon} from "../components/icons/search-icon";
 import {FilterIcon} from "../components/icons/filter-icon";
 import {Footer} from "../components/footer";
-import {FlightCard, TransferFlightCard} from "../components/flight-cards";
+import {FlightCard} from "../components/flight-cards";
 import {AutoCompleteInput} from "../components/autocomplete-input";
 import {DateInput} from "../components/input-date";
 import {PassengerDropdown} from "../components/passengers-selector";
 import {useEffect, useState} from "react";
+import {RoundTripSelector} from "../components/roundtrip-selector";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function FlightsScreen() {
-    const [cities, setCities] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [airportFrom, setAirportFrom] = useState('');
+    const [fromSuggestions, setFromSuggestions] = useState([]);
+    const [airportTo, setAirportTo] = useState('');
+    const [whereSuggestions, setWhereSuggestions] = useState([]);
+    const [dateStart, setDateStart] = useState(new Date());
+    const [dateEnd, setDateEnd] = useState(new Date());
+    const [roundTrip, setRoundTrip] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
+    const [passengers, setPassengers] = useState({
+        adults: 1,
+        children: 1,
+        infants: 0,
+    });
+    const [flightResults, setFlightResults] = useState([]);
+    const [visibleFlights, setVisibleFlights] = useState(5);
+    const [userId, setUserId] = useState(null);
 
     useEffect(() => {
-        fetchCities();
+        checkAuth();
     }, []);
 
-    const fetchCities = async () => {
-        if (cities.length > 0) return;
+    const checkAuth = async () => {
         try {
-            setLoading(true);
-            const response = await fetch('https://countriesnow.space/api/v0.1/countries/cities', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    country: 'Nigeria'
-                }),
-            });
-            const data = await response.json();
-            if (data.data && Array.isArray(data.data)) {
-                setCities(data.data);
+            const userString = await AsyncStorage.getItem('@user');
+            if (userString) {
+                const user = JSON.parse(userString);
+                setUserId(user.id);
             }
         } catch (error) {
-            console.error('Error fetching cities:', error);
+            console.error('Failed to get user data', error);
+        }
+    };
+
+    const addToCart = async (flight) => {
+        if (!userId) {
+            Alert.alert('Error', 'Please log in to add flights to cart');
+            return;
+        }
+
+        try {
+            const cartKey = `@cart_${userId}`;
+            const cartString = await AsyncStorage.getItem(cartKey);
+            let cart = cartString ? JSON.parse(cartString) : [];
+
+            // Добавляем уникальный идентификатор к каждому билету
+            const flightWithId = { ...flight, id: Date.now().toString() };
+            cart.push(flightWithId);
+
+            await AsyncStorage.setItem(cartKey, JSON.stringify(cart));
+            console.log('Cart after adding:', JSON.stringify(cart, null, 2));
+            Alert.alert('Success', 'Flight added to cart');
+        } catch (error) {
+            console.error('Failed to add flight to cart', error);
+            Alert.alert('Error', 'Failed to add flight to cart');
+        }
+    };
+
+    const handleSearch = async () => {
+        setIsLoading(true)
+
+        const payload = {
+            adults: passengers.adults,
+            airportFrom: getAirportCode(airportFrom),
+            airportTo: getAirportCode(airportTo),
+            children: passengers.children,
+            dateEnd: formatDate(dateEnd),
+            dateStart: formatDate(dateStart),
+            infants: passengers.infants,
+            isRoundtrip: roundTrip
+        };
+
+        console.log('sending data:', JSON.stringify(payload, null, 2));
+
+        try {
+            const response = await axios.post('https://travelcom.online/api/crpo/getFlights', payload);
+            setFlightResults(response.data);
+            setVisibleFlights(5);
+            console.log('response:', JSON.stringify(response.data, null, 2));
+        } catch (error) {
+            console.error('error fetching flights:', error);
         } finally {
-            setLoading(false);
+            setIsLoading(false);
+        }
+    };
+
+    const handleShowMore = () => {
+        setVisibleFlights(prevVisible => prevVisible + 5);
+    };
+
+    const getAirportCode = (fullAirportName) => {
+        if (!fullAirportName || fullAirportName.length < 3) {
+            console.warn(`Неверный формат названия аэропорта: "${fullAirportName}"`);
+            return '';
+        }
+        return fullAirportName.slice(0, 3).toUpperCase();
+    };
+
+    const formatDate = (date) => {
+        if (date !== null){
+            return date.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric'}).replace(/\//g, '.');
+        } else {
+            return null;
         }
     };
 
     return(
         <ScrollView>
             <View style={styles.flightsInputForm}>
-                <AutoCompleteInput title='From' airportsData={cities}/>
-                <AutoCompleteInput title='Where' airportsData={cities}/>
+                <AutoCompleteInput
+                    title='From'
+                    inputText={airportFrom}
+                    setInputText={setAirportFrom}
+                    suggestions={fromSuggestions}
+                    setSuggestions={setFromSuggestions}
+                />
+                <AutoCompleteInput
+                    title='Where'
+                    inputText={airportTo}
+                    setInputText={setAirportTo}
+                    suggestions={whereSuggestions}
+                    setSuggestions={setWhereSuggestions}
+                />
+                <RoundTripSelector roundTrip={roundTrip} setRoundTrip={setRoundTrip} setBackDate={setDateEnd}/>
                 <View style={styles.selector}>
                     <View style={{marginVertical: 7}}>
-                        <DateInput/>
+                        <DateInput date={dateStart} setDate={setDateStart}/>
                     </View>
-                    <View style={styles.separator}/>
-                    <Pressable style={{marginVertical: 7}}>
-                        <DateInput/>
-                    </Pressable>
+                    <View style={[styles.separator, roundTrip ? {display: 'flex'} : {display: 'none'}]}/>
+                    <View style={[{marginVertical: 7}, roundTrip ? {display: 'flex'} : {display: 'none'}]}>
+                        <DateInput date={dateEnd} setDate={setDateEnd}/>
+                    </View>
                 </View>
-                <PassengerDropdown/>
+                <PassengerDropdown passengers={passengers} setPassengers={setPassengers}/>
                 <View style={styles.flexCenter}>
-                    <TouchableOpacity activeOpacity={0.8} style={[styles.searchBtn, styles.flexCenter]}>
-                        <View style={[styles.flexCenter, {gap: 4}]}>
-                            <SearchIcon/>
-                            <Text style={styles.btnText}>Search</Text>
-                        </View>
+                    <TouchableOpacity
+                        activeOpacity={0.8}
+                        style={[styles.searchBtn, styles.flexCenter]}
+                        onPress={handleSearch}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <ActivityIndicator color="#ffffff" />
+                        ) : (
+                            <View style={[styles.flexCenter, {gap: 4}]}>
+                                <SearchIcon/>
+                                <Text style={styles.btnText}>Search</Text>
+                            </View>
+                        )}
                     </TouchableOpacity>
                 </View>
             </View>
@@ -76,48 +176,30 @@ export default function FlightsScreen() {
                 <Pressable style={{marginBottom: 8}}>
                     <FilterIcon/>
                 </Pressable>
-                <FlightCard
-                    price={200}
-                    flightTime='5h, 20min'
-                    depCity='London'
-                    depAirport='Luton Airport, LTN'
-                    depTime='11:10'
-                    depDate='2/03/2024'
-                    arrivalCity='Paris'
-                    arrivalTime='16:30'
-                    arrivalDate='2/03/2024'
-                    arrivalAirport='Paris Airport, CGA'
-                    airlinesTitle='Aegean Airlines'
-                    airlinesImg={airlinesImg}
-                    btnShown={true}
-                />
-                <TransferFlightCard
-                    price={400}
-                    flightTime1='5h, 20min'
-                    depCity1='London'
-                    depAirport1='Luton Airport, LTN'
-                    depTime1='11:10'
-                    depDate1='2/03/2024'
-                    arrivalCity1='Paris'
-                    arrivalAirport1='Paris Airport, CGA'
-                    arrivalTime1='16:30'
-                    arrivalDate1='2/03/2024'
-                    airlinesImg1={airlinesImg}
-                    airlinesImg2={airlinesImg}
-                    airlinesTitle1='Aegean Airlines'
-                    airlinesTitle2='Aegean Airlines'
-                    arrivalCity2='Barcelona'
-                    arrivalAirport2='Barcelona Airport, BNA'
-                    depDate2='2/03/2024'
-                    depTime2='17:40'
-                    arrivalTime2='21:40'
-                    arrivalDate2='2/03/2024'
-                    transferTime='1h, 10min'
-                    btnShown={true}
-                />
-                <TouchableOpacity activeOpacity={0.8} style={[styles.showMoreBtn, {paddingVertical: 18}]}>
-                    <Text style={styles.btnText}>Show more</Text>
-                </TouchableOpacity>
+                {flightResults.slice(0, visibleFlights).map((flight, index) => (
+                    <FlightCard
+                        key={index}
+                        price={flight.price}
+                        flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
+                        depCity={flight.depCity.title}
+                        depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
+                        depTime={flight.depTime}
+                        depDate={flight.depDate}
+                        arrivalCity={flight.arriveCity.title}
+                        arrivalTime={flight.arriveTime}
+                        arrivalDate={flight.arriveDate}
+                        arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
+                        airlinesTitle={flight.provider.supplier.title}
+                        airlinesImg={airlinesImg}
+                        btnText="Add to cart"
+                        onPress={() => addToCart(flight)}
+                    />
+                ))}
+                {visibleFlights < flightResults.length && (
+                    <TouchableOpacity activeOpacity={0.8} style={[styles.showMoreBtn, {paddingVertical: 18}]} onPress={handleShowMore}>
+                        <Text style={styles.btnText}>Show more</Text>
+                    </TouchableOpacity>
+                )}
             </View>
             <Footer/>
         </ScrollView>
