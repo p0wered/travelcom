@@ -6,6 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import {ChatSendIcon} from "../components/icons/chat-send-icon";
 import {PaperclipIcon} from "../components/icons/paperclip-icon";
+import {useNavigation} from "@react-navigation/native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MAX_IMAGE_WIDTH = SCREEN_WIDTH * 0.7;
@@ -66,13 +67,15 @@ const OutgoingMessage = ({ message, time }) => (
 );
 
 
-export default function ChatScreen(){
+export default function ChatScreen({navigation}){
+    const navigate = useNavigation();
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [userData, setUserData] = useState(null);
     const [userToken, setUserToken] = useState(null);
     const [chatId, setChatId] = useState(null);
     const [isPickerVisible, setIsPickerVisible] = useState(false);
+    const [loggedIn, setLoggedIn] = useState(false);
     const flatListRef = useRef();
 
     const pickImage = async () => {
@@ -168,31 +171,60 @@ export default function ChatScreen(){
         setIsPickerVisible(!isPickerVisible);
     };
 
-    useEffect(() => {
-        getUserData();
-    }, []);
-
-    useEffect(() => {
-        if (userData && userToken) {
-            fetchMessages();
-            initializePusher();
-        }
-    }, [userData, userToken]);
-
     const getUserData = async () => {
         try {
             const userDataString = await AsyncStorage.getItem('@user');
             const token = await AsyncStorage.getItem('@token');
             if (userDataString && token) {
-                setUserData(JSON.parse(userDataString));
+                const parsedUserData = JSON.parse(userDataString);
+                setUserData(parsedUserData);
                 setUserToken(token);
+                setLoggedIn(true);
+                return { isLoggedIn: true, userData: parsedUserData, token };
+            } else {
+                setUserData(null);
+                setUserToken(null);
+                setLoggedIn(false);
+                return { isLoggedIn: false, userData: null, token: null };
             }
         } catch (e) {
             console.error('Failed to get user data', e);
+            setUserData(null);
+            setUserToken(null);
+            setLoggedIn(false);
+            return { isLoggedIn: false, userData: null, token: null };
         }
     };
 
-    const initializePusher = useCallback(() => {
+    useEffect(() => {
+        let isMounted = true;
+
+        const checkUserAndFetchData = async () => {
+            const { isLoggedIn, userData, token } = await getUserData();
+            if (isMounted) {
+                if (isLoggedIn && userData && token) {
+                    await fetchMessages(token);
+                    initializePusher(userData);
+                } else {
+                    setMessages([]);
+                    setChatId(null);
+                }
+            }
+        };
+
+        const unsubscribe = navigation.addListener('focus', checkUserAndFetchData);
+
+        checkUserAndFetchData();
+
+        return () => {
+            isMounted = false;
+            unsubscribe();
+        };
+    }, [navigation]);
+
+    const initializePusher = useCallback((userData) => {
+        if (!userData || !userData.id) return;
+
         const pusher = new Pusher('9e6dd00ba6c994e5ebfe', {
             cluster: 'eu'
         });
@@ -207,16 +239,20 @@ export default function ChatScreen(){
             });
             flatListRef.current?.scrollToEnd({animated: true});
         });
-    }, [userData]);
 
-    const fetchMessages = useCallback(async () => {
-        if (!userToken) return;
+        return () => {
+            pusher.unsubscribe(`chat_${userData.id}`);
+        };
+    }, []);
+
+    const fetchMessages = useCallback(async (token) => {
+        if (!token) return;
 
         try {
             const response = await fetch('https://travelcom.online/api/chat/get_messages', {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${userToken}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
             });
@@ -232,7 +268,7 @@ export default function ChatScreen(){
         } catch (error) {
             console.error('Error fetching messages:', error);
         }
-    }, [userToken]);
+    }, []);
 
     const sendMessage = async () => {
         if (inputMessage.trim() === '' || !userData || !userToken || !chatId) return;
@@ -279,7 +315,13 @@ export default function ChatScreen(){
     };
 
     if (!userData || !userToken) {
-        return <Text>Loading...</Text>;
+        return (
+            <View style={[styles.container, {backgroundColor: 'white'}]}>
+                <View style={styles.loginFlexbox}>
+                    <Text style={styles.loginText}>Please login to use chat</Text>
+                </View>
+            </View>
+        )
     }
 
     return (
@@ -347,6 +389,16 @@ const styles = StyleSheet.create({
         padding: 10,
         maxWidth: '80%',
     },
+    loginFlexbox: {
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    loginText: {
+      fontSize: 18,
+        fontFamily: 'Montserrat-Bold'
+    },
     outgoingMessageBubble: {
         backgroundColor: '#d0ecff',
         borderRadius: 15,
@@ -395,8 +447,9 @@ const styles = StyleSheet.create({
         resizeMode: 'contain',
     },
     documentText: {
-        color: '#007AFF',
+        color: '#207fbf',
         marginTop: 5,
+        fontFamily: 'Montserrat-Regular'
     },
     attachButton: {
         padding: 10,

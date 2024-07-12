@@ -1,9 +1,8 @@
 import {
-    ActivityIndicator, Alert,
-    Pressable,
+    ActivityIndicator, Alert, Image,
     ScrollView,
     StyleSheet,
-    Text,
+    Text, TextInput,
     TouchableOpacity,
     View
 } from "react-native";
@@ -15,10 +14,15 @@ import {FlightCard} from "../components/flight-cards";
 import {AutoCompleteInput} from "../components/autocomplete-input";
 import {DateInput} from "../components/input-date";
 import {PassengerDropdown} from "../components/passengers-selector";
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {RoundTripSelector} from "../components/roundtrip-selector";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {useFocusEffect} from "@react-navigation/native";
+import Arrow from "../components/icons/arrow-icon";
+import {DayIcon} from "../components/icons/day-icon";
+import {NightIcon} from "../components/icons/night-icon";
+import {CheckIcon} from "../components/icons/check-icon";
 
 export default function FlightsScreen() {
     const [airportFrom, setAirportFrom] = useState('');
@@ -37,6 +41,15 @@ export default function FlightsScreen() {
     const [flightResults, setFlightResults] = useState([]);
     const [visibleFlights, setVisibleFlights] = useState(5);
     const [userId, setUserId] = useState(null);
+    const [cartItems, setCartItems] = useState([]);
+    const [filtersVisible, setFiltersVisible] = useState(false);
+    const [dayFlightsOnly, setDayFlightsOnly] = useState(false);
+    const [nightFlightsOnly, setNightFlightsOnly] = useState(false);
+    const [minPrice, setMinPrice] = useState('');
+    const [maxPrice, setMaxPrice] = useState('');
+    const [selectedAirlines, setSelectedAirlines] = useState([]);
+    const [availableAirlines, setAvailableAirlines] = useState([]);
+    const [filteredResults, setFilteredResults] = useState([]);
 
     useEffect(() => {
         checkAuth();
@@ -54,28 +67,116 @@ export default function FlightsScreen() {
         }
     };
 
+    const applyFilters = () => {
+        let filtered = [...flightResults];
+
+        if (dayFlightsOnly) {
+            filtered = filtered.filter(flight => {
+                const depHour = parseInt(flight.depTime.split(':')[0]);
+                return depHour >= 6 && depHour < 18;
+            });
+        }
+
+        if (nightFlightsOnly) {
+            filtered = filtered.filter(flight => {
+                const depHour = parseInt(flight.depTime.split(':')[0]);
+                return depHour < 6 || depHour >= 18;
+            });
+        }
+
+        if (minPrice !== '') {
+            filtered = filtered.filter(flight => flight.price >= parseFloat(minPrice));
+        }
+
+        if (maxPrice !== '') {
+            filtered = filtered.filter(flight => flight.price <= parseFloat(maxPrice));
+        }
+
+        if (selectedAirlines.length > 0) {
+            filtered = filtered.filter(flight => selectedAirlines.includes(flight.provider.supplier.title));
+        }
+
+        setFilteredResults(filtered);
+    };
+
+    useEffect(() => {
+        applyFilters();
+    }, [dayFlightsOnly, nightFlightsOnly, minPrice, maxPrice, selectedAirlines, flightResults]);
+
+    const toggleAirline = (airline) => {
+        setSelectedAirlines(prevSelected =>
+            prevSelected.includes(airline)
+                ? prevSelected.filter(a => a !== airline)
+                : [...prevSelected, airline]
+        );
+    };
+
+    const loadCartItems = useCallback(async () => {
+        try {
+            const userString = await AsyncStorage.getItem('@user');
+            if (userString) {
+                const user = JSON.parse(userString);
+                setUserId(user.id);
+                const cartKey = `@cart_${user.id}`;
+                const cartString = await AsyncStorage.getItem(cartKey);
+                if (cartString) {
+                    const loadedCart = JSON.parse(cartString);
+                    setCartItems(loadedCart);
+                    console.log(loadedCart);
+                } else {
+                    setCartItems([]);
+                }
+            } else {
+                setCartItems([]);
+                setUserId(null);
+            }
+        } catch (error) {
+            console.error('Failed to load cart items', error);
+            setCartItems([]);
+            setUserId(null);
+        }
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadCartItems();
+        }, [loadCartItems])
+    );
+
     const addToCart = async (flight) => {
         if (!userId) {
             Alert.alert('Error', 'Please log in to add flights to cart');
             return;
         }
-
         try {
             const cartKey = `@cart_${userId}`;
-            const cartString = await AsyncStorage.getItem(cartKey);
-            let cart = cartString ? JSON.parse(cartString) : [];
-
-            // Добавляем уникальный идентификатор к каждому билету
-            const flightWithId = { ...flight, id: Date.now().toString() };
-            cart.push(flightWithId);
-
-            await AsyncStorage.setItem(cartKey, JSON.stringify(cart));
-            console.log('Cart after adding:', JSON.stringify(cart, null, 2));
-            Alert.alert('Success', 'Flight added to cart');
+            const updatedCart = [...cartItems, flight];
+            await AsyncStorage.setItem(cartKey, JSON.stringify(updatedCart));
+            setCartItems(updatedCart);
         } catch (error) {
             console.error('Failed to add flight to cart', error);
             Alert.alert('Error', 'Failed to add flight to cart');
         }
+    };
+
+    const removeFromCart = async (flight) => {
+        if (!userId) {
+            Alert.alert('Error', 'Please log in to remove flights from cart');
+            return;
+        }
+        try {
+            const updatedCart = cartItems.filter(item => item.id !== flight.id);
+            const cartKey = `@cart_${userId}`;
+            await AsyncStorage.setItem(cartKey, JSON.stringify(updatedCart));
+            setCartItems(updatedCart);
+        } catch (error) {
+            console.error('Failed to remove flight from cart', error);
+            Alert.alert('Error', 'Failed to remove flight from cart');
+        }
+    };
+
+    const isInCart = (flight) => {
+        return cartItems.some(item => item.id === flight.id);
     };
 
     const handleSearch = async () => {
@@ -97,8 +198,11 @@ export default function FlightsScreen() {
         try {
             const response = await axios.post('https://travelcom.online/api/crpo/getFlights', payload);
             setFlightResults(response.data);
+            setFilteredResults(response.data);
             setVisibleFlights(5);
             console.log('response:', JSON.stringify(response.data, null, 2));
+            const airlines = [...new Set(response.data.map(flight => flight.provider.supplier.title))];
+            setAvailableAirlines(airlines);
         } catch (error) {
             console.error('error fetching flights:', error);
         } finally {
@@ -173,33 +277,125 @@ export default function FlightsScreen() {
                 </View>
             </View>
             <View style={styles.flightsList}>
-                <Pressable style={{marginBottom: 8}}>
-                    <FilterIcon/>
-                </Pressable>
-                {flightResults.slice(0, visibleFlights).map((flight, index) => (
-                    <FlightCard
-                        key={index}
-                        price={flight.price}
-                        flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
-                        depCity={flight.depCity.title}
-                        depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
-                        depTime={flight.depTime}
-                        depDate={flight.depDate}
-                        arrivalCity={flight.arriveCity.title}
-                        arrivalTime={flight.arriveTime}
-                        arrivalDate={flight.arriveDate}
-                        arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
-                        airlinesTitle={flight.provider.supplier.title}
-                        airlinesImg={airlinesImg}
-                        btnText="Add to cart"
-                        onPress={() => addToCart(flight)}
-                    />
-                ))}
+                <TouchableOpacity
+                    activeOpacity={0.5}
+                    style={styles.filtersFlexbox}
+                    onPress={() => setFiltersVisible(!filtersVisible)}
+                >
+                    <View style={styles.merger}>
+                        <FilterIcon/>
+                        <Text style={styles.mainBlueText}>{filtersVisible ? 'Hide Filters' : 'Show Filters'}</Text>
+                    </View>
+                    <Arrow/>
+                </TouchableOpacity>
+
+                {filtersVisible && (
+                    <View style={styles.filtersContainer}>
+                        <View style={{gap: 15}}>
+                            <Text style={styles.mainBlueText}>Transfers</Text>
+                            <TouchableOpacity
+                                style={styles.filtersFlexbox}
+                                onPress={() => setDayFlightsOnly(!dayFlightsOnly)}
+                            >
+                                <View style={styles.merger}>
+                                    <DayIcon color='#207FBF'/>
+                                    <Text style={styles.mainText}>Day flights only</Text>
+                                </View>
+                                <CheckIcon color={dayFlightsOnly ? '#207FBF' : 'grey'} width={24} height={24}/>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.filtersFlexbox}
+                                onPress={() => setNightFlightsOnly(!nightFlightsOnly)}
+                            >
+                                <View style={styles.merger}>
+                                    <NightIcon color='#207FBF'/>
+                                    <Text style={styles.mainText}>Night flights only</Text>
+                                </View>
+                                <CheckIcon color={nightFlightsOnly ? '#207FBF' : 'grey'} width={24} height={24}/>
+                            </TouchableOpacity>
+                        </View>
+                        <View style={{gap: 15}}>
+                            <Text style={styles.mainBlueText}>Price</Text>
+                            <View style={styles.merger}>
+                                <TextInput
+                                    style={styles.filtersInput}
+                                    placeholder='from 0'
+                                    placeholderTextColor='#bebebe'
+                                    value={minPrice}
+                                    onChangeText={setMinPrice}
+                                    keyboardType="numeric"
+                                />
+                                <TextInput
+                                    style={styles.filtersInput}
+                                    placeholder='up to 1000$'
+                                    placeholderTextColor='#bebebe'
+                                    value={maxPrice}
+                                    onChangeText={setMaxPrice}
+                                    keyboardType="numeric"
+                                />
+                            </View>
+                        </View>
+                        <View style={{gap: 15}}>
+                            <Text style={styles.mainBlueText}>Airlines</Text>
+                            <View>
+                                {
+                                    availableAirlines.length > 0 ? (
+                                        availableAirlines.map(airline => (
+                                            <TouchableOpacity
+                                                style={styles.filtersFlexbox}
+                                                key={airline}
+                                                onPress={() => toggleAirline(airline)}
+                                            >
+                                                <View style={styles.merger}>
+                                                    <Image source={airlinesImg} style={{width: 24, height: 24}}/>
+                                                    <Text style={styles.mainText}>{airline}</Text>
+                                                </View>
+                                                <CheckIcon
+                                                    color={selectedAirlines.includes(airline) ? '#207FBF' : 'grey'}
+                                                    width={24}
+                                                    height={24}
+                                                />
+                                            </TouchableOpacity>
+                                        ))
+                                    ) : (
+                                        <Text style={styles.smallText}>No available airlines</Text>
+                                    )
+                                }
+                            </View>
+                        </View>
+                    </View>
+                )}
+
+                {filteredResults.slice(0, visibleFlights).map((flight, index) => {
+                    const inCart = isInCart(flight);
+                    return (
+                        <FlightCard
+                            key={flight.id}
+                            price={flight.price}
+                            flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
+                            depCity={flight.depCity.title}
+                            depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
+                            depTime={flight.depTime}
+                            depDate={flight.depDate}
+                            arrivalCity={flight.arriveCity.title}
+                            arrivalTime={flight.arriveTime}
+                            arrivalDate={flight.arriveDate}
+                            arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
+                            airlinesTitle={flight.provider.supplier.title}
+                            airlinesImg={airlinesImg}
+                            btnText={inCart ? "Remove from cart" : "Add to cart"}
+                            onPress={() => inCart ? removeFromCart(flight) : addToCart(flight)}
+                            onCartScreen={false}
+                        />
+                    );
+                })}
+
                 {visibleFlights < flightResults.length && (
                     <TouchableOpacity activeOpacity={0.8} style={[styles.showMoreBtn, {paddingVertical: 18}]} onPress={handleShowMore}>
                         <Text style={styles.btnText}>Show more</Text>
                     </TouchableOpacity>
                 )}
+
             </View>
             <Footer/>
         </ScrollView>
@@ -304,5 +500,40 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontFamily: 'Montserrat-Bold',
         marginLeft: 10,
+    },
+    filtersFlexbox: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8
+    },
+    mainBlueText: {
+        color: '#207FBF',
+        fontSize: 18,
+        fontFamily: 'Montserrat-Bold'
+    },
+    filtersContainer: {
+        padding: 15,
+        backgroundColor: 'white',
+        borderRadius: 10,
+        gap: 15,
+        marginBottom: 15
+    },
+    merger: {
+        flexDirection: 'row',
+        gap: 10,
+        alignItems: 'center'
+    },
+    filtersInput: {
+        color: '#207FBF',
+        width: '49%',
+        fontSize: 16,
+        fontFamily: 'Montserrat-Bold',
+        paddingHorizontal: 15,
+        height: 56,
+        borderRadius: 10,
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: '#8c8c8c'
     },
 });

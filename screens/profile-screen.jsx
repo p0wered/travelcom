@@ -12,7 +12,6 @@ import ExitIcon from "../components/icons/exit-icon";
 import {Footer} from "../components/footer";
 import MailIcon from "../components/icons/mail-icon";
 import {PasswordIcon} from "../components/icons/password-icon";
-import {CheckIcon} from "../components/icons/check-icon";
 import {useNavigation} from "@react-navigation/native";
 import {PersonIcon} from "../components/icons/person-icon";
 import {PhoneIcon} from "../components/icons/phone-icon";
@@ -28,7 +27,8 @@ export default function ProfileScreen ({navigation}){
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
-    const [color, setColor] = useState('#207FBF')
+    const [color, setColor] = useState('#207FBF');
+    const [errorMsg, setErrorMsg] = useState(undefined);
 
     useEffect(() => {
         loadUserData();
@@ -46,10 +46,6 @@ export default function ProfileScreen ({navigation}){
             console.error('Failed to load user data', e);
         }
     };
-
-    const toggleColor = () => {
-        color === 'grey' ? setColor('#207FBF') : setColor('grey')
-    }
 
     const saveUserData = async (userData, userToken) => {
         try {
@@ -88,7 +84,7 @@ export default function ProfileScreen ({navigation}){
                 setUser(response.data.user);
                 setToken(response.data.success.token);
                 await saveUserData(response.data.user, response.data.success.token);
-                Alert.alert('Success', isLogin ? 'Logged in successfully' : 'Registered successfully');
+                setErrorMsg(undefined);
             } else {
                 console.log('User data or token not found in response');
                 Alert.alert('Error', 'User data or token not found in response');
@@ -101,15 +97,15 @@ export default function ProfileScreen ({navigation}){
             console.error('Auth error:', error);
 
             if (error.response) {
-                let errorMessage = isLogin ? 'Login failed:' : 'Registration failed:';
+                let errorMessage = '';
                 if (error.response.data.errors) {
                     Object.keys(error.response.data.errors).forEach(key => {
-                        errorMessage += `\n${key}: ${error.response.data.errors[key].join(', ')}`;
+                        errorMessage += `${error.response.data.errors[key].join(', ')}\n`;
                     });
                 } else if (error.response.data.message) {
-                    errorMessage += '\n' + error.response.data.message;
+                    errorMessage += '' + error.response.data.message;
                 }
-                Alert.alert('Error', errorMessage);
+                setErrorMsg(errorMessage);
             } else if (error.request) {
                 Alert.alert('Error', 'No response received from server');
             } else {
@@ -218,7 +214,7 @@ export default function ProfileScreen ({navigation}){
     // user successfully registered
     if (registrationSuccess) {
         return (
-            <View style={styles.container}>
+            <View style={[styles.container, {backgroundColor: 'white'}]}>
                 <Text style={styles.title}>Check your email box</Text>
                 <Text style={styles.text}>We've sent you a verification email. Please check your inbox and verify your account.</Text>
                 <Button title="Back to Login" onPress={resetForm} />
@@ -229,7 +225,7 @@ export default function ProfileScreen ({navigation}){
     // user not logged in, show log in
     if (isLogin) {
         return (
-            <ScrollView>
+            <ScrollView style={{backgroundColor: 'white'}}>
                 <View style={{padding: 15}}>
                     <Text style={styles.titleText}>LOG IN</Text>
                     <View style={styles.inputContainer}>
@@ -260,12 +256,9 @@ export default function ProfileScreen ({navigation}){
                             secureTextEntry
                         />
                     </View>
-                    <View style={{marginVertical: 10}}>
-                        <TouchableOpacity style={[styles.merger, {justifyContent: 'center', gap: 8}]} onPress={toggleColor}>
-                            <CheckIcon color={color} width={32} height={32}/>
-                            <Text style={styles.regularText}>Remember me</Text>
-                        </TouchableOpacity>
-                    </View>
+                    {errorMsg ? (
+                        <Text style={styles.errorText}>{errorMsg}</Text>
+                    ) : (<></>)}
                     <View style={[styles.merger, {justifyContent: 'center', gap: 0}]}>
                         <Text style={styles.mainText}>Don't have an account?</Text>
                         <TouchableOpacity style={{padding: 15}} onPress={() => setIsLogin(false)}>
@@ -288,7 +281,7 @@ export default function ProfileScreen ({navigation}){
     }
 
     return (
-        <ScrollView>
+        <ScrollView style={{backgroundColor: 'white'}}>
             <View style={{padding: 15}}>
                 <Text style={styles.titleText}>REGISTRATION</Text>
                 <View style={styles.inputContainer}>
@@ -472,8 +465,8 @@ const styles = StyleSheet.create({
     },
     sendBtn: {
         borderRadius: 10,
-        paddingVertical: 20,
-        paddingHorizontal: 65,
+        paddingVertical: 18,
+        paddingHorizontal: 80,
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
@@ -501,5 +494,11 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginBottom: 12,
         textAlign: 'center',
+    },
+    errorText: {
+        fontFamily: 'Montserrat-Bold',
+        fontSize: 12,
+        color: '#c93333',
+        textAlign: 'center'
     }
 });

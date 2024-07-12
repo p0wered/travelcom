@@ -1,14 +1,147 @@
 import React, {useCallback, useState} from 'react';
-import {Text, ScrollView, Alert, StyleSheet, View, TouchableOpacity} from 'react-native';
+import {Text, ScrollView, Alert, StyleSheet, View, TouchableOpacity, TextInput, Linking} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {FlightCard} from "../components/flight-cards";
 import airlinesImg from '../assets/airlines.png'
 import {useFocusEffect} from "@react-navigation/native";
 import {Footer} from "../components/footer";
 
+const CheckoutForm = ({ onSubmit }) => {
+    const [error, setError] = useState('');
+    const [formDataList, setFormDataList] = useState([{
+        firstName: '',
+        lastName: '',
+        middleName: '',
+        birthDate: '',
+        gender: '',
+        passport: '',
+    }]);
+
+    const handleChange = (index, name, value) => {
+        const newFormDataList = [...formDataList];
+        newFormDataList[index] = { ...newFormDataList[index], [name]: value };
+        setFormDataList(newFormDataList);
+        setError('');
+    };
+
+    const addPerson = () => {
+        setFormDataList([...formDataList, {
+            firstName: '',
+            lastName: '',
+            middleName: '',
+            birthDate: '',
+            gender: '',
+            passport: '',
+        }]);
+    };
+
+    const removePerson = (index) => {
+        if (formDataList.length > 1) {
+            const newFormDataList = formDataList.filter((_, i) => i !== index);
+            setFormDataList(newFormDataList);
+        }
+    };
+
+    const validateForm = () => {
+        for (let i = 0; i < formDataList.length; i++) {
+            const person = formDataList[i];
+            for (const key in person) {
+                if (person[key].trim() === '') {
+                    setError(`Please fill in all fields for Person ${i + 1}`);
+                    return false;
+                }
+            }
+        }
+        return true;
+    };
+
+    const handleSubmit = () => {
+        if (validateForm()) {
+            setError('');
+            onSubmit(formDataList);
+        }
+    };
+
+    return (
+        <ScrollView style={styles.formContainer}>
+            {formDataList.map((formData, index) => (
+                <View key={index} style={styles.personContainer}>
+                    <View style={styles.personHeaderContainer}>
+                        <Text style={[styles.mainText, {fontSize: 18}]}>Person {index + 1}</Text>
+                        {
+                            index !== 0 ? (
+                                <TouchableOpacity onPress={() => removePerson(index)} style={styles.removePersonBtn}>
+                                    <Text style={styles.removePersonBtnText}>x</Text>
+                                </TouchableOpacity>
+                            ) : (<></>)
+                        }
+
+                    </View>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="First Name"
+                        placeholderTextColor="#bebebe"
+                        value={formData.firstName}
+                        onChangeText={(text) => handleChange(index, 'firstName', text)}
+                        autoComplete='name'
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Last Name"
+                        placeholderTextColor="#bebebe"
+                        value={formData.lastName}
+                        onChangeText={(text) => handleChange(index, 'lastName', text)}
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Middle Name"
+                        placeholderTextColor="#bebebe"
+                        value={formData.middleName}
+                        onChangeText={(text) => handleChange(index, 'middleName', text)}
+                        autoComplete='name-middle'
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Birth Date (DD.MM.YYYY)"
+                        placeholderTextColor="#bebebe"
+                        value={formData.birthDate}
+                        onChangeText={(text) => handleChange(index, 'birthDate', text)}
+                        keyboardType='numbers-and-punctuation'
+                        autoComplete='birthdate-full'
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Gender"
+                        placeholderTextColor="#bebebe"
+                        value={formData.gender}
+                        onChangeText={(text) => handleChange(index, 'gender', text)}
+                        autoComplete='gender'
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Passport"
+                        placeholderTextColor="#bebebe"
+                        value={formData.passport}
+                        onChangeText={(text) => handleChange(index, 'passport', text)}
+                        keyboardType='number-pad'
+                    />
+                </View>
+            ))}
+            <TouchableOpacity style={styles.payButton} onPress={addPerson}>
+                <Text style={styles.payButtonText}>Add Person</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.payButton} onPress={handleSubmit}>
+                <Text style={styles.payButtonText}>Pay</Text>
+            </TouchableOpacity>
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        </ScrollView>
+    );
+};
+
 export default function CartScreen({navigation}) {
     const [cartItems, setCartItems] = useState([]);
     const [userId, setUserId] = useState(null);
+    const [expandedCardId, setExpandedCardId] = useState(null);
 
     const loadCartItems = useCallback(async () => {
         try {
@@ -50,48 +183,122 @@ export default function CartScreen({navigation}) {
             await AsyncStorage.setItem(cartKey, JSON.stringify(updatedCart));
             setCartItems(updatedCart);
             console.log('Updated cart:', updatedCart);
-            Alert.alert('Success', 'Flight removed from cart');
         } catch (error) {
             console.error('Failed to remove flight from cart', error);
             Alert.alert('Error', 'Failed to remove flight from cart');
         }
     };
 
+    const handleCheckout = (flightId) => {
+        setExpandedCardId(expandedCardId === flightId ? null : flightId);
+    };
+
+    const handlePayment = async (flightId, formData) => {
+        const flight = cartItems.find(item => item.id === flightId);
+        if (!flight) {
+            console.error('Flight not found');
+            return;
+        }
+
+        const itemString = JSON.stringify({ ...flight, ...formData });
+
+        const payloadData = {
+            item: itemString,
+            price: flight.price,
+        };
+
+        console.log('Payload data:', JSON.stringify(payloadData, null, 2));
+
+        try {
+            const token = await AsyncStorage.getItem('@token');
+            if (!token) {
+                throw new Error('Authorization token not found');
+            }
+
+            const response = await fetch('https://travelcom.online/api/payment/buy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payloadData),
+            });
+
+            console.log('Response status:', response.status);
+            console.log('Response headers:', JSON.stringify(response.headers, null, 2));
+
+            const responseText = await response.text();
+            console.log('Response text:', responseText);
+
+            if (response.status >= 400) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            if (responseText.startsWith('http')) {
+                console.log('Opening URL:', responseText);
+                Linking.openURL(responseText);
+            } else {
+                try {
+                    const data = JSON.parse(responseText);
+                    if (data.url) {
+                        console.log('Opening URL from JSON:', data.url);
+                        Linking.openURL(data.url);
+                    } else {
+                        throw new Error('No URL in JSON response');
+                    }
+                } catch (parseError) {
+                    console.error('Error parsing response:', parseError);
+                    Alert.alert('Error', 'Server returned an invalid response. Please try again later.');
+                }
+            }
+        } catch (error) {
+            console.error('Payment error:', error);
+            Alert.alert('Error', 'Failed to process payment. Please try again later.');
+        }
+    };
+
     return (
-        <ScrollView>
-            <View style={{padding: 15}}>
+        <ScrollView style={{padding: 15}}>
+            <View>
                 <Text style={styles.titleText}>Shopping cart</Text>
                 {cartItems.length === 0 ? (
                     <Text style={[styles.mainText, {paddingBottom: 100}]}>Your cart is empty</Text>
                 ) : (
                     cartItems.map((flight, index) => (
-                        <FlightCard
-                            key={flight.id || index}
-                            price={flight.price}
-                            flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
-                            depCity={flight.depCity.title}
-                            depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
-                            depTime={flight.depTime}
-                            depDate={flight.depDate}
-                            arrivalCity={flight.arriveCity.title}
-                            arrivalTime={flight.arriveTime}
-                            arrivalDate={flight.arriveDate}
-                            arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
-                            airlinesTitle={flight.provider.supplier.title}
-                            airlinesImg={airlinesImg}
-                            btnText="Remove from cart"
-                            onPress={() => removeFromCart(flight.id)}
-                        />
+                        <View key={flight.id || index}>
+                            <FlightCard
+                                price={flight.price}
+                                flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
+                                depCity={flight.depCity.title}
+                                depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
+                                depTime={flight.depTime}
+                                depDate={flight.depDate}
+                                arrivalCity={flight.arriveCity.title}
+                                arrivalTime={flight.arriveTime}
+                                arrivalDate={flight.arriveDate}
+                                arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
+                                airlinesTitle={flight.provider.supplier.title}
+                                airlinesImg={airlinesImg}
+                                btnText="Remove"
+                                onPress={() => removeFromCart(flight.id)}
+                                onCartScreen={true}
+                                onCheckoutPress={() => handleCheckout(flight.id)}
+                                checkoutBtnText={expandedCardId === flight.id ? "Hide Checkout" : "Checkout"}
+                            />
+                            {expandedCardId === flight.id && (
+                                <CheckoutForm
+                                    onSubmit={(formData) => handlePayment(flight.id, formData)}
+                                />
+                            )}
+                        </View>
                     ))
                 )}
-                <TouchableOpacity activeOpacity={0.8} style={styles.showMoreBtn}>
-                    <Text style={styles.btnText}>Checkout</Text>
-                </TouchableOpacity>
             </View>
             <Footer/>
         </ScrollView>
     );
 }
+
 
 const styles = StyleSheet.create({
     titleText: {
@@ -115,4 +322,66 @@ const styles = StyleSheet.create({
         color: 'white',
         textAlign: 'center'
     },
+    formContainer: {
+        marginTop: -30,
+        paddingTop: 16,
+        paddingHorizontal: 15,
+        paddingBottom: 15,
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        marginBottom: 15
+    },
+    input: {
+        fontSize: 16,
+        fontFamily: 'Montserrat-Regular',
+        height: 46,
+        borderRadius: 10,
+        paddingHorizontal: 20,
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: '#207FBF'
+    },
+    payButton: {
+        padding: 15,
+        borderRadius: 10,
+        backgroundColor: '#207FBF',
+        marginTop: 10
+    },
+    payButtonText: {
+        fontFamily: 'Montserrat-Bold',
+        color: 'white',
+        textAlign: 'center',
+    },
+    personContainer: {
+        marginTop: 15,
+        flexDirection: 'column',
+        gap: 10
+    },
+    personHeaderContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginBottom: 10,
+    },
+    removePersonBtn: {
+        backgroundColor: '#207FBF',
+        width: 26,
+        height: 26,
+        borderRadius: 100,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    removePersonBtnText: {
+        color: 'white',
+        fontSize: 18,
+        fontFamily: 'Montserrat-Medium',
+        marginBottom: 2
+    },
+    errorText: {
+        marginTop: 10,
+        fontFamily: 'Montserrat-Bold',
+        fontSize: 14,
+        color: '#c93333',
+        textAlign: 'center'
+    }
 })

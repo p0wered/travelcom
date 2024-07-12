@@ -1,7 +1,8 @@
 import {Image, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 
 export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalCity, depAirport, arrivalAirport,
-                               flightTime, depTime, arrivalTime, depDate, arrivalDate, btnText, onPress})
+                               flightTime, depTime, arrivalTime, depDate, arrivalDate, btnText, onPress, onCartScreen,
+                               onCheckoutPress, checkoutBtnText})
 {
     let btnShow;
     btnText === undefined ? btnShow = false : btnShow = true;
@@ -47,13 +48,20 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                     </View>
                 </View>
             </View>
-            <View style={[styles.chooseBtnWrap, btnShow ? {display: 'flex'} : {display: 'none'}]}>
+            <View style={styles.chooseBtnWrap}>
                 <TouchableOpacity
-                    style={styles.chooseBtn}
+                    style={[styles.chooseBtn, btnShow ? {display: 'flex'} : {display: 'none'}, onCartScreen ? {width: '48%'} : {width: '100%'}]}
                     activeOpacity={0.8}
                     onPress={onPress}
                 >
                     <Text style={styles.btnText}>{btnText}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.chooseBtn, onCartScreen ? {display: 'flex'} : {display: 'none'}]}
+                    activeOpacity={0.8}
+                    onPress={onCheckoutPress}
+                >
+                    <Text style={styles.btnText}>{checkoutBtnText}</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -106,6 +114,7 @@ const styles = StyleSheet.create({
         color: '#9B9B9A'
     },
     btnText: {
+        fontSize: 12,
         fontFamily: 'Montserrat-Bold',
         color: 'white',
         textAlign: 'center'
@@ -115,7 +124,7 @@ const styles = StyleSheet.create({
         paddingVertical: 18,
         borderRadius: 10,
         overflow: 'hidden',
-        marginBottom: 20
+        marginBottom: 15
     },
     airlinesImg: {
         width: 18,
@@ -136,8 +145,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 18
     },
     chooseBtn: {
-        paddingHorizontal: 28,
-        paddingVertical: 10,
+        width: '48%',
+        paddingHorizontal: 25,
+        paddingVertical: 14,
         borderRadius: 10,
         backgroundColor: '#207FBF'
     },
@@ -148,6 +158,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 16,
         paddingHorizontal: 16,
-        gap: 16
+        gap: 10
     }
 });

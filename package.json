@@ -1,6 +1,6 @@
 {
   "name": "travelcom",
-  "version": "0.8.6",
+  "version": "0.9.3",
   "main": "expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
