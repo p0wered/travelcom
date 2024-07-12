@@ -1,10 +1,17 @@
-import {Image, Pressable, Text, View, StyleSheet, TouchableOpacity} from "react-native";
+import {Image, Text, View, StyleSheet, TouchableOpacity} from "react-native";
 
-export function BlogItem({title, desc, date, img, small, textColor}){
+export function BlogItem({title, desc, date, img, small, textColor, navigation, item}){
     let imgHeight = small ? 188 : 276;
+    const handlePress = () => {
+        navigation.navigate('NewsItem', { newsItem: item });
+    };
 
     return(
-        <TouchableOpacity activeOpacity={0.5} style={{width: 300, overflow: 'hidden', marginLeft: 12}}>
+        <TouchableOpacity
+            activeOpacity={0.5}
+            style={{width: 300, overflow: 'hidden', marginLeft: 12}}
+            onPress={handlePress}
+        >
             <Image source={img} style={[styles.blogImg, {height: imgHeight}]}/>
             <View style={{display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 16}}>
                 <Text style={[styles.blogSmallText, {color: textColor}]}>{date}</Text>

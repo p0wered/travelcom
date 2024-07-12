@@ -32,6 +32,8 @@ import OrdersScreen from "./screens/orders-screen";
 import CartScreen from "./screens/cart-screen";
 import FavouritesScreen from "./screens/favourites-screen";
 import NotificationScreen from "./screens/notification-screen";
+import {NewsItemScreen} from "./screens/news-item-screen";
+import {DirectionItemScreen} from "./screens/direction-item-screen";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -220,6 +222,8 @@ function AppContent() {
             <Stack.Screen name="Terms"  component={TermsScreen}/>
             <Stack.Screen name="Refunds"  component={RefundsScreen}/>
             <Stack.Screen name="FAQ"  component={FaqScreen}/>
+            <Stack.Screen name="NewsItem" component={NewsItemScreen} options={{headerTitle: 'Back'}}/>
+            <Stack.Screen name="DirectionItem" component={DirectionItemScreen} options={{headerTitle: 'Back'}}/>
         </Stack.Navigator>
     );
 }

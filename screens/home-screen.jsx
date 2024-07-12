@@ -14,8 +14,11 @@ import {generateAccordionItems} from "../components/accordion-list";
 import {QuestionForm} from "../components/question-form";
 import {useEffect, useState} from "react";
 import axios from "axios";
+import {useNavigation} from "@react-navigation/native";
+import {decode} from "html-entities";
 
 export default function HomeScreen() {
+    const navigation = useNavigation();
     const faqTitles = [
         'How does Travelcom work?',
         'How do you I find and buy air tickets?',
@@ -46,7 +49,7 @@ export default function HomeScreen() {
                 </View>
             </ImageBackground>
             <DirectionsList/>
-            <BlogList/>
+            <BlogList navigation={navigation}/>
             <View style={styles.faqFlexbox}>
                 <Text style={styles.faqText}>FAQ</Text>
                 {accordionItems}
@@ -57,15 +60,21 @@ export default function HomeScreen() {
     )
 }
 
-function DirectionItem({title, backgroundImg, countryFlag}){
-    return(
-        <TouchableOpacity  activeOpacity={0.8} style={styles.directionItem}>
-            <Image source={backgroundImg} style={{width: '100%', height: 222, padding: 15}}/>
+function DirectionItem({item}) {
+    const navigation = useNavigation();
+
+    return (
+        <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.directionItem}
+            onPress={() => navigation.navigate('DirectionItem', { item })}
+        >
+            <Image source={{uri: `https://travelcom.online/storage/${item.mainImage}`}} style={{width: '100%', height: 222, padding: 15}}/>
             <View style={styles.directionInner}>
                 <Text style={[styles.mainText, {textTransform: 'uppercase'}]}>
-                    {title}⠀
+                    {item.name}⠀
                 </Text>
-                <Image source={countryFlag} style={{width: 20, height: 20}}/>
+                <Image source={{uri: `https://travelcom.online/storage/${item.icon}`}} style={{width: 20, height: 20}}/>
             </View>
         </TouchableOpacity>
     )
@@ -97,13 +106,7 @@ function DirectionsList() {
             <FlatList
                 scrollEnabled={false}
                 data={directions}
-                renderItem={({ item }) => (
-                    <DirectionItem
-                        title={item.name}
-                        backgroundImg={{uri: `https://travelcom.online/storage/${item.mainImage}`}}
-                        countryFlag={{uri: `https://travelcom.online/storage/${item.icon}`}}
-                    />
-                )}
+                renderItem={({ item }) => <DirectionItem item={item} />}
                 keyExtractor={item => item.id.toString()}
             />
             <TouchableOpacity activeOpacity={0.8} style={styles.mainBtn}>
@@ -113,7 +116,7 @@ function DirectionsList() {
     );
 }
 
-function BlogList() {
+function BlogList({ navigation }) {
     const [news, setNews] = useState([]);
 
     useEffect(() => {
@@ -127,6 +130,13 @@ function BlogList() {
         } catch (error) {
             console.error('Error fetching news:', error);
         }
+    };
+
+    const processText = (html) => {
+        let processedText = decode(html);
+        processedText = processedText.replace(/<[^>]+>/g, ' ').replace(/\n/g, ' ');
+        processedText = processedText.replace(/\s+/g, ' ').trim();
+        return processedText;
     };
 
     return (
@@ -144,11 +154,13 @@ function BlogList() {
                 {news.map((item) => (
                     <BlogItem
                         key={item.id}
-                        title={item.name.toUpperCase()}
-                        desc={item.text.replace(/<[^>]+>/g, '').slice(0, 100) + '...'}
+                        item={item}
+                        title={processText(item.name).toUpperCase()}
+                        desc={processText(item.text).slice(0, 100) + '...'}
                         date={new Date(item.created_at).toLocaleDateString()}
                         textColor='white'
                         img={{ uri: `https://travelcom.online/storage/${item.mainImage}` }}
+                        navigation={navigation}
                     />
                 ))}
             </ScrollView>
@@ -160,12 +172,13 @@ function BlogList() {
                 {news.map((item) => (
                     <BlogItem
                         key={item.id}
-                        title={item.name.toUpperCase()}
-                        desc={item.text.replace(/<[^>]+>/g, '').slice(0, 100) + '...'}
+                        item={item}
+                        title={processText(item.name).toUpperCase()}
+                        desc={processText(item.text).slice(0, 100) + '...'}
                         date={new Date(item.created_at).toLocaleDateString()}
                         textColor='white'
-                        img={{uri: `https://travelcom.online/storage/${item.mainImage}`}}
-                        small={true}
+                        img={{ uri: `https://travelcom.online/storage/${item.mainImage}` }}
+                        navigation={navigation}
                     />
                 ))}
             </ScrollView>

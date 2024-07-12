@@ -513,7 +513,8 @@ const styles = StyleSheet.create({
         fontFamily: 'Montserrat-Bold'
     },
     filtersContainer: {
-        padding: 15,
+        paddingHorizontal: 15,
+        paddingVertical: 20,
         backgroundColor: 'white',
         borderRadius: 10,
         gap: 15,

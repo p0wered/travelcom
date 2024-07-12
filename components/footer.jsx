@@ -10,28 +10,30 @@ export function FooterRaw({color, navigation}){
     return(
         <View style={[styles.footerMain, {backgroundColor: color}]}>
             <View style={styles.iconRow}>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => Linking.openURL('https://instagram.com')}>
                     <InstagramIcon/>
                 </TouchableOpacity>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => Linking.openURL('https://facebook.com')}>
                     <FacebookIcon/>
                 </TouchableOpacity>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => Linking.openURL('https://twitter.com')}>
                     <TwitterIcon/>
                 </TouchableOpacity>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => Linking.openURL('https://linkedin.com')}>
                     <LinkedinIcon/>
                 </TouchableOpacity>
             </View>
             <Logo color='#207FBF' width={140} height={60}/>
             <View>
-                <Text style={styles.footerLinkBlue}>Rumors Limited</Text>
+                <Text style={styles.footerLinkBlue}>Travelcom Limited</Text>
             </View>
-            <TouchableOpacity onPress={() => Linking.openURL('mailto:info@travelcom.com') }>
+            <TouchableOpacity onPress={() => Linking.openURL('mailto:info@travelcom.com')}>
                 <Text style={styles.footerLinkBlue}>info@travelcom.com</Text>
             </TouchableOpacity>
             <TouchableOpacity>
-                <Text style={styles.footerLinkBlue}>International House, 55 Longsmith Street, Gloucester, UKВ </Text>
+                <Text style={styles.footerLinkBlue}>
+                    63-66 Hatton Garden, Fifth Floor Suite 23, London, England, EC1N 8LE
+                </Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('Privacy')}>
                 <Text style={styles.footerLink}>Privacy Policy</Text>
