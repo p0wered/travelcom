@@ -10,9 +10,10 @@ import Logo from "./components/icons/logo";
 import MenuIcon from "./components/icons/menu-icon";
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import {useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {Modal, StyleSheet, Text, Animated, TouchableOpacity, View, Dimensions} from "react-native";
 import CloseIcon from "./components/icons/close-icon";
+import React from 'react';
 import {
     AboutIcon,
     ContactsIcon,
@@ -34,6 +35,7 @@ import FavouritesScreen from "./screens/favourites-screen";
 import NotificationScreen from "./screens/notification-screen";
 import {NewsItemScreen} from "./screens/news-item-screen";
 import {DirectionItemScreen} from "./screens/direction-item-screen";
+import {SafeAreaProvider} from "react-native-safe-area-context";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -90,53 +92,55 @@ function MainTabs(){
     const navigateToAbout = createNavigationFunction('About');
     const navigateToContacts = createNavigationFunction('Contacts');
 
+    const tabScreenOptions = useCallback(({ route }) => ({
+        tabBarIcon: ({color}) => {
+            let iconName;
+            let routeName = route.name;
+
+            if (routeName === 'Travel') {
+                iconName = 'home-icon'
+            } else if (routeName === 'Hotels') {
+                iconName = 'hotels-icon'
+            } else if (routeName === 'Flights') {
+                iconName = 'flights-icon'
+            } else if (routeName === 'Chat') {
+                iconName = 'chat-icon'
+            } else if (routeName === 'Profile') {
+                iconName = 'profile-icon'
+            }
+            return <TabIcons icon={iconName} color={color}/>
+        },
+        tabBarActiveTintColor: '#207FBF',
+        tabBarInactiveTintColor: '#9B9B9A',
+        tabBarLabelStyle: {
+            fontSize: 11,
+            fontWeight: 700,
+            marginTop: 0,
+        },
+        tabBarStyle: {height: 68},
+        tabBarItemStyle: {height: 60},
+        headerStyle: {
+            backgroundColor: '#207FBF',
+            height: 75
+        },
+        headerTintColor: 'white',
+        headerTitle: '',
+        headerLeft: () => (
+            <Logo color='white' width={92} height={38}/>
+        ),
+        headerLeftContainerStyle: {padding: 14},
+        headerRight: () => (
+            <TouchableOpacity style={{padding: 18}} onPress={toggleMenu}>
+                <MenuIcon/>
+            </TouchableOpacity>
+        ),
+    }), [toggleMenu]);
+
     return(
         <>
             <Tab.Navigator
                 initialRouteName={'Home'}
-                screenOptions={({route}) => ({
-                    tabBarIcon: ({color}) => {
-                        let iconName;
-                        let routeName = route.name;
-
-                        if (routeName === 'Travel') {
-                            iconName = 'home-icon'
-                        } else if (routeName === 'Hotels') {
-                            iconName = 'hotels-icon'
-                        } else if (routeName === 'Flights') {
-                            iconName = 'flights-icon'
-                        } else if (routeName === 'Chat') {
-                            iconName = 'chat-icon'
-                        } else if (routeName === 'Profile') {
-                            iconName = 'profile-icon'
-                        }
-                        return <TabIcons icon={iconName} color={color}/>
-                    },
-                    tabBarActiveTintColor: '#207FBF',
-                    tabBarInactiveTintColor: '#9B9B9A',
-                    tabBarLabelStyle: {
-                        fontSize: 11,
-                        fontWeight: 700,
-                        marginTop: 0,
-                    },
-                    tabBarStyle: {height: 68},
-                    tabBarItemStyle: {height: 60},
-                    headerStyle: {
-                        backgroundColor: '#207FBF',
-                        height: 75
-                    },
-                    headerTintColor: 'white',
-                    headerTitle: '',
-                    headerLeft: () => (
-                        <Logo color='white' width={92} height={38}/>
-                    ),
-                    headerLeftContainerStyle: {padding: 14},
-                    headerRight: () => (
-                        <TouchableOpacity style={{padding: 18}} onPress={toggleMenu}>
-                            <MenuIcon/>
-                        </TouchableOpacity>
-                    ),
-                })}>
+                screenOptions={tabScreenOptions}>
                 <Tab.Screen name={'Travel'} component={HomeScreen}/>
                 <Tab.Screen name={'Hotels'} component={HotelsScreen}/>
                 <Tab.Screen name={'Flights'} component={FlightsScreen}/>
@@ -159,7 +163,7 @@ function MainTabs(){
                         onPress={toggleMenu}
                     />
                 </Animated.View>
-                <Animated.View style={[styles.menuContainer, {transform: [{ translateX: slideAnim }]}]}>
+                <Animated.View style={[styles.menuContainer, {transform:[{translateX: slideAnim}]}]}>
                     <TouchableOpacity style={styles.menuContent} activeOpacity={1}>
                         <View>
                             <View style={styles.closeBtn}>
@@ -228,6 +232,33 @@ function AppContent() {
     );
 }
 
+class ErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError(error) {
+        return { hasError: true };
+    }
+
+    componentDidCatch(error, errorInfo) {
+        console.log(error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text>Oops! Something went wrong.</Text>
+                </View>
+            );
+        }
+
+        return this.props.children;
+    }
+}
+
 export default function App() {
     const [loaded, error] = useFonts({
         'Montserrat-Bold': require('./assets/fonts/Montserrat-Bold.ttf'),
@@ -247,10 +278,14 @@ export default function App() {
     }
 
     return (
-        <NavigationContainer>
-            <AppContent/>
-        </NavigationContainer>
-  );
+        <ErrorBoundary>
+            <SafeAreaProvider>
+                <NavigationContainer>
+                    <AppContent />
+                </NavigationContainer>
+            </SafeAreaProvider>
+        </ErrorBoundary>
+    );
 }
 
 const styles = StyleSheet.create({
