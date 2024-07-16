@@ -118,7 +118,7 @@ export function FaqScreen(){
                 <Text style={styles.faqText}>FAQ</Text>
                 {accordionItems}
             </View>
-            <QuestionForm/>
+            <QuestionForm title='Any other question? Write to us!'/>
             <Footer color='white'/>
         </ScrollView>
     )

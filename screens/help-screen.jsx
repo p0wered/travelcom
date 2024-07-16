@@ -1,65 +1,11 @@
-import {Pressable, Text, TextInput, View, StyleSheet, ScrollView, TouchableOpacity, Linking} from "react-native";
-import {SendIcon} from "../components/icons/send-icon";
+import {StyleSheet, ScrollView} from "react-native";
 import {Footer} from "../components/footer";
-import {AddressIcon} from "../components/icons/address-icon";
-import MailIcon from "../components/icons/mail-icon";
+import {QuestionForm} from "../components/question-form";
 
 export default function HelpScreen() {
     return(
         <ScrollView>
-            <View style={styles.questionForm}>
-                <View style={{marginBottom: 30, marginTop: 15}}>
-                    <Text style={styles.questionTitle}>
-                        If you have any questions or problems with the registration, please contact us
-                    </Text>
-                </View>
-                <View style={{display: 'flex', flexDirection: 'column', gap: 14}}>
-                    <TextInput
-                        style={styles.questionInput}
-                        placeholder='Phone'
-                        placeholderTextColor='grey'
-                        autoComplete='tel'
-                        keyboardType='number-pad'
-                    />
-                    <TextInput
-                        style={styles.questionInput}
-                        placeholder='E-mail'
-                        placeholderTextColor='grey'
-                        autoComplete='email'
-                    />
-                    <TextInput
-                        style={[styles.questionInput, {height: 107}]}
-                        placeholder='Your question'
-                        placeholderTextColor='grey'
-                        multiline = {true}
-                        numberOfLines={4}
-                    />
-                </View>
-                <Pressable style={styles.sendBtn}>
-                    <Text style={styles.sendBtnText}>SEND</Text>
-                    <SendIcon/>
-                </Pressable>
-            </View>
-            <View style={styles.info}>
-                <View>
-                    <View style={styles.merger}>
-                        <AddressIcon/>
-                        <Text style={styles.blueText}>Address</Text>
-                    </View>
-                    <Text style={styles.blueTextSmall}>
-                        International House, 55 Longsmith Street, Gloucester, UKВ
-                    </Text>
-                </View>
-                <View>
-                    <View style={styles.merger}>
-                        <MailIcon color="#207FBF"/>
-                        <Text style={styles.blueText}>E-mail</Text>
-                    </View>
-                    <TouchableOpacity onPress={() => Linking.openURL('mailto:info@travelcom.com')}>
-                        <Text style={styles.blueTextSmall}>info@nobleconseirge.com</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
+            <QuestionForm title='If you have any questions or problems with the registration, please contact us'/>
             <Footer color='white'/>
         </ScrollView>
     )

@@ -59,7 +59,7 @@ export default function ContactsScreen() {
                     </TouchableOpacity>
                 </View>
             </View>
-            <QuestionForm/>
+            <QuestionForm title='Any other question? Write to us!'/>
         </ScrollView>
     )
 }
