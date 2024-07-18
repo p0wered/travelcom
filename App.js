@@ -11,7 +11,7 @@ import MenuIcon from "./components/icons/menu-icon";
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {Modal, StyleSheet, Text, Animated, TouchableOpacity, View, Dimensions} from "react-native";
+import {Modal, StyleSheet, Text, Animated, TouchableOpacity, View, Dimensions, StatusBar} from "react-native";
 import CloseIcon from "./components/icons/close-icon";
 import React from 'react';
 import {
@@ -121,16 +121,16 @@ function MainTabs(){
         tabBarItemStyle: {height: 60},
         headerStyle: {
             backgroundColor: '#207FBF',
-            height: 75
+            height: 60
         },
         headerTintColor: 'white',
         headerTitle: '',
         headerLeft: () => (
             <Logo color='white' width={92} height={38}/>
         ),
-        headerLeftContainerStyle: {padding: 14},
+        headerLeftContainerStyle: {paddingHorizontal: 10},
         headerRight: () => (
-            <TouchableOpacity style={{padding: 18}} onPress={toggleMenu}>
+            <TouchableOpacity style={{paddingHorizontal: 18}} onPress={toggleMenu}>
                 <MenuIcon/>
             </TouchableOpacity>
         ),
@@ -139,7 +139,7 @@ function MainTabs(){
     return(
         <>
             <Tab.Navigator
-                initialRouteName={'Home'}
+                initialRouteName={'Travel'}
                 screenOptions={tabScreenOptions}>
                 <Tab.Screen name={'Travel'} component={HomeScreen}/>
                 <Tab.Screen name={'Hotels'} component={HotelsScreen}/>
@@ -219,6 +219,7 @@ function AppContent() {
             screenOptions={() => ({
                 headerStyle: {backgroundColor: '#207FBF'},
                 headerTintColor: 'white'
+
             })}
         >
             <Stack.Screen name="MainTabs" component={MainTabs} options={{headerShown: false}}/>
@@ -250,7 +251,7 @@ class ErrorBoundary extends React.Component {
         if (this.state.hasError) {
             return (
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <Text>Oops! Something went wrong.</Text>
+                    <Text style={styles.errorText}>Oops! Some error occurred while loading app.</Text>
                 </View>
             );
         }
@@ -281,7 +282,8 @@ export default function App() {
         <ErrorBoundary>
             <SafeAreaProvider>
                 <NavigationContainer>
-                    <AppContent />
+                    <AppContent/>
+                    <StatusBar barStyle='light-content' backgroundColor='#207fbf'/>
                 </NavigationContainer>
             </SafeAreaProvider>
         </ErrorBoundary>
@@ -322,5 +324,12 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontFamily: 'Montserrat-Bold',
         color: '#207FBF'
+    },
+    errorText: {
+        fontSize: 16,
+        fontFamily: 'Montserrat-Bold',
+        color: 'black',
+        padding: 15,
+        textAlign: 'center'
     }
 });

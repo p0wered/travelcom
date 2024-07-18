@@ -70,7 +70,7 @@ function NotificationItem({ title, content }) {
             Animated.timing(animatedHeight, {
                 toValue: isExpanded ? 0 : 1,
                 duration: 150,
-                useNativeDriver: false,
+                useNativeDriver: true,
             }),
             Animated.timing(animatedOpacity, {
                 toValue: isExpanded ? 0 : 1,

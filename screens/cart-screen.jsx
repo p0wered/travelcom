@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
-        marginBottom: 10,
+        paddingLeft: 5
     },
     removePersonBtn: {
         backgroundColor: '#207FBF',

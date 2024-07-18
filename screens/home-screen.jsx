@@ -42,7 +42,11 @@ export default function HomeScreen() {
                             For travel arrangements, questions about locations and details,
                             you can write in the chat and our managers will help
                         </Text>
-                        <TouchableOpacity activeOpacity={0.8} style={[styles.formBtn, styles.mainBtn]}>
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            style={[styles.formBtn, styles.mainBtn]}
+                            onPress={() => navigation.navigate('Chat')}
+                        >
                             <Text style={styles.mainText}>Go to the chat</Text>
                         </TouchableOpacity>
                     </View>
@@ -54,7 +58,7 @@ export default function HomeScreen() {
                 <Text style={styles.faqText}>FAQ</Text>
                 {accordionItems}
             </View>
-            <QuestionForm/>
+            <QuestionForm title='Any other question? Write to us!'/>
             <Footer color='white'/>
         </ScrollView>
     )

@@ -19,6 +19,7 @@ import {PhoneIcon} from "../components/icons/phone-icon";
 export default function ProfileScreen ({navigation}){
     const navigate = useNavigation();
     const [isLogin, setIsLogin] = useState(true);
+    const [isForgotPassword, setIsForgotPassword] = useState(false);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
@@ -27,7 +28,6 @@ export default function ProfileScreen ({navigation}){
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
-    const [color, setColor] = useState('#207FBF');
     const [errorMsg, setErrorMsg] = useState(undefined);
 
     useEffect(() => {
@@ -94,23 +94,51 @@ export default function ProfileScreen ({navigation}){
                 setRegistrationSuccess(true);
             }
         } catch (error) {
-            console.error('Auth error:', error);
-
-            if (error.response) {
-                let errorMessage = '';
-                if (error.response.data.errors) {
-                    Object.keys(error.response.data.errors).forEach(key => {
-                        errorMessage += `${error.response.data.errors[key].join(', ')}\n`;
-                    });
-                } else if (error.response.data.message) {
-                    errorMessage += '' + error.response.data.message;
+            console.error('Error response:', error.response?.data);
+            if (error.response && error.response.data) {
+                if (error.response.data.success === false) {
+                    setErrorMsg(error.response.data.message);
+                } else if (error.response.data.errors) {
+                    if (error.response.data.errors.email) {
+                        setErrorMsg(error.response.data.errors.email[0]);
+                    } else if (error.response.data.errors.password) {
+                        setErrorMsg(error.response.data.errors.password[0]);
+                    } else if (error.response.data.errors.phone) {
+                        setErrorMsg(error.response.data.errors.phone[0]);
+                    } else {
+                        setErrorMsg('An error occurred. Please try again.');
+                    }
+                } else {
+                    setErrorMsg('An unexpected error occurred. Please try again.');
                 }
-                setErrorMsg(errorMessage);
-            } else if (error.request) {
-                Alert.alert('Error', 'No response received from server');
             } else {
-                Alert.alert('Error', 'An error occurred while setting up the request');
+                setErrorMsg('No response from server. Please check your connection.');
             }
+        }
+    };
+
+    const handlePasswordRecovery = async () => {
+        try {
+            const response = await axios({
+                method: 'post',
+                url: 'https://travelcom.online/api/auth/recover',
+                data: { email },
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.data.success) {
+                Alert.alert('Success', 'Check your email');
+                setIsForgotPassword(false);
+                setEmail('');
+            } else {
+                setErrorMsg('Failed to send recovery email. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error response:', error.response?.data);
+            setErrorMsg('An error occurred. Please try again.');
         }
     };
 
@@ -136,6 +164,29 @@ export default function ProfileScreen ({navigation}){
         setRegistrationSuccess(false);
         setIsLogin(true);
     };
+
+    const changeToRegister = () => {
+        setPassword('');
+        setEmail('');
+        setIsLogin(false);
+        setErrorMsg(undefined);
+        setIsForgotPassword(false);
+    }
+
+    const changeToLogin = () => {
+        setPassword('');
+        setEmail('');
+        setIsLogin(true);
+        setErrorMsg(undefined);
+        setIsForgotPassword(false);
+    }
+
+    const changeToRecover = () => {
+        setPassword('');
+        setEmail('');
+        setErrorMsg(undefined);
+        setIsForgotPassword(true);
+    }
 
     // user logged in, show profile
     if (user && token) {
@@ -224,6 +275,43 @@ export default function ProfileScreen ({navigation}){
 
     // user not logged in, show log in
     if (isLogin) {
+        if (isForgotPassword) {
+            return (
+                <ScrollView style={{backgroundColor: 'white'}}>
+                    <View style={{padding: 15}}>
+                        <Text style={styles.titleText}>PASSWORD RECOVER</Text>
+                        <View style={styles.inputContainer}>
+                            <View style={styles.iconWrap}>
+                                <MailIcon color='white'/>
+                            </View>
+                            <TextInput
+                                style={styles.input}
+                                placeholder='E-mail'
+                                placeholderTextColor='#9B9B9A'
+                                autoComplete='email'
+                                keyboardType='email-address'
+                                value={email}
+                                onChangeText={setEmail}
+                            />
+                        </View>
+                        {errorMsg ? (
+                            <Text style={styles.errorText}>{errorMsg}</Text>
+                        ) : (<></>)}
+                        <View style={{flexDirection: 'row', justifyContent: 'center'}}>
+                            <TouchableOpacity style={styles.sendBtn} onPress={handlePasswordRecovery}>
+                                <Text style={styles.sendBtnText}>RECOVER</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <View style={{flexDirection: 'row', justifyContent: 'center', marginTop: 20}}>
+                            <TouchableOpacity onPress={changeToLogin}>
+                                <Text style={[styles.mainText, {color: '#207FBF'}]}>Back to Login</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </ScrollView>
+            );
+        }
+
         return (
             <ScrollView style={{backgroundColor: 'white'}}>
                 <View style={{padding: 15}}>
@@ -261,12 +349,12 @@ export default function ProfileScreen ({navigation}){
                     ) : (<></>)}
                     <View style={[styles.merger, {justifyContent: 'center', gap: 0}]}>
                         <Text style={styles.mainText}>Don't have an account?</Text>
-                        <TouchableOpacity style={{padding: 15}} onPress={() => setIsLogin(false)}>
+                        <TouchableOpacity style={{padding: 15}} onPress={changeToRegister}>
                             <Text style={[styles.mainText, {color: '#207FBF'}]}>Register</Text>
                         </TouchableOpacity>
                     </View>
                     <View style={{flexDirection: 'row', justifyContent: 'center'}}>
-                        <TouchableOpacity style={{padding: 10}}>
+                        <TouchableOpacity style={{padding: 10}} onPress={changeToRecover}>
                             <Text style={[styles.mainText, {color: '#207FBF'}]}>Forgot my password</Text>
                         </TouchableOpacity>
                     </View>
@@ -354,10 +442,15 @@ export default function ProfileScreen ({navigation}){
                 </View>
                 <View style={[styles.merger, {justifyContent: 'center', gap: 0}]}>
                     <Text style={styles.mainText}>Already have an account?</Text>
-                    <TouchableOpacity style={{padding: 15}} onPress={() => setIsLogin(true)}>
+                    <TouchableOpacity style={{padding: 15}} onPress={changeToLogin}>
                         <Text style={[styles.mainText, {color: '#207FBF'}]}>Log in</Text>
                     </TouchableOpacity>
                 </View>
+                {errorMsg ? (
+                    <View style={styles.errorContainer}>
+                        <Text style={styles.errorText}>{errorMsg}</Text>
+                    </View>
+                ) : null}
                 <View style={{flexDirection: 'row', justifyContent: 'center'}}>
                     <TouchableOpacity style={styles.sendBtn} onPress={handleAuth}>
                         <Text style={styles.sendBtnText}>PROCEED</Text>
@@ -494,6 +587,9 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginBottom: 12,
         textAlign: 'center',
+    },
+    errorContainer: {
+        padding: 10
     },
     errorText: {
         fontFamily: 'Montserrat-Bold',
