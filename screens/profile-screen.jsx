@@ -95,7 +95,6 @@ export default function ProfileScreen ({navigation}){
             }
         } catch (error) {
             console.error('Error response:', error.response?.data);
-
             if (error.response && error.response.data) {
                 if (error.response.data.success === false) {
                     setErrorMsg(error.response.data.message);
@@ -104,6 +103,8 @@ export default function ProfileScreen ({navigation}){
                         setErrorMsg(error.response.data.errors.email[0]);
                     } else if (error.response.data.errors.password) {
                         setErrorMsg(error.response.data.errors.password[0]);
+                    } else if (error.response.data.errors.phone) {
+                        setErrorMsg(error.response.data.errors.phone[0]);
                     } else {
                         setErrorMsg('An error occurred. Please try again.');
                     }
@@ -169,6 +170,7 @@ export default function ProfileScreen ({navigation}){
         setEmail('');
         setIsLogin(false);
         setErrorMsg(undefined);
+        setIsForgotPassword(false);
     }
 
     const changeToLogin = () => {
@@ -176,6 +178,14 @@ export default function ProfileScreen ({navigation}){
         setEmail('');
         setIsLogin(true);
         setErrorMsg(undefined);
+        setIsForgotPassword(false);
+    }
+
+    const changeToRecover = () => {
+        setPassword('');
+        setEmail('');
+        setErrorMsg(undefined);
+        setIsForgotPassword(true);
     }
 
     // user logged in, show profile
@@ -293,7 +303,7 @@ export default function ProfileScreen ({navigation}){
                             </TouchableOpacity>
                         </View>
                         <View style={{flexDirection: 'row', justifyContent: 'center', marginTop: 20}}>
-                            <TouchableOpacity onPress={() => setIsForgotPassword(false)}>
+                            <TouchableOpacity onPress={changeToLogin}>
                                 <Text style={[styles.mainText, {color: '#207FBF'}]}>Back to Login</Text>
                             </TouchableOpacity>
                         </View>
@@ -344,7 +354,7 @@ export default function ProfileScreen ({navigation}){
                         </TouchableOpacity>
                     </View>
                     <View style={{flexDirection: 'row', justifyContent: 'center'}}>
-                        <TouchableOpacity style={{padding: 10}} onPress={() => setIsForgotPassword(true)}>
+                        <TouchableOpacity style={{padding: 10}} onPress={changeToRecover}>
                             <Text style={[styles.mainText, {color: '#207FBF'}]}>Forgot my password</Text>
                         </TouchableOpacity>
                     </View>
