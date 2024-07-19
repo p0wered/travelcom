@@ -52,7 +52,7 @@ export default function HomeScreen() {
                     </View>
                 </View>
             </ImageBackground>
-            <DirectionsList/>
+            <DirectionsList navigation={navigation}/>
             <BlogList navigation={navigation}/>
             <View style={styles.faqFlexbox}>
                 <Text style={styles.faqText}>FAQ</Text>
@@ -84,7 +84,7 @@ function DirectionItem({item}) {
     )
 }
 
-function DirectionsList() {
+function DirectionsList({navigation}) {
     const [directions, setDirections] = useState([]);
 
     useEffect(() => {
@@ -113,14 +113,14 @@ function DirectionsList() {
                 renderItem={({ item }) => <DirectionItem item={item} />}
                 keyExtractor={item => item.id.toString()}
             />
-            <TouchableOpacity activeOpacity={0.8} style={styles.mainBtn}>
+            <TouchableOpacity activeOpacity={0.8} style={styles.mainBtn} onPress={() => navigation.navigate('News')}>
                 <Text style={[styles.mainText, {width: 140, textAlign: 'center'}]}>Know more</Text>
             </TouchableOpacity>
         </View>
     );
 }
 
-function BlogList({ navigation }) {
+function BlogList({navigation}) {
     const [news, setNews] = useState([]);
 
     useEffect(() => {
@@ -187,7 +187,11 @@ function BlogList({ navigation }) {
                 ))}
             </ScrollView>
             <View style={{display: 'flex', alignItems: 'center'}}>
-                <TouchableOpacity activeOpacity={0.8} style={[styles.mainBtn, {backgroundColor: 'white'}]}>
+                <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={[styles.mainBtn, {backgroundColor: 'white'}]}
+                    onPress={() => navigation.navigate('News')}
+                >
                     <Text style={[styles.mainText, {color: '#207FBF', width: 140, textAlign: 'center'}]}>Know more</Text>
                 </TouchableOpacity>
             </View>

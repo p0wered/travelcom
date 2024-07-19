@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Text, ScrollView, Alert, StyleSheet, View, TouchableOpacity, TextInput, Linking} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {FlightCard} from "../components/flight-cards";
@@ -6,9 +6,8 @@ import airlinesImg from '../assets/airlines.png'
 import {useFocusEffect} from "@react-navigation/native";
 import {Footer} from "../components/footer";
 
-const CheckoutForm = ({ onSubmit }) => {
-    const [error, setError] = useState('');
-    const [formDataList, setFormDataList] = useState([{
+const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList}) => {
+    const [formDataList, setFormDataList] = useState(initialFormDataList || [{
         firstName: '',
         lastName: '',
         middleName: '',
@@ -16,6 +15,8 @@ const CheckoutForm = ({ onSubmit }) => {
         gender: '',
         passport: '',
     }]);
+    const [personCount, setPersonCount] = useState(initialFormDataList ? initialFormDataList.length : 1);
+    const [error, setError] = useState('');
 
     const handleChange = (index, name, value) => {
         const newFormDataList = [...formDataList];
@@ -24,21 +25,28 @@ const CheckoutForm = ({ onSubmit }) => {
         setError('');
     };
 
+    useEffect(() => {
+        onPersonCountChange(personCount, formDataList);
+    }, [personCount, formDataList]);
+
     const addPerson = () => {
-        setFormDataList([...formDataList, {
+        const newFormDataList = [...formDataList, {
             firstName: '',
             lastName: '',
             middleName: '',
             birthDate: '',
             gender: '',
             passport: '',
-        }]);
+        }];
+        setFormDataList(newFormDataList);
+        setPersonCount(prevState => prevState + 1);
     };
 
     const removePerson = (index) => {
         if (formDataList.length > 1) {
             const newFormDataList = formDataList.filter((_, i) => i !== index);
             setFormDataList(newFormDataList);
+            setPersonCount(prevState => prevState - 1);
         }
     };
 
@@ -67,7 +75,7 @@ const CheckoutForm = ({ onSubmit }) => {
             {formDataList.map((formData, index) => (
                 <View key={index} style={styles.personContainer}>
                     <View style={styles.personHeaderContainer}>
-                        <Text style={[styles.mainText, {fontSize: 18}]}>Person {index + 1}</Text>
+                        <Text style={[styles.mainText]}>Person {index + 1}</Text>
                         {
                             index !== 0 ? (
                                 <TouchableOpacity onPress={() => removePerson(index)} style={styles.removePersonBtn}>
@@ -142,6 +150,24 @@ export default function CartScreen({navigation}) {
     const [cartItems, setCartItems] = useState([]);
     const [userId, setUserId] = useState(null);
     const [expandedCardId, setExpandedCardId] = useState(null);
+    const [personCounts, setPersonCounts] = useState({});
+    const [formDataLists, setFormDataLists] = useState({});
+
+    const handlePersonCountChange = (flightId, count, formDataList) => {
+        setPersonCounts(prevCounts => ({
+            ...prevCounts,
+            [flightId]: count
+        }));
+        setFormDataLists(prevLists => ({
+            ...prevLists,
+            [flightId]: formDataList
+        }));
+    };
+
+    const calculateTotalPrice = (flight) => {
+        const count = personCounts[flight.id] || 1;
+        return flight.price * count;
+    };
 
     const loadCartItems = useCallback(async () => {
         try {
@@ -191,6 +217,19 @@ export default function CartScreen({navigation}) {
 
     const handleCheckout = (flightId) => {
         setExpandedCardId(expandedCardId === flightId ? null : flightId);
+        if (!formDataLists[flightId]) {
+            setFormDataLists(prevLists => ({
+                ...prevLists,
+                [flightId]: [{
+                    firstName: '',
+                    lastName: '',
+                    middleName: '',
+                    birthDate: '',
+                    gender: '',
+                    passport: '',
+                }]
+            }));
+        }
     };
 
     const handlePayment = async (flightId, formData) => {
@@ -200,13 +239,12 @@ export default function CartScreen({navigation}) {
             return;
         }
 
-        const itemString = JSON.stringify({ ...flight, ...formData });
-
+        const totalPrice = calculateTotalPrice(flight);
+        const itemString = JSON.stringify({ ...flight, ...formData, totalPrice });
         const payloadData = {
             item: itemString,
-            price: flight.price,
+            price: totalPrice,
         };
-
         console.log('Payload data:', JSON.stringify(payloadData, null, 2));
 
         try {
@@ -267,7 +305,7 @@ export default function CartScreen({navigation}) {
                     cartItems.map((flight, index) => (
                         <View key={flight.id || index}>
                             <FlightCard
-                                price={flight.price}
+                                price={calculateTotalPrice(flight)}
                                 flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
                                 depCity={flight.depCity.title}
                                 depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
@@ -288,6 +326,8 @@ export default function CartScreen({navigation}) {
                             {expandedCardId === flight.id && (
                                 <CheckoutForm
                                     onSubmit={(formData) => handlePayment(flight.id, formData)}
+                                    onPersonCountChange={(count, formDataList) => handlePersonCountChange(flight.id, count, formDataList)}
+                                    initialFormDataList={formDataLists[flight.id]}
                                 />
                             )}
                         </View>
@@ -324,7 +364,6 @@ const styles = StyleSheet.create({
     },
     formContainer: {
         marginTop: -30,
-        paddingTop: 16,
         paddingHorizontal: 15,
         paddingBottom: 15,
         backgroundColor: '#fff',
@@ -332,9 +371,9 @@ const styles = StyleSheet.create({
         marginBottom: 15
     },
     input: {
-        fontSize: 16,
+        fontSize: 14,
         fontFamily: 'Montserrat-Regular',
-        height: 46,
+        height: 42,
         borderRadius: 10,
         paddingHorizontal: 20,
         backgroundColor: 'white',
@@ -353,7 +392,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     personContainer: {
-        marginTop: 15,
+        marginVertical: 12,
         flexDirection: 'column',
         gap: 10
     },

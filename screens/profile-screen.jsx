@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import {View, TextInput, Button, StyleSheet, Alert, ScrollView, Text, Pressable, TouchableOpacity} from 'react-native';
+import {
+    View,
+    TextInput,
+    Button,
+    StyleSheet,
+    Alert,
+    ScrollView,
+    Text,
+    Pressable,
+    TouchableOpacity,
+    ActivityIndicator
+} from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {AvatarIcon} from "../components/icons/avatar-icon";
@@ -29,6 +40,7 @@ export default function ProfileScreen ({navigation}){
     const [token, setToken] = useState(null);
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
     const [errorMsg, setErrorMsg] = useState(undefined);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         loadUserData();
@@ -62,62 +74,66 @@ export default function ProfileScreen ({navigation}){
             : 'https://travelcom.online/api/auth/register';
 
         const authData = isLogin
-            ? { email, password }
-            : { name, email, phone, password, password_confirmation: passwordConfirmation };
+            ? {email, password}
+            : {name, email, phone, password, password_confirmation: passwordConfirmation};
 
-        console.log(`Sending ${isLogin ? 'login' : 'registration'} data:`, JSON.stringify(authData, null, 2));
+        if (!isLogin && password !== passwordConfirmation) {
+            setErrorMsg('Passwords must match')
+        } else {
+            console.log(`Sending ${isLogin ? 'login' : 'registration'} data:`, JSON.stringify(authData, null, 2));
+            try {
+                setIsLoading(true);
+                const response = await axios({
+                    method: 'post',
+                    url: url,
+                    data: authData,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                });
+                console.log('Server response:', response.data);
 
-        try {
-            const response = await axios({
-                method: 'post',
-                url: url,
-                data: authData,
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            console.log('Server response:', response.data);
-
-            if (response.data.success && response.data.user) {
-                setUser(response.data.user);
-                setToken(response.data.success.token);
-                await saveUserData(response.data.user, response.data.success.token);
-                setErrorMsg(undefined);
-            } else {
-                console.log('User data or token not found in response');
-                Alert.alert('Error', 'User data or token not found in response');
-            }
-
-            if (!isLogin) {
-                setRegistrationSuccess(true);
-            }
-        } catch (error) {
-            console.error('Error response:', error.response?.data);
-            if (error.response && error.response.data) {
-                if (error.response.data.success === false) {
-                    setErrorMsg(error.response.data.message);
-                } else if (error.response.data.errors) {
-                    if (error.response.data.errors.email) {
-                        setErrorMsg(error.response.data.errors.email[0]);
-                    } else if (error.response.data.errors.password) {
-                        setErrorMsg(error.response.data.errors.password[0]);
-                    } else if (error.response.data.errors.phone) {
-                        setErrorMsg(error.response.data.errors.phone[0]);
+                if (response.data.success && response.data.user) {
+                    setUser(response.data.user);
+                    setToken(response.data.success.token);
+                    await saveUserData(response.data.user, response.data.success.token);
+                    setErrorMsg(undefined);
+                } else {
+                    console.log('User data or token not found in response');
+                    Alert.alert('Error', 'User data or token not found in response');
+                }
+                if (!isLogin) {
+                    setRegistrationSuccess(true);
+                }
+            } catch (error) {
+                console.error('Error response:', error.response?.data);
+                if (error.response && error.response.data) {
+                    if (error.response.data.success === false) {
+                        setErrorMsg(error.response.data.message);
+                    } else if (error.response.data.errors) {
+                        if (error.response.data.errors.email) {
+                            setErrorMsg(error.response.data.errors.email[0]);
+                        } else if (error.response.data.errors.password) {
+                            setErrorMsg(error.response.data.errors.password[0]);
+                        } else if (error.response.data.errors.phone) {
+                            setErrorMsg(error.response.data.errors.phone[0]);
+                        } else {
+                            setErrorMsg('An error occurred. Please try again.');
+                        }
                     } else {
-                        setErrorMsg('An error occurred. Please try again.');
+                        setErrorMsg('An unexpected error occurred. Please try again.');
                     }
                 } else {
-                    setErrorMsg('An unexpected error occurred. Please try again.');
+                    setErrorMsg('No response from server. Please check your connection.');
                 }
-            } else {
-                setErrorMsg('No response from server. Please check your connection.');
             }
+            setIsLoading(false);
         }
     };
 
     const handlePasswordRecovery = async () => {
+        setIsLoading(true);
         try {
             const response = await axios({
                 method: 'post',
@@ -140,6 +156,7 @@ export default function ProfileScreen ({navigation}){
             console.error('Error response:', error.response?.data);
             setErrorMsg('An error occurred. Please try again.');
         }
+        setIsLoading(false);
     };
 
     const handleLogout = async () => {
@@ -279,8 +296,8 @@ export default function ProfileScreen ({navigation}){
             return (
                 <ScrollView style={{backgroundColor: 'white'}}>
                     <View style={{padding: 15}}>
-                        <Text style={styles.titleText}>PASSWORD RECOVER</Text>
-                        <View style={styles.inputContainer}>
+                        <Text style={styles.titleText}>PASSWORD RECOVERY</Text>
+                        <View style={[styles.inputContainer, {marginBottom: 0}]}>
                             <View style={styles.iconWrap}>
                                 <MailIcon color='white'/>
                             </View>
@@ -295,11 +312,17 @@ export default function ProfileScreen ({navigation}){
                             />
                         </View>
                         {errorMsg ? (
-                            <Text style={styles.errorText}>{errorMsg}</Text>
+                            <Text style={[styles.errorText, {marginTop: 15}]}>{errorMsg}</Text>
                         ) : (<></>)}
                         <View style={{flexDirection: 'row', justifyContent: 'center'}}>
                             <TouchableOpacity style={styles.sendBtn} onPress={handlePasswordRecovery}>
-                                <Text style={styles.sendBtnText}>RECOVER</Text>
+                                {
+                                    isLoading ? (
+                                        <ActivityIndicator color='#fff'/>
+                                    ) : (
+                                        <Text style={styles.sendBtnText}>RECOVER</Text>
+                                    )
+                                }
                             </TouchableOpacity>
                         </View>
                         <View style={{flexDirection: 'row', justifyContent: 'center', marginTop: 20}}>
@@ -360,7 +383,13 @@ export default function ProfileScreen ({navigation}){
                     </View>
                     <View style={{flexDirection: 'row', justifyContent: 'center'}}>
                         <TouchableOpacity style={styles.sendBtn} onPress={handleAuth}>
-                            <Text style={styles.sendBtnText}>LOG IN</Text>
+                            {
+                                isLoading ? (
+                                    <ActivityIndicator color='#fff'/>
+                                ) : (
+                                    <Text style={styles.sendBtnText}>LOG IN</Text>
+                                )
+                            }
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -453,7 +482,13 @@ export default function ProfileScreen ({navigation}){
                 ) : null}
                 <View style={{flexDirection: 'row', justifyContent: 'center'}}>
                     <TouchableOpacity style={styles.sendBtn} onPress={handleAuth}>
-                        <Text style={styles.sendBtnText}>PROCEED</Text>
+                        {
+                            isLoading ? (
+                                <ActivityIndicator color='#fff'/>
+                            ) : (
+                                <Text style={styles.sendBtnText}>PROCEED</Text>
+                            )
+                        }
                     </TouchableOpacity>
                 </View>
             </View>

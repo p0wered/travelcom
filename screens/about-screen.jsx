@@ -49,7 +49,7 @@ export default function AboutScreen() {
                         <Text style={styles.blueText}>E-mail</Text>
                     </View>
                     <TouchableOpacity onPress={() => Linking.openURL('mailto:info@travelcom.com')}>
-                        <Text style={styles.blueTextSmall}>info@nobleconseirge.com</Text>
+                        <Text style={styles.blueTextSmall}>info@travelcom.com</Text>
                     </TouchableOpacity>
                 </View>
                 <Footer/>

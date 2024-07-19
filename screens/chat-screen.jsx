@@ -396,8 +396,9 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     loginText: {
-      fontSize: 18,
-        fontFamily: 'Montserrat-Bold'
+        fontSize: 18,
+        fontFamily: 'Montserrat-Bold',
+        color: '#207FBF'
     },
     outgoingMessageBubble: {
         backgroundColor: '#d0ecff',

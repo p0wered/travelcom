@@ -85,6 +85,18 @@ export default function OrdersScreen(){
         );
     };
 
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString('ru-RU', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    }
+
     const renderFlightCard = ({ item }) => {
         const flightData = item.item;
         if (!flightData) {
@@ -114,6 +126,8 @@ export default function OrdersScreen(){
                     onCartScreen={false}
                 />
                 <View style={styles.clientsContainer}>
+                    <Text style={styles.mainText}>Created at:</Text>
+                    <Text style={[styles.clientInfoText, {marginBottom: 8}]}>{formatDate(item.created_at)}</Text>
                     {clientsData.map((clientData, index) => (
                         <View style={{marginBottom: 10}} key={index}>
                             <Text style={styles.mainText}>Person {index + 1} Information</Text>

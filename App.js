@@ -250,7 +250,7 @@ class ErrorBoundary extends React.Component {
     render() {
         if (this.state.hasError) {
             return (
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
                     <Text style={styles.errorText}>Oops! Some error occurred while loading app.</Text>
                 </View>
             );

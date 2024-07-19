@@ -1,174 +1,129 @@
-import {Animated, LayoutAnimation, Pressable, ScrollView, StyleSheet, Text, View} from "react-native";
-import ArrowActive from "../components/icons/arrow-icon-active";
+import React, {useEffect, useRef, useState} from 'react';
+import {View, Text, StyleSheet, Pressable, Animated, ScrollView} from 'react-native';
 import Arrow from "../components/icons/arrow-icon";
-import {useEffect, useRef, useState} from "react";
+import ArrowActive from "../components/icons/arrow-icon-active";
 
-export default function NotificationScreen(){
-    return(
-        <ScrollView style={{padding: 15}}>
-            <Text style={styles.titleText}>Notifications</Text>
-            <NotificationItem
-                title='Lorem ipsum dolor sit amet'
-                content='Lorem ipsum dolor sit amet, consectetuer adipiscing elit.
-                Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque
-                penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-                Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem.
-                Nulla consequat massa quis enim. Donec pede justo, fringilla vel,
-                aliquet nec, vulputate eget. '
-            />
-            <NotificationItem
-                title='Lorem ipsum dolor sit amet'
-                content='Lorem ipsum dolor sit amet, consectetuer adipiscing elit.
-                Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque
-                penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-                Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem.
-                Nulla consequat massa quis enim. Donec pede justo, fringilla vel,
-                aliquet nec, vulputate eget. '
-            />
-            <NotificationItem
-                title='Lorem ipsum dolor sit amet'
-                content='Lorem ipsum dolor sit amet, consectetuer adipiscing elit.
-                Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque
-                penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-                Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem.
-                Nulla consequat massa quis enim. Donec pede justo, fringilla vel,
-                aliquet nec, vulputate eget. '
-            />
-            <NotificationItem
-                title='Lorem ipsum dolor sit amet'
-                content='Lorem ipsum dolor sit amet, consectetuer adipiscing elit.
-                Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque
-                penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-                Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem.
-                Nulla consequat massa quis enim. Donec pede justo, fringilla vel,
-                aliquet nec, vulputate eget. '
-            />
-        </ScrollView>
-    )
-}
-
-function NotificationItem({ title, content }) {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [headerHeight, setHeaderHeight] = useState(0);
-    const [contentHeight, setContentHeight] = useState(0);
-    const animatedHeight = useRef(new Animated.Value(0)).current;
+const Notification = ({title, content}) => {
+    const [expanded, setExpanded] = useState(false);
     const animatedOpacity = useRef(new Animated.Value(0)).current;
+    const animatedScale = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    }, [isExpanded]);
-
-    useEffect(() => {
-        if (headerHeight > 0) {
-            animatedHeight.setValue(isExpanded ? 1 : 0);
-        }
-    }, [headerHeight]);
-
-    const toggleNotification = () => {
-        setIsExpanded(!isExpanded);
         Animated.parallel([
-            Animated.timing(animatedHeight, {
-                toValue: isExpanded ? 0 : 1,
-                duration: 150,
+            Animated.timing(animatedOpacity, {
+                toValue: expanded ? 1 : 0,
+                duration: 300,
                 useNativeDriver: true,
             }),
-            Animated.timing(animatedOpacity, {
-                toValue: isExpanded ? 0 : 1,
-                duration: 200,
+            Animated.timing(animatedScale, {
+                toValue: expanded ? 1 : 0,
+                duration: 300,
                 useNativeDriver: true,
             })
         ]).start();
-    };
-
-    const maxHeight = animatedHeight.interpolate({
-        inputRange: [0, 1],
-        outputRange: [headerHeight + 33, headerHeight + contentHeight + 33],
-    });
+    }, [expanded]);
 
     return (
-        <Animated.View style={[
-            styles.notificationItem,
-            isExpanded && styles.notificationItemActive,
-            { height: maxHeight }
-        ]}>
-            <Pressable onPress={toggleNotification}>
-                <View
-                    style={styles.notificationInner}
-                    onLayout={(event) => {
-                        const { height } = event.nativeEvent.layout;
-                        setHeaderHeight(height);
-                    }}
-                >
-                    <Text style={[styles.mainText, {color: 'black'}]}>{title}</Text>
-                    <View style={styles.arrowContainer}>
-                        <Animated.View style={[styles.arrowWrapper, { opacity: animatedOpacity }]}>
-                            <ArrowActive color='#207FBF'/>
-                        </Animated.View>
-                        <Animated.View style={[styles.arrowWrapper, { opacity: animatedOpacity.interpolate({
-                                inputRange: [0, 1],
-                                outputRange: [1, 0],
-                            }) }]}>
-                            <Arrow color='#207FBF' />
-                        </Animated.View>
-                    </View>
-                </View>
-            </Pressable>
-            <View style={{ height: isExpanded ? 'auto' : 0, overflow: 'hidden' }}>
-                <View
-                    onLayout={(event) => {
-                        const { height } = event.nativeEvent.layout;
-                        setContentHeight(height);
-                    }}
-                >
-                    <Text style={{color: 'black', paddingHorizontal: 15, paddingBottom: 15}}>{content}</Text>
-                </View>
+        <Pressable onPress={() => setExpanded(!expanded)} style={styles.notification}>
+            <View style={styles.notificationHeader}>
+                <Text style={styles.title}>{title}</Text>
+                {expanded ? (<ArrowActive color='#207FBF'/>) : (<Arrow/>)}
             </View>
-        </Animated.View>
+            <Animated.View style={{
+                opacity: animatedOpacity,
+                height: expanded ? 'auto' : 0,
+                overflow: 'hidden'
+            }}>
+                <Text style={styles.content}>{content}</Text>
+            </Animated.View>
+        </Pressable>
     );
-}
+};
 
+export default function NotificationsScreen(){
+    return (
+        <ScrollView style={styles.container}>
+            <Text style={styles.titleText}>Notifications</Text>
+            <View>
+                <Notification
+                    title='New notification'
+                    content='Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+                    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                    nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+                    reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+                    pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+                    culpa qui officia deserunt mollit anim id est laborum.'
+                />
+                <Notification
+                    title='New notification'
+                    content='Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+                    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                    nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+                    reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+                    pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+                    culpa qui officia deserunt mollit anim id est laborum.'
+                />
+                <Notification
+                    title='New notification'
+                    content='Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+                    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                    nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+                    reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+                    pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+                    culpa qui officia deserunt mollit anim id est laborum.'
+                />
+                <Notification
+                    title='New notification'
+                    content='Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+                    sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                    nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+                    reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+                    pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+                    culpa qui officia deserunt mollit anim id est laborum.'
+                />
+            </View>
+        </ScrollView>
+    );
+};
 const styles = StyleSheet.create({
+    container: {
+        padding: 20,
+        backgroundColor: '#f5f5f5',
+    },
     titleText: {
         fontSize: 20,
         fontFamily: 'Montserrat-Bold',
         color: '#207FBF',
         marginBottom: 15
     },
-    mainText: {
-        fontFamily: 'Montserrat-Bold',
-        fontSize: 14,
-        color: 'white'
-    },
-    notificationItem: {
-        height: 51,
-        borderRadius: 10,
-        marginBottom: 12,
+    notification: {
         backgroundColor: 'white',
-        overflow: 'hidden'
+        padding: 18,
+        borderRadius: 10,
+        marginBottom: 10,
     },
-    notificationItemActive: {
-        height: 'auto'
-    },
-    notificationInner: {
-        display: 'flex',
+    notificationHeader: {
         flexDirection: 'row',
-        alignItems: 'center',
         justifyContent: 'space-between',
-        margin: 15
+        alignItems: 'center',
     },
-    separatorNotification: {
-        width: '100%',
-        height: 1,
-        backgroundColor: 'white'
+    title: {
+        fontSize: 16,
+        fontFamily: 'Montserrat-Bold'
     },
-    arrowContainer: {
-        position: 'relative',
-        width: 15,
-        height: 15,
+    content: {
+        marginTop: 10,
+        fontSize: 14,
+        fontFamily: 'Montserrat-Regular'
     },
-    arrowWrapper: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
+    smallText: {
+        fontFamily: 'Montserrat-Regular',
+        fontSize: 12,
+        color: 'grey',
+        marginBottom: 3
     },
-})
+});
