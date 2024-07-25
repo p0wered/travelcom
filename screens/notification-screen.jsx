@@ -3,7 +3,7 @@ import {View, Text, StyleSheet, Pressable, Animated, ScrollView} from 'react-nat
 import Arrow from "../components/icons/arrow-icon";
 import ArrowActive from "../components/icons/arrow-icon-active";
 
-const Notification = ({title, content}) => {
+const Notification = ({title, content, date}) => {
     const [expanded, setExpanded] = useState(false);
     const animatedOpacity = useRef(new Animated.Value(0)).current;
     const animatedScale = useRef(new Animated.Value(0)).current;
@@ -26,7 +26,10 @@ const Notification = ({title, content}) => {
     return (
         <Pressable onPress={() => setExpanded(!expanded)} style={styles.notification}>
             <View style={styles.notificationHeader}>
-                <Text style={styles.title}>{title}</Text>
+                <View>
+                    <Text style={styles.smallText}>{date}</Text>
+                    <Text style={styles.title}>{title}</Text>
+                </View>
                 {expanded ? (<ArrowActive color='#207FBF'/>) : (<Arrow/>)}
             </View>
             <Animated.View style={{
@@ -54,6 +57,7 @@ export default function NotificationsScreen(){
                     reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
                     pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
                     culpa qui officia deserunt mollit anim id est laborum.'
+                    date='19/07/2024'
                 />
                 <Notification
                     title='New notification'
@@ -64,6 +68,7 @@ export default function NotificationsScreen(){
                     reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
                     pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
                     culpa qui officia deserunt mollit anim id est laborum.'
+                    date='19/07/2024'
                 />
                 <Notification
                     title='New notification'
@@ -74,6 +79,7 @@ export default function NotificationsScreen(){
                     reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
                     pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
                     culpa qui officia deserunt mollit anim id est laborum.'
+                    date='19/07/2024'
                 />
                 <Notification
                     title='New notification'
@@ -84,6 +90,7 @@ export default function NotificationsScreen(){
                     reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
                     pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
                     culpa qui officia deserunt mollit anim id est laborum.'
+                    date='19/07/2024'
                 />
             </View>
         </ScrollView>
@@ -102,7 +109,7 @@ const styles = StyleSheet.create({
     },
     notification: {
         backgroundColor: 'white',
-        padding: 18,
+        padding: 14,
         borderRadius: 10,
         marginBottom: 10,
     },

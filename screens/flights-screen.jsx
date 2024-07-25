@@ -24,6 +24,11 @@ import {DayIcon} from "../components/icons/day-icon";
 import {NightIcon} from "../components/icons/night-icon";
 import {CheckIcon} from "../components/icons/check-icon";
 
+export const convertPrice = (rubles) => {
+    const euros = rubles / 95.32;
+    return Math.round(euros);
+};
+
 export default function FlightsScreen() {
     const [airportFrom, setAirportFrom] = useState('');
     const [fromSuggestions, setFromSuggestions] = useState([]);
@@ -39,7 +44,7 @@ export default function FlightsScreen() {
         infants: 0,
     });
     const [flightResults, setFlightResults] = useState([]);
-    const [visibleFlights, setVisibleFlights] = useState(5);
+    const [visibleFlights, setVisibleFlights] = useState(12);
     const [userId, setUserId] = useState(null);
     const [cartItems, setCartItems] = useState([]);
     const [filtersVisible, setFiltersVisible] = useState(false);
@@ -50,6 +55,8 @@ export default function FlightsScreen() {
     const [selectedAirlines, setSelectedAirlines] = useState([]);
     const [availableAirlines, setAvailableAirlines] = useState([]);
     const [filteredResults, setFilteredResults] = useState([]);
+    const [favoriteItems, setFavoriteItems] = useState([]);
+    const [errorMsg, setErrorMsg] = useState(undefined);
 
     useEffect(() => {
         checkAuth();
@@ -69,34 +76,36 @@ export default function FlightsScreen() {
 
     const applyFilters = () => {
         let filtered = [...flightResults];
-
         if (dayFlightsOnly) {
             filtered = filtered.filter(flight => {
                 const depHour = parseInt(flight.depTime.split(':')[0]);
-                return depHour >= 6 && depHour < 18;
+                return depHour >= 6 && depHour < 22;
             });
         }
-
         if (nightFlightsOnly) {
             filtered = filtered.filter(flight => {
                 const depHour = parseInt(flight.depTime.split(':')[0]);
-                return depHour < 6 || depHour >= 18;
+                return depHour < 6 || depHour >= 22;
             });
         }
-
         if (minPrice !== '') {
             filtered = filtered.filter(flight => flight.price >= parseFloat(minPrice));
         }
-
         if (maxPrice !== '') {
             filtered = filtered.filter(flight => flight.price <= parseFloat(maxPrice));
         }
-
         if (selectedAirlines.length > 0) {
             filtered = filtered.filter(flight => selectedAirlines.includes(flight.provider.supplier.title));
         }
-
-        setFilteredResults(filtered);
+        if (filtered.length === 0 && flightResults.length !== 0){
+            setErrorMsg('Nothing found')
+            setFilteredResults(filtered);
+            setVisibleFlights(12);
+        } else {
+            setErrorMsg(undefined)
+            setFilteredResults(filtered);
+            setVisibleFlights(12);
+        }
     };
 
     useEffect(() => {
@@ -137,10 +146,42 @@ export default function FlightsScreen() {
         }
     }, []);
 
+    const loadFavoriteItems = useCallback(async () => {
+        try {
+            const userString = await AsyncStorage.getItem('@user');
+            if (userString) {
+                const user = JSON.parse(userString);
+                setUserId(user.id);
+                const favoriteKey = `@favorites_${user.id}`;
+                const favoriteString = await AsyncStorage.getItem(favoriteKey);
+                if (favoriteString) {
+                    const loadedFavorites = JSON.parse(favoriteString);
+                    setFavoriteItems(loadedFavorites);
+                    console.log(loadedFavorites);
+                } else {
+                    setFavoriteItems([]);
+                }
+            } else {
+                setFavoriteItems([]);
+                setUserId(null);
+            }
+        } catch (error) {
+            console.error('Failed to load favorite items', error);
+            setFavoriteItems([]);
+            setUserId(null);
+        }
+    }, []);
+
     useFocusEffect(
         useCallback(() => {
             loadCartItems();
         }, [loadCartItems])
+    );
+
+    useFocusEffect(
+        useCallback(() => {
+            loadFavoriteItems();
+        }, [loadFavoriteItems])
     );
 
     const addToCart = async (flight) => {
@@ -179,9 +220,32 @@ export default function FlightsScreen() {
         return cartItems.some(item => item.id === flight.id);
     };
 
-    const handleSearch = async () => {
-        setIsLoading(true)
+    const toggleFavorite = async (flight) => {
+        if (!userId) {
+            Alert.alert('Error', 'Please log in to manage favorites');
+            return;
+        }
+        try {
+            const favoriteKey = `@favorites_${userId}`;
+            let updatedFavorites;
+            if (isInFavorites(flight)) {
+                updatedFavorites = favoriteItems.filter(item => item.id !== flight.id);
+            } else {
+                updatedFavorites = [...favoriteItems, flight];
+            }
+            await AsyncStorage.setItem(favoriteKey, JSON.stringify(updatedFavorites));
+            setFavoriteItems(updatedFavorites);
+        } catch (error) {
+            console.error('Failed to update favorites', error);
+            Alert.alert('Error', 'Failed to update favorites');
+        }
+    };
 
+    const isInFavorites = (flight) => {
+        return favoriteItems.some(item => item.id === flight.id);
+    };
+
+    const handleSearch = async () => {
         const payload = {
             adults: passengers.adults,
             airportFrom: getAirportCode(airportFrom),
@@ -192,26 +256,43 @@ export default function FlightsScreen() {
             infants: passengers.infants,
             isRoundtrip: roundTrip
         };
-
-        console.log('sending data:', JSON.stringify(payload, null, 2));
-
-        try {
-            const response = await axios.post('https://travelcom.online/api/crpo/getFlights', payload);
-            setFlightResults(response.data);
-            setFilteredResults(response.data);
-            setVisibleFlights(5);
-            console.log('response:', JSON.stringify(response.data, null, 2));
-            const airlines = [...new Set(response.data.map(flight => flight.provider.supplier.title))];
-            setAvailableAirlines(airlines);
-        } catch (error) {
-            console.error('error fetching flights:', error);
-        } finally {
-            setIsLoading(false);
+        if (airportFrom === '' || airportTo === '') {
+            setErrorMsg('Please fill all fields');
+        } else {
+            setIsLoading(true);
+            try {
+                const response = await axios.post('https://travelcom.online/api/crpo/getFlights', payload);
+                if (response.data.success === false) {
+                    setErrorMsg(response.data.message || 'No flights found');
+                    setFlightResults([]);
+                    setFilteredResults([]);
+                    setVisibleFlights(0);
+                    setAvailableAirlines([]);
+                } else {
+                    setFlightResults(response.data);
+                    setFilteredResults(response.data);
+                    setVisibleFlights(12);
+                    console.log('response:', JSON.stringify(response.data, null, 2));
+                    const airlines = [...new Set(response.data.map(flight => flight.provider.supplier.title))];
+                    setAvailableAirlines(airlines);
+                    setErrorMsg(undefined);
+                }
+            } catch (error) {
+                if (error.response) {
+                    setErrorMsg(error.response.data.message || 'Error fetching flights');
+                } else if (error.request) {
+                    setErrorMsg('No response from server');
+                } else {
+                    setErrorMsg(error.message || 'Error fetching flights');
+                }
+            } finally {
+                setIsLoading(false);
+            }
         }
     };
 
     const handleShowMore = () => {
-        setVisibleFlights(prevVisible => prevVisible + 5);
+        setVisibleFlights(prevVisible => Math.min(prevVisible + 12, filteredResults.length));
     };
 
     const getAirportCode = (fullAirportName) => {
@@ -366,12 +447,20 @@ export default function FlightsScreen() {
                     </View>
                 )}
 
+                {errorMsg ? (
+                    <Text style={[styles.mainText, {textAlign: 'center', marginTop: 10}]}>{errorMsg}</Text>
+                ) : (
+                    <></>
+                )}
+
                 {filteredResults.slice(0, visibleFlights).map((flight, index) => {
                     const inCart = isInCart(flight);
+                    const inFavorites = isInFavorites(flight);
+                    const isRoundTrip = flight.isRoundtrip || false;
                     return (
                         <FlightCard
                             key={flight.id}
-                            price={flight.price}
+                            price={convertPrice(flight.price)}
                             flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
                             depCity={flight.depCity.title}
                             depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
@@ -383,15 +472,32 @@ export default function FlightsScreen() {
                             arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
                             airlinesTitle={flight.provider.supplier.title}
                             airlinesImg={airlinesImg}
+                            backDepTime={isRoundTrip ? flight.back_ticket?.depTime : undefined}
+                            backDepDate={isRoundTrip ? flight.back_ticket?.depDate : undefined}
+                            backDepAirport={isRoundTrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}
+                            backDepCity={isRoundTrip ? flight.back_ticket?.depCity.title : undefined}
+                            backArriveTime={isRoundTrip ? flight.back_ticket?.arriveTime : undefined}
+                            backArriveDate={isRoundTrip ? flight.back_ticket?.arriveDate : undefined}
+                            backArriveAirport={isRoundTrip ? `${flight.back_ticket?.arriveAirport.title}, ${flight.back_ticket?.arriveAirport.code}` : undefined}
+                            backArriveCity={isRoundTrip ? flight.back_ticket?.arriveCity.title : undefined}
+                            backFlightTime={isRoundTrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
+                            isRoundTrip={isRoundTrip}
                             btnText={inCart ? "Remove from cart" : "Add to cart"}
                             onPress={() => inCart ? removeFromCart(flight) : addToCart(flight)}
+                            favouriteIconPress={() => toggleFavorite(flight)}
+                            favouriteIconColor={inFavorites ? 'black' : 'white'}
                             onCartScreen={false}
+                            showFavIcon={true}
                         />
                     );
                 })}
 
-                {visibleFlights < flightResults.length && (
-                    <TouchableOpacity activeOpacity={0.8} style={[styles.showMoreBtn, {paddingVertical: 18}]} onPress={handleShowMore}>
+                {visibleFlights < filteredResults.length && (
+                    <TouchableOpacity
+                        activeOpacity={0.8}
+                        style={[styles.showMoreBtn, {paddingVertical: 18}]}
+                        onPress={handleShowMore}
+                    >
                         <Text style={styles.btnText}>Show more</Text>
                     </TouchableOpacity>
                 )}

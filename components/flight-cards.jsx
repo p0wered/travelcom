@@ -1,8 +1,11 @@
 import {Image, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {FavoriteIcon} from "./icons/favorite-icon";
 
 export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalCity, depAirport, arrivalAirport,
                                flightTime, depTime, arrivalTime, depDate, arrivalDate, btnText, onPress, onCartScreen,
-                               onCheckoutPress, checkoutBtnText})
+                               onCheckoutPress, checkoutBtnText, showFavIcon, favouriteIconPress, favouriteIconColor,
+                               isRoundTrip, backDepTime, backDepDate, backArriveTime, backArriveDate, backDepAirport,
+                               backArriveAirport, backDepCity, backArriveCity, backFlightTime})
 {
     let btnShow;
     btnText === undefined ? btnShow = false : btnShow = true;
@@ -13,7 +16,7 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                 <View>
                     <View style={{marginBottom: 10}}>
                         <Text style={styles.mainText}>{depCity} - {arrivalCity}</Text>
-                        <Text style={styles.greyText}>{flightTime} on the way</Text>
+                        <Text style={[styles.greyText, {marginTop: 5}]}>{flightTime} on the way there</Text>
                     </View>
                     <View style={styles.textMerger}>
                         <Image style={styles.airlinesImg} source={airlinesImg}/>
@@ -21,7 +24,7 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                     </View>
                 </View>
                 <View>
-                    <Text style={styles.largeText}>{price} ₽</Text>
+                    <Text style={styles.largeText}>{price} €</Text>
                 </View>
             </View>
             <View style={styles.cardBlock}>
@@ -48,9 +51,44 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                     </View>
                 </View>
             </View>
+            {isRoundTrip ? (
+                <>
+                    <View style={styles.separator}/>
+                    <Text style={[styles.greyText, {paddingHorizontal: 18, marginBottom: 8}]}>{backFlightTime} on the way back</Text>
+                    <View style={styles.cardBlock}>
+                        <View style={{display: 'flex', flexDirection: 'row'}}>
+                            <View style={{marginRight: 26}}>
+                                <View style={{marginBottom: 16}}>
+                                    <Text style={[styles.mainText, {fontSize: 13}]}>{backDepTime}</Text>
+                                    <Text style={styles.greyText}>{backDepDate}</Text>
+                                </View>
+                                <View>
+                                    <Text style={[styles.mainText, {fontSize: 13}]}>{backArriveTime}</Text>
+                                    <Text style={styles.greyText}>{backArriveDate}</Text>
+                                </View>
+                            </View>
+                            <View>
+                                <View style={{marginBottom: 16}}>
+                                    <Text style={[styles.mainText, {fontSize: 13}]}>{backDepCity}</Text>
+                                    <Text style={styles.greyText}>{backDepAirport}</Text>
+                                </View>
+                                <View>
+                                    <Text style={[styles.mainText, {fontSize: 13}]}>{backArriveCity}</Text>
+                                    <Text style={styles.greyText}>{backArriveAirport}</Text>
+                                </View>
+                            </View>
+                        </View>
+                    </View>
+                </>
+            ) : (
+                <></>
+            )}
             <View style={styles.chooseBtnWrap}>
+                <TouchableOpacity style={[styles.favouriteBtn, showFavIcon ? {display: 'flex'} : {display: 'none'}]} onPress={favouriteIconPress}>
+                    <FavoriteIcon color={favouriteIconColor} stroke='black'/>
+                </TouchableOpacity>
                 <TouchableOpacity
-                    style={[styles.chooseBtn, btnShow ? {display: 'flex'} : {display: 'none'}, onCartScreen ? {width: '48%'} : {width: '100%'}]}
+                    style={[styles.chooseBtn, btnShow ? {display: 'flex'} : {display: 'none'}, onCartScreen ? {width: '48%'} : {width: '83%'}]}
                     activeOpacity={0.8}
                     onPress={onPress}
                 >
@@ -154,10 +192,21 @@ const styles = StyleSheet.create({
     chooseBtnWrap: {
         display: 'flex',
         flexDirection: 'row-reverse',
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
         alignItems: 'center',
         marginTop: 16,
         paddingHorizontal: 16,
-        gap: 10
+        gap: 6
+    },
+    favouriteBtn: {
+        paddingHorizontal: 4,
+        paddingVertical: 10
+    },
+    separator: {
+        height: 1,
+        marginTop: 18,
+        marginBottom: 10,
+        marginHorizontal: 18,
+        backgroundColor: '#e5e5e5'
     }
 });

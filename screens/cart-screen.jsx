@@ -5,6 +5,7 @@ import {FlightCard} from "../components/flight-cards";
 import airlinesImg from '../assets/airlines.png'
 import {useFocusEffect} from "@react-navigation/native";
 import {Footer} from "../components/footer";
+import {convertPrice} from "./flights-screen";
 
 const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList}) => {
     const [formDataList, setFormDataList] = useState(initialFormDataList || [{
@@ -166,7 +167,7 @@ export default function CartScreen({navigation}) {
 
     const calculateTotalPrice = (flight) => {
         const count = personCounts[flight.id] || 1;
-        return flight.price * count;
+        return convertPrice(flight.price) * count;
     };
 
     const loadCartItems = useCallback(async () => {
@@ -299,40 +300,52 @@ export default function CartScreen({navigation}) {
         <ScrollView style={{padding: 15}}>
             <View>
                 <Text style={styles.titleText}>Shopping cart</Text>
-                {cartItems.length === 0 ? (
-                    <Text style={[styles.mainText, {paddingBottom: 100}]}>Your cart is empty</Text>
-                ) : (
-                    cartItems.map((flight, index) => (
-                        <View key={flight.id || index}>
-                            <FlightCard
-                                price={calculateTotalPrice(flight)}
-                                flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
-                                depCity={flight.depCity.title}
-                                depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
-                                depTime={flight.depTime}
-                                depDate={flight.depDate}
-                                arrivalCity={flight.arriveCity.title}
-                                arrivalTime={flight.arriveTime}
-                                arrivalDate={flight.arriveDate}
-                                arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
-                                airlinesTitle={flight.provider.supplier.title}
-                                airlinesImg={airlinesImg}
-                                btnText="Remove"
-                                onPress={() => removeFromCart(flight.id)}
-                                onCartScreen={true}
-                                onCheckoutPress={() => handleCheckout(flight.id)}
-                                checkoutBtnText={expandedCardId === flight.id ? "Hide Checkout" : "Checkout"}
-                            />
-                            {expandedCardId === flight.id && (
-                                <CheckoutForm
-                                    onSubmit={(formData) => handlePayment(flight.id, formData)}
-                                    onPersonCountChange={(count, formDataList) => handlePersonCountChange(flight.id, count, formDataList)}
-                                    initialFormDataList={formDataLists[flight.id]}
+                {
+                    cartItems.length === 0 ? (
+                        <Text style={[styles.mainText, {paddingBottom: 100}]}>Your cart is empty</Text>
+                    ) : (
+                        cartItems.map((flight, index) => (
+                            <View key={flight.id || index}>
+                                <FlightCard
+                                    price={calculateTotalPrice(flight)}
+                                    flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
+                                    depCity={flight.depCity.title}
+                                    depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
+                                    depTime={flight.depTime}
+                                    depDate={flight.depDate}
+                                    arrivalCity={flight.arriveCity.title}
+                                    arrivalTime={flight.arriveTime}
+                                    arrivalDate={flight.arriveDate}
+                                    arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
+                                    airlinesTitle={flight.provider.supplier.title}
+                                    airlinesImg={airlinesImg}
+                                    backDepTime={flight.isRoundtrip ? flight.back_ticket?.depTime : undefined}
+                                    backDepDate={flight.isRoundtrip ? flight.back_ticket?.depDate : undefined}
+                                    backDepAirport={flight.isRoundtrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}
+                                    backDepCity={flight.isRoundtrip ? flight.back_ticket?.depCity.title : undefined}
+                                    backArriveTime={flight.isRoundtrip ? flight.back_ticket?.arriveTime : undefined}
+                                    backArriveDate={flight.isRoundtrip ? flight.back_ticket?.arriveDate : undefined}
+                                    backArriveAirport={flight.isRoundtrip ? `${flight.back_ticket?.arriveAirport.title}, ${flight.back_ticket?.arriveAirport.code}` : undefined}
+                                    backArriveCity={flight.isRoundtrip ? flight.back_ticket?.arriveCity.title : undefined}
+                                    backFlightTime={flight.isRoundtrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
+                                    isRoundTrip={flight.isRoundtrip}
+                                    btnText="Remove"
+                                    onPress={() => removeFromCart(flight.id)}
+                                    onCartScreen={true}
+                                    onCheckoutPress={() => handleCheckout(flight.id)}
+                                    checkoutBtnText={expandedCardId === flight.id ? "Hide Checkout" : "Checkout"}
+                                    showFavIcon={false}
                                 />
-                            )}
-                        </View>
-                    ))
-                )}
+                                {expandedCardId === flight.id && (
+                                    <CheckoutForm
+                                        onSubmit={(formData) => handlePayment(flight.id, formData)}
+                                        onPersonCountChange={(count, formDataList) => handlePersonCountChange(flight.id, count, formDataList)}
+                                        initialFormDataList={formDataLists[flight.id]}
+                                    />
+                                )}
+                            </View>
+                        ))
+                    )}
             </View>
             <Footer/>
         </ScrollView>

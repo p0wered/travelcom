@@ -35,7 +35,7 @@ export default function OrdersScreen(){
         try {
             const token = await AsyncStorage.getItem('@token');
             if (!token) {
-                setError('Токен не найден. Пожалуйста, войдите в аккаунт.');
+                setError('Please log in');
                 setLoading(false);
                 return;
             }
@@ -49,7 +49,7 @@ export default function OrdersScreen(){
             });
 
             if (!response.ok) {
-                throw new Error('Не удалось получить данные о заказах');
+                throw new Error('Couldn\'t get orders');
             }
 
             const data = await response.json();
@@ -124,6 +124,7 @@ export default function OrdersScreen(){
                     depDate={flightData.depDate}
                     arrivalDate={flightData.arriveDate}
                     onCartScreen={false}
+                    showFavIcon={false}
                 />
                 <View style={styles.clientsContainer}>
                     <Text style={styles.mainText}>Created at:</Text>

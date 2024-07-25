@@ -2,7 +2,6 @@ import {
     FlatList,
     Image,
     ImageBackground,
-    Pressable,
     ScrollView,
     StyleSheet,
     Text, TouchableOpacity,
@@ -186,13 +185,13 @@ function BlogList({navigation}) {
                     />
                 ))}
             </ScrollView>
-            <View style={{display: 'flex', alignItems: 'center'}}>
+            <View style={{display: 'flex', alignItems: 'center', paddingHorizontal: 10}}>
                 <TouchableOpacity
                     activeOpacity={0.8}
-                    style={[styles.mainBtn, {backgroundColor: 'white'}]}
+                    style={[styles.mainBtn, {backgroundColor: 'white', width: '100%'}]}
                     onPress={() => navigation.navigate('News')}
                 >
-                    <Text style={[styles.mainText, {color: '#207FBF', width: 140, textAlign: 'center'}]}>Know more</Text>
+                    <Text style={[styles.mainText, {color: '#207FBF', textAlign: 'center'}]}>Know more</Text>
                 </TouchableOpacity>
             </View>
         </View>

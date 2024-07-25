@@ -7,6 +7,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import {ChatSendIcon} from "../components/icons/chat-send-icon";
 import {PaperclipIcon} from "../components/icons/paperclip-icon";
 import {useNavigation} from "@react-navigation/native";
+import axios from "axios";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MAX_IMAGE_WIDTH = SCREEN_WIDTH * 0.7;
@@ -84,10 +85,18 @@ export default function ChatScreen({navigation}){
             allowsEditing: true,
             aspect: [4, 3],
             quality: 1,
+            base64: true,
         });
 
         if (!result.canceled) {
-            await sendFile(result.assets[0], 'image');
+            const asset = result.assets[0];
+            const formData = new FormData();
+            formData.append('image', {
+                uri: asset.uri,
+                type: asset.mimeType || 'image/jpeg',
+                name: asset.fileName || 'image.jpg',
+            });
+            sendFile(formData);
         }
     };
 
@@ -98,70 +107,24 @@ export default function ChatScreen({navigation}){
         });
 
         if (result.type === 'success') {
-            await sendFile(result, 'document');
+            const formData = new FormData();
+            formData.append('document', {
+                uri: result.uri,
+                type: result.mimeType,
+                name: result.name,
+            });
+            sendFile(formData);
         }
     };
 
-    const sendFile = async (file, type) => {
-        if (!userData || !userToken || !chatId) {
-            console.error('Missing required data:', { userData, userToken, chatId });
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('chat_id', chatId);
-        formData.append('user_id', userData.id);
-
-        if (type === 'image') {
-            formData.append('file', {
-                uri: file.uri,
-                type: 'image/jpeg',
-                name: 'image.jpg',
-            });
-        } else {
-            formData.append('file', {
-                uri: file.uri,
-                type: file.mimeType,
-                name: file.name,
-            });
-        }
-
-        console.log('Sending file with formData:', JSON.stringify(formData));
-
+    const sendFile = async (formData) => {
         try {
-            console.log('Sending POST request to:', 'https://travelcom.online/api/chat/send_message');
-            console.log('Headers:', {
-                'Authorization': `Bearer ${userToken}`,
-                'Content-Type': 'multipart/form-data',
-            });
-
-            const response = await fetch('https://travelcom.online/api/chat/send_message', {
-                method: 'POST',
+            const response = await axios.post('https://travelcom.online/api/chat/send_message', formData, {
                 headers: {
-                    'Authorization': `Bearer ${userToken}`,
                     'Content-Type': 'multipart/form-data',
                 },
-                body: formData,
             });
-
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Error response:', errorText);
-                throw new Error(`Failed to send file: ${response.status} ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            console.log('Response data:', data);
-
-            if (data && data.message) {
-                setMessages(prevMessages => [...prevMessages, data.message]);
-                flatListRef.current?.scrollToEnd({animated: true});
-            } else {
-                console.warn('Unexpected response format:', data);
-            }
+            console.log(response.data);
         } catch (error) {
             console.error('Error sending file:', error);
         }

@@ -1,143 +1,146 @@
-import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
-import {useState} from "react";
-import {FlightCard} from "../components/flight-cards";
+import {Alert, ScrollView, StyleSheet, Text, View} from "react-native";
 import {Footer} from "../components/footer";
-import {RoomItem} from "../components/room-item";
-import {FlightDirection} from "../components/flight-direction-item";
+import {FlightCard} from "../components/flight-cards";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {useFocusEffect} from "@react-navigation/native";
+import {useCallback, useState} from "react";
 import airlinesImg from '../assets/airlines.png';
+import {convertPrice} from "./flights-screen";
 
 export default function FavouritesScreen() {
-    const [selectedType, setSelectedType] = useState('All');
-    const types = ['All', 'Flights', 'Hotels'];
+    const [favoriteItems, setFavoriteItems] = useState([]);
+    const [cartItems, setCartItems] = useState([]);
+    const [userId, setUserId] = useState(null);
 
-    const renderContent = () => {
-        switch (selectedType) {
-            case 'Flights':
-                return (
-                    <>
-                        <FlightCard
-                            price={200}
-                            flightTime='5h, 20min'
-                            depCity='London'
-                            depAirport='Luton Airport, LTN'
-                            depTime='11:10'
-                            depDate='2/03/2024'
-                            arrivalCity='Paris'
-                            arrivalTime='16:30'
-                            arrivalDate='2/03/2024'
-                            arrivalAirport='Paris Airport, CGA'
-                            airlinesTitle='Aegean Airlines'
-                            airlinesImg={airlinesImg}
-                            btnShown={true}
-                        />
-                        <FlightDirection
-                            image={require('../assets/country-image.png')}
-                            direction='London - Paris'
-                        />
-                    </>
-                );
-            case 'Hotels':
-                return (
-                    <>
-                        <RoomItem
-                            image={require('../assets/hotels/room-image-2.png')}
-                            name='Hotel Alane'
-                            price='1700'
-                            fromCenter='8.1'
-                            reviewsScore='4.5'
-                            reviewsAmount='84'
-                            hotelStars='3'
-                        />
-                        <RoomItem
-                            image={require('../assets/hotels/room-image-6.png')}
-                            name='Hotel Rapture'
-                            price='1700'
-                            fromCenter='13.9'
-                            reviewsScore='3.9'
-                            reviewsAmount='5'
-                            hotelStars='2'
-                        />
-                    </>
-                );
-            case 'All':
-                return (
-                    <>
-                        <FlightDirection
-                            image={require('../assets/country-image.png')}
-                            direction='London - Paris'
-                        />
-                        <RoomItem
-                            image={require('../assets/hotels/room-image-2.png')}
-                            name='Hotel Alane'
-                            price='1700'
-                            fromCenter='8.1'
-                            reviewsScore='4.5'
-                            reviewsAmount='84'
-                            hotelStars='3'
-                        />
-                        <FlightCard
-                            price={200}
-                            flightTime='5h, 20min'
-                            depCity='London'
-                            depAirport='Luton Airport, LTN'
-                            depTime='11:10'
-                            depDate='2/03/2024'
-                            arrivalCity='Paris'
-                            arrivalTime='16:30'
-                            arrivalDate='2/03/2024'
-                            arrivalAirport='Paris Airport, CGA'
-                            airlinesTitle='Aegean Airlines'
-                            airlinesImg={airlinesImg}
-                            btnShown={true}
-                        />
-                        <RoomItem
-                            image={require('../assets/hotels/room-image-2.png')}
-                            name='Hotel Alane'
-                            price='1700'
-                            fromCenter='8.1'
-                            reviewsScore='4.5'
-                            reviewsAmount='84'
-                            hotelStars='3'
-                        />
-                    </>
-                );
-            case 'Awaiting payment':
-                return <Text style={styles.mainText}>There is nothing yet</Text>
-            default:
-                return null;
+    const loadFavoriteAndCartItems = useCallback(async () => {
+        try {
+            const userString = await AsyncStorage.getItem('@user');
+            if (userString) {
+                const user = JSON.parse(userString);
+                setUserId(user.id);
+                const favoriteKey = `@favorites_${user.id}`;
+                const cartKey = `@cart_${user.id}`;
+
+                const [favoriteString, cartString] = await Promise.all([
+                    AsyncStorage.getItem(favoriteKey),
+                    AsyncStorage.getItem(cartKey)
+                ]);
+
+                if (favoriteString) {
+                    const loadedFavorites = JSON.parse(favoriteString);
+                    setFavoriteItems(loadedFavorites);
+                } else {
+                    setFavoriteItems([]);
+                }
+
+                if (cartString) {
+                    const loadedCart = JSON.parse(cartString);
+                    setCartItems(loadedCart);
+                } else {
+                    setCartItems([]);
+                }
+            } else {
+                setFavoriteItems([]);
+                setCartItems([]);
+                setUserId(null);
+            }
+        } catch (error) {
+            console.error('Failed to load favorite and cart items', error);
+            setFavoriteItems([]);
+            setCartItems([]);
+            setUserId(null);
+        }
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadFavoriteAndCartItems();
+        }, [loadFavoriteAndCartItems])
+    );
+
+    const removeFromFavorites = async (flightId) => {
+        try {
+            const updatedFavorites = favoriteItems.filter(item => item.id !== flightId);
+            const favoriteKey = `@favorites_${userId}`;
+            await AsyncStorage.setItem(favoriteKey, JSON.stringify(updatedFavorites));
+            setFavoriteItems(updatedFavorites);
+        } catch (error) {
+            console.error('Failed to remove flight from favorites', error);
+            Alert.alert('Error', 'Failed to remove flight from favorites');
         }
     };
 
+    const toggleCart = async (flight) => {
+        if (!userId) {
+            Alert.alert('Error', 'Please log in to manage cart');
+            return;
+        }
+        try {
+            const cartKey = `@cart_${userId}`;
+            let updatedCart;
+            if (isInCart(flight)) {
+                updatedCart = cartItems.filter(item => item.id !== flight.id);
+            } else {
+                updatedCart = [...cartItems, flight];
+            }
+            await AsyncStorage.setItem(cartKey, JSON.stringify(updatedCart));
+            setCartItems(updatedCart);
+        } catch (error) {
+            console.error('Failed to update cart', error);
+            Alert.alert('Error', 'Failed to update cart');
+        }
+    };
+
+    const isInCart = (flight) => {
+        return cartItems.some(item => item.id === flight.id);
+    };
+
     return (
-        <ScrollView>
-            <View style={{padding: 15}}>
-                <Text style={styles.titleText}>Favourites</Text>
-                <View style={styles.buttonsContainer}>
-                    {types.map((type) => (
-                        <TouchableOpacity
-                            key={type}
-                            style={[
-                                styles.button,
-                                selectedType === type && styles.selectedButton,
-                            ]}
-                            onPress={() => setSelectedType(type)}
-                        >
-                            <Text
-                                style={[
-                                    styles.buttonText,
-                                    selectedType === type && styles.selectedButtonText,
-                                ]}
-                                numberOfLines={2}
-                                adjustsFontSizeToFit={true}
-                            >
-                                {type}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-                {renderContent()}
+        <ScrollView style={{padding: 15}}>
+            <View>
+                <Text style={styles.titleText}>Favorite Flights</Text>
+                {favoriteItems.length === 0 ? (
+                    <Text style={[styles.mainText, {paddingBottom: 100}]}>You have no favorite flights</Text>
+                ) : (
+                    favoriteItems.map((flight, index) => {
+                        const inCart = isInCart(flight);
+                        const isRoundTrip = flight.isRoundtrip || false;
+                        return (
+                            <FlightCard
+                                key={flight.id}
+                                price={convertPrice(flight.price)}
+                                flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
+                                depCity={flight.depCity.title}
+                                depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
+                                depTime={flight.depTime}
+                                depDate={flight.depDate}
+                                arrivalCity={flight.arriveCity.title}
+                                arrivalTime={flight.arriveTime}
+                                arrivalDate={flight.arriveDate}
+                                arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
+                                airlinesTitle={flight.provider.supplier.title}
+                                airlinesImg={airlinesImg}
+                                backDepTime={isRoundTrip ? flight.back_ticket?.depTime : undefined}
+                                backDepDate={isRoundTrip ? flight.back_ticket?.depDate : undefined}
+                                backDepAirport={isRoundTrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}
+                                backDepCity={isRoundTrip ? flight.back_ticket?.depCity.title : undefined}
+                                backArriveTime={isRoundTrip ? flight.back_ticket?.arriveTime : undefined}
+                                backArriveDate={isRoundTrip ? flight.back_ticket?.arriveDate : undefined}
+                                backArriveAirport={isRoundTrip ? `${flight.back_ticket?.arriveAirport.title}, ${flight.back_ticket?.arriveAirport.code}` : undefined}
+                                backArriveCity={isRoundTrip ? flight.back_ticket?.arriveCity.title : undefined}
+                                backFlightTime={isRoundTrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
+                                isRoundTrip={isRoundTrip}
+                                btnText={inCart ? "Remove from cart" : "Add to cart"}
+                                onPress={() => toggleCart(flight)}
+                                favouriteIconColor='black'
+                                favouriteIconPress={() => removeFromFavorites(flight.id)}
+                                showFavIcon={true}
+                            />
+                        );
+                    })
+                )}
             </View>
-            <Footer color='white'/>
+            <Footer/>
         </ScrollView>
     );
 }

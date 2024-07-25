@@ -7,7 +7,6 @@ import {
     Alert,
     ScrollView,
     Text,
-    Pressable,
     TouchableOpacity,
     ActivityIndicator
 } from 'react-native';
@@ -41,10 +40,18 @@ export default function ProfileScreen ({navigation}){
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
     const [errorMsg, setErrorMsg] = useState(undefined);
     const [isLoading, setIsLoading] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editableUser, setEditableUser] = useState(null);
 
     useEffect(() => {
         loadUserData();
     }, []);
+
+    useEffect(() => {
+        if (user) {
+            resetEditableUser();
+        }
+    }, [user]);
 
     const loadUserData = async () => {
         try {
@@ -56,8 +63,58 @@ export default function ProfileScreen ({navigation}){
             }
         } catch (e) {
             console.error('Failed to load user data', e);
+        } finally {
+            setIsLoading(false);
         }
     };
+
+    const resetEditableUser = () => {
+        setEditableUser({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone
+        });
+    };
+
+    const handleEdit = () => {
+        if (isEditing) {
+            resetEditableUser();
+        }
+        setIsEditing(!isEditing);
+    };
+
+    const handleSave = async () => {
+        try {
+            const response = await axios.post('https://travelcom.online/api/auth/edit-profile', editableUser, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.data.success) {
+                setUser(prev => ({ ...prev, ...editableUser }));
+                await AsyncStorage.setItem('@user', JSON.stringify({ ...user, ...editableUser }));
+                setIsEditing(false);
+            } else {
+                console.error('Failed to update profile');
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+        }
+    };
+
+    const handleChange = (field, value) => {
+        setEditableUser(prev => ({ ...prev, [field]: value }));
+    };
+
+    if (isLoading) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        );
+    }
 
     const saveUserData = async (userData, userToken) => {
         try {
@@ -210,23 +267,57 @@ export default function ProfileScreen ({navigation}){
         return (
             <ScrollView>
                 <View style={styles.profileBlock}>
-                    <View style={[styles.merger, styles.nameBlock]}>
-                        <View style={styles.merger}>
+                    <View style={styles.nameBlock}>
+                        <View style={[styles.merger, {gap: 10}]}>
                             <AvatarIcon/>
-                            <Text style={styles.mainText}>{user.name}</Text>
+                            {isEditing ? (
+                                <TextInput
+                                    style={[styles.editInput, {fontFamily: 'Montserrat-Bold'}]}
+                                    value={editableUser.name}
+                                    onChangeText={(value) => handleChange('name', value)}
+                                />
+                            ) : (
+                                <Text style={styles.mainText}>{user.name}</Text>
+                            )}
                         </View>
-                        <Pressable style={{padding: 10}}>
-                            <EditProfileIcon/>
-                        </Pressable>
+                        <TouchableOpacity style={{padding: 10}} onPress={handleEdit}>
+                            <EditProfileIcon />
+                        </TouchableOpacity>
                     </View>
                     <View style={{marginBottom: 18}}>
                         <Text style={styles.smallText}>Email</Text>
-                        <Text style={styles.regularText}>{user.email}</Text>
+                        {isEditing ? (
+                            <TextInput
+                                style={styles.editInput}
+                                value={editableUser.email}
+                                onChangeText={(value) => handleChange('email', value)}
+                            />
+                        ) : (
+                            <Text style={styles.regularText}>{user.email}</Text>
+                        )}
                     </View>
                     <View style={{marginBottom: 12}}>
                         <Text style={styles.smallText}>Phone number</Text>
-                        <Text style={styles.regularText}>{user.phone}</Text>
+                        {isEditing ? (
+                            <TextInput
+                                style={styles.editInput}
+                                value={editableUser.phone}
+                                onChangeText={(value) => handleChange('phone', value)}
+                            />
+                        ) : (
+                            <Text style={styles.regularText}>{user.phone}</Text>
+                        )}
                     </View>
+                    {isEditing && (
+                        <View style={{flexDirection: 'row', gap: 10}}>
+                            <TouchableOpacity style={styles.editBtn} onPress={handleEdit} >
+                                <Text style={styles.sendBtnText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.editBtn} onPress={handleSave} >
+                                <Text style={styles.sendBtnText}>Save</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
                 </View>
                 <View style={{padding: 15}}>
                     <View style={styles.profileMenu}>
@@ -532,7 +623,10 @@ const styles = StyleSheet.create({
     },
     nameBlock: {
         justifyContent: 'space-between',
-        marginBottom: 38
+        display: 'flex',
+        flexDirection: "row",
+        alignItems: 'center',
+        marginBottom: 18
     },
     profileMenu: {
         borderRadius: 14,
@@ -631,5 +725,28 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#c93333',
         textAlign: 'center'
+    },
+    editInput: {
+        fontSize: 14,
+        fontFamily: 'Montserrat-Regular',
+        height: 42,
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        backgroundColor: 'white',
+        marginTop: 5,
+        borderWidth: 1,
+        borderColor: '#207FBF'
+    },
+    editBtn: {
+        width: '48%',
+        borderRadius: 10,
+        paddingVertical: 14,
+        paddingHorizontal: 20,
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 20,
+        backgroundColor: '#207FBF'
     }
 });
