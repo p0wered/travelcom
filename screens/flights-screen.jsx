@@ -6,7 +6,6 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import airlinesImg from "../assets/airlines.png";
 import {SearchIcon} from "../components/icons/search-icon";
 import {FilterIcon} from "../components/icons/filter-icon";
 import {Footer} from "../components/footer";
@@ -23,11 +22,6 @@ import Arrow from "../components/icons/arrow-icon";
 import {DayIcon} from "../components/icons/day-icon";
 import {NightIcon} from "../components/icons/night-icon";
 import {CheckIcon} from "../components/icons/check-icon";
-
-export const convertPrice = (rubles) => {
-    const euros = rubles / 95.32;
-    return Math.round(euros);
-};
 
 export default function FlightsScreen() {
     const [airportFrom, setAirportFrom] = useState('');
@@ -54,6 +48,7 @@ export default function FlightsScreen() {
     const [maxPrice, setMaxPrice] = useState('');
     const [selectedAirlines, setSelectedAirlines] = useState([]);
     const [availableAirlines, setAvailableAirlines] = useState([]);
+    const [airlinesLogos, setAirlinesLogos] = useState([]);
     const [filteredResults, setFilteredResults] = useState([]);
     const [favoriteItems, setFavoriteItems] = useState([]);
     const [errorMsg, setErrorMsg] = useState(undefined);
@@ -274,12 +269,13 @@ export default function FlightsScreen() {
                     setVisibleFlights(12);
                     console.log('response:', JSON.stringify(response.data, null, 2));
                     const airlines = [...new Set(response.data.map(flight => flight.provider.supplier.title))];
+                    const logos = [...new Set(response.data.map(flight => flight.providerLogo))];
                     setAvailableAirlines(airlines);
-                    setErrorMsg(undefined);
+                    setAirlinesLogos(logos);
                 }
             } catch (error) {
                 if (error.response) {
-                    setErrorMsg(error.response.data.message || 'Error fetching flights');
+                    setErrorMsg(error.response.data.message);
                 } else if (error.request) {
                     setErrorMsg('No response from server');
                 } else {
@@ -313,48 +309,51 @@ export default function FlightsScreen() {
 
     return(
         <ScrollView>
-            <View style={styles.flightsInputForm}>
-                <AutoCompleteInput
-                    title='From'
-                    inputText={airportFrom}
-                    setInputText={setAirportFrom}
-                    suggestions={fromSuggestions}
-                    setSuggestions={setFromSuggestions}
-                />
-                <AutoCompleteInput
-                    title='Where'
-                    inputText={airportTo}
-                    setInputText={setAirportTo}
-                    suggestions={whereSuggestions}
-                    setSuggestions={setWhereSuggestions}
-                />
-                <RoundTripSelector roundTrip={roundTrip} setRoundTrip={setRoundTrip} setBackDate={setDateEnd}/>
-                <View style={styles.selector}>
-                    <View style={{marginVertical: 7}}>
-                        <DateInput date={dateStart} setDate={setDateStart}/>
+            <View style={{width: '100%', backgroundColor: 'white'}}>
+                <Text style={[styles.mainBlueText, {paddingHorizontal: 15, paddingTop: 15, backgroundColor: 'white'}]}>Search flights</Text>
+                <View style={styles.flightsInputForm}>
+                    <AutoCompleteInput
+                        title='From'
+                        inputText={airportFrom}
+                        setInputText={setAirportFrom}
+                        suggestions={fromSuggestions}
+                        setSuggestions={setFromSuggestions}
+                    />
+                    <AutoCompleteInput
+                        title='Where'
+                        inputText={airportTo}
+                        setInputText={setAirportTo}
+                        suggestions={whereSuggestions}
+                        setSuggestions={setWhereSuggestions}
+                    />
+                    <RoundTripSelector roundTrip={roundTrip} setRoundTrip={setRoundTrip} setBackDate={setDateEnd}/>
+                    <View style={styles.selector}>
+                        <View style={{marginVertical: 7}}>
+                            <DateInput inCheckout={false} date={dateStart} setDate={setDateStart}/>
+                        </View>
+                        <View style={[styles.separator, roundTrip ? {display: 'flex'} : {display: 'none'}]}/>
+                        <View style={[{marginVertical: 7}, roundTrip ? {display: 'flex'} : {display: 'none'}]}>
+                            <DateInput inCheckout={false} date={dateEnd} setDate={setDateEnd}/>
+                        </View>
                     </View>
-                    <View style={[styles.separator, roundTrip ? {display: 'flex'} : {display: 'none'}]}/>
-                    <View style={[{marginVertical: 7}, roundTrip ? {display: 'flex'} : {display: 'none'}]}>
-                        <DateInput date={dateEnd} setDate={setDateEnd}/>
+                    <PassengerDropdown passengers={passengers} setPassengers={setPassengers}/>
+                    <View style={styles.flexCenter}>
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            style={[styles.searchBtn, styles.flexCenter]}
+                            onPress={handleSearch}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <ActivityIndicator color="#ffffff" />
+                            ) : (
+                                <View style={[styles.flexCenter, {gap: 4}]}>
+                                    <SearchIcon/>
+                                    <Text style={styles.btnText}>Search</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
                     </View>
-                </View>
-                <PassengerDropdown passengers={passengers} setPassengers={setPassengers}/>
-                <View style={styles.flexCenter}>
-                    <TouchableOpacity
-                        activeOpacity={0.8}
-                        style={[styles.searchBtn, styles.flexCenter]}
-                        onPress={handleSearch}
-                        disabled={isLoading}
-                    >
-                        {isLoading ? (
-                            <ActivityIndicator color="#ffffff" />
-                        ) : (
-                            <View style={[styles.flexCenter, {gap: 4}]}>
-                                <SearchIcon/>
-                                <Text style={styles.btnText}>Search</Text>
-                            </View>
-                        )}
-                    </TouchableOpacity>
                 </View>
             </View>
             <View style={styles.flightsList}>
@@ -421,14 +420,14 @@ export default function FlightsScreen() {
                             <View>
                                 {
                                     availableAirlines.length > 0 ? (
-                                        availableAirlines.map(airline => (
+                                        availableAirlines.map((airline, index) => (
                                             <TouchableOpacity
                                                 style={styles.filtersFlexbox}
                                                 key={airline}
                                                 onPress={() => toggleAirline(airline)}
                                             >
                                                 <View style={styles.merger}>
-                                                    <Image source={airlinesImg} style={{width: 24, height: 24}}/>
+                                                    <Image source={{uri: airlinesLogos[index]}} style={{width: 28, height: 28, borderRadius: 100, borderWidth: 1, borderColor: '#d5d5d5'}}/>
                                                     <Text style={styles.mainText}>{airline}</Text>
                                                 </View>
                                                 <CheckIcon
@@ -447,50 +446,52 @@ export default function FlightsScreen() {
                     </View>
                 )}
 
-                {errorMsg ? (
-                    <Text style={[styles.mainText, {textAlign: 'center', marginTop: 10}]}>{errorMsg}</Text>
-                ) : (
-                    <></>
-                )}
-
                 {filteredResults.slice(0, visibleFlights).map((flight, index) => {
                     const inCart = isInCart(flight);
                     const inFavorites = isInFavorites(flight);
                     const isRoundTrip = flight.isRoundtrip || false;
                     return (
-                        <FlightCard
-                            key={flight.id}
-                            price={convertPrice(flight.price)}
-                            flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
-                            depCity={flight.depCity.title}
-                            depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
-                            depTime={flight.depTime}
-                            depDate={flight.depDate}
-                            arrivalCity={flight.arriveCity.title}
-                            arrivalTime={flight.arriveTime}
-                            arrivalDate={flight.arriveDate}
-                            arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
-                            airlinesTitle={flight.provider.supplier.title}
-                            airlinesImg={airlinesImg}
-                            backDepTime={isRoundTrip ? flight.back_ticket?.depTime : undefined}
-                            backDepDate={isRoundTrip ? flight.back_ticket?.depDate : undefined}
-                            backDepAirport={isRoundTrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}
-                            backDepCity={isRoundTrip ? flight.back_ticket?.depCity.title : undefined}
-                            backArriveTime={isRoundTrip ? flight.back_ticket?.arriveTime : undefined}
-                            backArriveDate={isRoundTrip ? flight.back_ticket?.arriveDate : undefined}
-                            backArriveAirport={isRoundTrip ? `${flight.back_ticket?.arriveAirport.title}, ${flight.back_ticket?.arriveAirport.code}` : undefined}
-                            backArriveCity={isRoundTrip ? flight.back_ticket?.arriveCity.title : undefined}
-                            backFlightTime={isRoundTrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
-                            isRoundTrip={isRoundTrip}
-                            btnText={inCart ? "Remove from cart" : "Add to cart"}
-                            onPress={() => inCart ? removeFromCart(flight) : addToCart(flight)}
-                            favouriteIconPress={() => toggleFavorite(flight)}
-                            favouriteIconColor={inFavorites ? 'black' : 'white'}
-                            onCartScreen={false}
-                            showFavIcon={true}
-                        />
+                        <>
+                            <FlightCard
+                                key={flight.id}
+                                price={flight.price}
+                                flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
+                                depCity={flight.depCity.title}
+                                depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
+                                depTime={flight.depTime}
+                                depDate={flight.depDate}
+                                arrivalCity={flight.arriveCity.title}
+                                arrivalTime={flight.arriveTime}
+                                arrivalDate={flight.arriveDate}
+                                arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
+                                airlinesTitle={flight.provider.supplier.title}
+                                airlinesImg={flight.providerLogo}
+                                backDepTime={isRoundTrip ? flight.back_ticket?.depTime : undefined}
+                                backDepDate={isRoundTrip ? flight.back_ticket?.depDate : undefined}
+                                backDepAirport={isRoundTrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}
+                                backDepCity={isRoundTrip ? flight.back_ticket?.depCity.title : undefined}
+                                backArriveTime={isRoundTrip ? flight.back_ticket?.arriveTime : undefined}
+                                backArriveDate={isRoundTrip ? flight.back_ticket?.arriveDate : undefined}
+                                backArriveAirport={isRoundTrip ? `${flight.back_ticket?.arriveAirport.title}, ${flight.back_ticket?.arriveAirport.code}` : undefined}
+                                backArriveCity={isRoundTrip ? flight.back_ticket?.arriveCity.title : undefined}
+                                backFlightTime={isRoundTrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
+                                isRoundTrip={isRoundTrip}
+                                btnText={inCart ? "Remove from cart" : "Add to cart"}
+                                onPress={() => inCart ? removeFromCart(flight) : addToCart(flight)}
+                                favouriteIconPress={() => toggleFavorite(flight)}
+                                favouriteIconColor={inFavorites ? 'black' : 'white'}
+                                onCartScreen={false}
+                                showFavIcon={true}
+                            />
+                        </>
                     );
                 })}
+
+                {errorMsg ? (
+                    <Text style={[styles.mainText, {textAlign: 'center', color: '#cd3737', marginTop: 10}]}>{errorMsg}</Text>
+                ) : (
+                    <></>
+                )}
 
                 {visibleFlights < filteredResults.length && (
                     <TouchableOpacity
@@ -537,11 +538,10 @@ const styles = StyleSheet.create({
     },
     flightsInputForm : {
         position: "relative",
-        backgroundColor: 'white',
         padding: 15,
         display: 'flex',
         flexDirection: 'column',
-        gap: 15
+        gap: 15,
     },
     flexCenter: {
         display: 'flex',

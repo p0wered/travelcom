@@ -1,19 +1,12 @@
 import {
     FlatList,
     Pressable,
-    ScrollView,
     StyleSheet,
     Text,
-    TextInput,
-    TouchableOpacity,
     View
 } from "react-native";
-import ArrowActive from "../components/icons/arrow-icon-active";
 import {StarIcon} from "../components/icons/star-icon";
 import {useEffect, useState} from "react";
-import {SearchIcon} from "../components/icons/search-icon";
-import {FilterIcon} from "../components/icons/filter-icon";
-import {Footer} from "../components/footer";
 import {RoomItem} from "../components/room-item";
 import Logo from "../components/icons/logo";
 
@@ -90,7 +83,7 @@ export default function HotelsScreen() {
                 }
                 return prevDots + '.';
             });
-        }, 300);
+        }, 700);
 
         return () => clearInterval(interval);
     }, []);

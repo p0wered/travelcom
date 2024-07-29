@@ -4,8 +4,6 @@ import {FlightCard} from "../components/flight-cards";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {useFocusEffect} from "@react-navigation/native";
 import {useCallback, useState} from "react";
-import airlinesImg from '../assets/airlines.png';
-import {convertPrice} from "./flights-screen";
 
 export default function FavouritesScreen() {
     const [favoriteItems, setFavoriteItems] = useState([]);
@@ -108,7 +106,7 @@ export default function FavouritesScreen() {
                         return (
                             <FlightCard
                                 key={flight.id}
-                                price={convertPrice(flight.price)}
+                                price={flight.price}
                                 flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
                                 depCity={flight.depCity.title}
                                 depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
@@ -119,7 +117,7 @@ export default function FavouritesScreen() {
                                 arrivalDate={flight.arriveDate}
                                 arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
                                 airlinesTitle={flight.provider.supplier.title}
-                                airlinesImg={airlinesImg}
+                                airlinesImg={flight.providerLogo}
                                 backDepTime={isRoundTrip ? flight.back_ticket?.depTime : undefined}
                                 backDepDate={isRoundTrip ? flight.back_ticket?.depDate : undefined}
                                 backDepAirport={isRoundTrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}

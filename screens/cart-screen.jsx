@@ -2,17 +2,16 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {Text, ScrollView, Alert, StyleSheet, View, TouchableOpacity, TextInput, Linking} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {FlightCard} from "../components/flight-cards";
-import airlinesImg from '../assets/airlines.png'
 import {useFocusEffect} from "@react-navigation/native";
 import {Footer} from "../components/footer";
-import {convertPrice} from "./flights-screen";
+import {DateInput} from "../components/input-date";
 
 const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList}) => {
     const [formDataList, setFormDataList] = useState(initialFormDataList || [{
         firstName: '',
         lastName: '',
         middleName: '',
-        birthDate: '',
+        birthDate: null,
         gender: '',
         passport: '',
     }]);
@@ -35,7 +34,7 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList}) => {
             firstName: '',
             lastName: '',
             middleName: '',
-            birthDate: '',
+            birthDate: null,
             gender: '',
             passport: '',
         }];
@@ -55,7 +54,11 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList}) => {
         for (let i = 0; i < formDataList.length; i++) {
             const person = formDataList[i];
             for (const key in person) {
-                if (person[key].trim() === '') {
+                if (key === 'birthDate' && person[key] === null) {
+                    setError(`Please select a birth date for Person ${i + 1}`);
+                    return false;
+                }
+                if (key !== 'birthDate' && person[key].trim() === '') {
                     setError(`Please fill in all fields for Person ${i + 1}`);
                     return false;
                 }
@@ -84,7 +87,6 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList}) => {
                                 </TouchableOpacity>
                             ) : (<></>)
                         }
-
                     </View>
                     <TextInput
                         style={styles.input}
@@ -109,15 +111,14 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList}) => {
                         onChangeText={(text) => handleChange(index, 'middleName', text)}
                         autoComplete='name-middle'
                     />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Birth Date (DD.MM.YYYY)"
-                        placeholderTextColor="#bebebe"
-                        value={formData.birthDate}
-                        onChangeText={(text) => handleChange(index, 'birthDate', text)}
-                        keyboardType='numbers-and-punctuation'
-                        autoComplete='birthdate-full'
-                    />
+                    <View style={[styles.input, {justifyContent: 'center'}]}>
+                        <DateInput
+                            inCheckout={true}
+                            placeholder='Birthday'
+                            date={formData.birthDate}
+                            setDate={(date) => handleChange(index, 'birthDate', date)}
+                        />
+                    </View>
                     <TextInput
                         style={styles.input}
                         placeholder="Gender"
@@ -167,7 +168,7 @@ export default function CartScreen({navigation}) {
 
     const calculateTotalPrice = (flight) => {
         const count = personCounts[flight.id] || 1;
-        return convertPrice(flight.price) * count;
+        return flight.price * count;
     };
 
     const loadCartItems = useCallback(async () => {
@@ -318,7 +319,7 @@ export default function CartScreen({navigation}) {
                                     arrivalDate={flight.arriveDate}
                                     arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
                                     airlinesTitle={flight.provider.supplier.title}
-                                    airlinesImg={airlinesImg}
+                                    airlinesImg={flight.providerLogo}
                                     backDepTime={flight.isRoundtrip ? flight.back_ticket?.depTime : undefined}
                                     backDepDate={flight.isRoundtrip ? flight.back_ticket?.depDate : undefined}
                                     backDepAirport={flight.isRoundtrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}
@@ -386,7 +387,7 @@ const styles = StyleSheet.create({
     input: {
         fontSize: 14,
         fontFamily: 'Montserrat-Regular',
-        height: 42,
+        height: 46,
         borderRadius: 10,
         paddingHorizontal: 20,
         backgroundColor: 'white',

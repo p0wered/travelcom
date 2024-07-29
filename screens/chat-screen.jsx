@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Dimensions, Linking, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Pusher from 'pusher-js/react-native';
+import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import {ChatSendIcon} from "../components/icons/chat-send-icon";
@@ -83,19 +84,23 @@ export default function ChatScreen({navigation}){
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
-            aspect: [4, 3],
             quality: 1,
-            base64: true,
         });
 
-        if (!result.canceled) {
+        if (!result.canceled && result.assets && result.assets.length > 0) {
             const asset = result.assets[0];
-            const formData = new FormData();
-            formData.append('image', {
+            const fileName = asset.uri.split('/').pop();
+            const fileExtension = fileName.split('.').pop();
+            const fileInfo = await FileSystem.getInfoAsync(asset.uri);
+
+            const file = {
                 uri: asset.uri,
-                type: asset.mimeType || 'image/jpeg',
-                name: asset.fileName || 'image.jpg',
-            });
+                name: fileName,
+                type: `image/${fileExtension}`,
+            };
+
+            let formData = new FormData();
+            formData.append('image', file);
             sendFile(formData);
         }
     };
@@ -105,22 +110,18 @@ export default function ChatScreen({navigation}){
             type: '*/*',
             copyToCacheDirectory: true,
         });
-
-        if (result.type === 'success') {
-            const formData = new FormData();
-            formData.append('document', {
-                uri: result.uri,
-                type: result.mimeType,
-                name: result.name,
-            });
-            sendFile(formData);
-        }
+        console.log(result);
+        let documentData = new FormData();
+        documentData.append('image', result.output[0]);
+        console.log(documentData);
+        sendFile(documentData);
     };
 
     const sendFile = async (formData) => {
         try {
             const response = await axios.post('https://travelcom.online/api/chat/send_message', formData, {
                 headers: {
+                    'Authorization': `Bearer ${userToken}`,
                     'Content-Type': 'multipart/form-data',
                 },
             });
@@ -430,7 +431,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff'
     },
     pickerOption: {
-        width: '50%',
+        width: '48%',
         padding: 10,
         borderRadius: 10,
         borderColor: '#207FBF',

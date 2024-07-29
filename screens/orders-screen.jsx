@@ -1,8 +1,7 @@
-import {ActivityIndicator, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {ActivityIndicator, FlatList, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import React, {useEffect, useState} from "react";
 import {FlightCard} from "../components/flight-cards";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import AirlinesImg from '../assets/airlines.png';
 import {Footer} from "../components/footer";
 
 
@@ -57,8 +56,8 @@ export default function OrdersScreen(){
                 ...order,
                 item: JSON.parse(order.item)
             }));
-            console.log(data)
             setOrders(parsedOrders);
+            console.log(parsedOrders)
         } catch (err) {
             setError(err.message);
         } finally {
@@ -73,7 +72,7 @@ export default function OrdersScreen(){
                     {`${clientData.lastName} ${clientData.firstName} ${clientData.middleName}`}
                 </Text>
                 <Text style={styles.clientInfoText}>
-                    {`Full Birthday: ${clientData.birthDate}`}
+                    {`Birthday: ${formatDate(clientData.birthDate).slice(0, 10)}`}
                 </Text>
                 <Text style={styles.clientInfoText}>
                     {`Gender: ${clientData.gender}`}
@@ -92,17 +91,23 @@ export default function OrdersScreen(){
             month: '2-digit',
             day: '2-digit',
             hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
+            minute: '2-digit'
         });
     }
 
     const renderFlightCard = ({ item }) => {
         const flightData = item.item;
+        const isRoundTrip = flightData.isRoundtrip || false;
         if (!flightData) {
             console.error('Flight data is undefined for item:', item);
             return null;
         }
+
+        const handlePayPress = () => {
+            if (item.payment_link) {
+                Linking.openURL(item.payment_link).catch(err => console.error("Couldn't open payment link", err));
+            }
+        };
 
         const clientsData = Object.keys(flightData)
             .filter(key => !isNaN(parseInt(key)))
@@ -111,18 +116,29 @@ export default function OrdersScreen(){
         return (
             <View style={styles.orderContainer}>
                 <FlightCard
-                    price={flightData.price}
-                    airlinesTitle={flightData.provider?.supplier?.title}
-                    airlinesImg={AirlinesImg}
-                    depCity={flightData.depCity?.title}
-                    arrivalCity={flightData.arriveCity?.title}
-                    depAirport={flightData.depAirport?.title}
-                    arrivalAirport={flightData.arriveAirport?.title}
-                    flightTime={`${flightData.duration?.flight?.hour || 0}h ${flightData.duration?.flight?.minute || 0}m`}
+                    key={flightData.id}
+                    price={flightData.price * clientsData.length}
+                    flightTime={`${flightData.duration.flight.hour}h, ${flightData.duration.flight.minute}min`}
+                    depCity={flightData.depCity.title}
+                    depAirport={`${flightData.depAirport.title}, ${flightData.depAirport.code}`}
                     depTime={flightData.depTime}
-                    arrivalTime={flightData.arriveTime}
                     depDate={flightData.depDate}
+                    arrivalCity={flightData.arriveCity.title}
+                    arrivalTime={flightData.arriveTime}
                     arrivalDate={flightData.arriveDate}
+                    arrivalAirport={`${flightData.arriveAirport.title}, ${flightData.arriveAirport.code}`}
+                    airlinesTitle={flightData.provider.supplier.title}
+                    airlinesImg={flightData.providerLogo}
+                    backDepTime={isRoundTrip ? flightData.back_ticket?.depTime : undefined}
+                    backDepDate={isRoundTrip ? flightData.back_ticket?.depDate : undefined}
+                    backDepAirport={isRoundTrip ? `${flightData.back_ticket?.depAirport.title}, ${flightData.back_ticket?.depAirport.code}` : undefined}
+                    backDepCity={isRoundTrip ? flightData.back_ticket?.depCity.title : undefined}
+                    backArriveTime={isRoundTrip ? flightData.back_ticket?.arriveTime : undefined}
+                    backArriveDate={isRoundTrip ? flightData.back_ticket?.arriveDate : undefined}
+                    backArriveAirport={isRoundTrip ? `${flightData.back_ticket?.arriveAirport.title}, ${flightData.back_ticket?.arriveAirport.code}` : undefined}
+                    backArriveCity={isRoundTrip ? flightData.back_ticket?.arriveCity.title : undefined}
+                    backFlightTime={isRoundTrip ? `${flightData.back_ticket?.duration.flight.hour}h, ${flightData.back_ticket?.duration.flight.minute}min` : undefined}
+                    isRoundTrip={isRoundTrip}
                     onCartScreen={false}
                     showFavIcon={false}
                 />
@@ -137,6 +153,15 @@ export default function OrdersScreen(){
                             </View>
                         </View>
                     ))}
+                </View>
+                <View style={{paddingHorizontal: 15, paddingBottom: 15}}>
+                    <TouchableOpacity
+                        style={styles.chooseBtn}
+                        activeOpacity={0.8}
+                        onPress={handlePayPress}
+                    >
+                        <Text style={styles.btnText}>Pay</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
         );
@@ -230,5 +255,12 @@ const styles = StyleSheet.create({
         fontFamily: 'Montserrat-Bold',
         color: 'white',
         textAlign: 'center'
+    },
+    chooseBtn: {
+        width: '100%',
+        paddingHorizontal: 25,
+        paddingVertical: 14,
+        borderRadius: 10,
+        backgroundColor: '#207FBF'
     },
 });

@@ -112,7 +112,7 @@ function DirectionsList({navigation}) {
                 renderItem={({ item }) => <DirectionItem item={item} />}
                 keyExtractor={item => item.id.toString()}
             />
-            <TouchableOpacity activeOpacity={0.8} style={styles.mainBtn} onPress={() => navigation.navigate('News')}>
+            <TouchableOpacity activeOpacity={0.8} style={[styles.mainBtn, {width: '100%', maxWidth: 500, margin: 'auto'}]} onPress={() => navigation.navigate('News')}>
                 <Text style={[styles.mainText, {width: 140, textAlign: 'center'}]}>Know more</Text>
             </TouchableOpacity>
         </View>
@@ -142,6 +142,17 @@ function BlogList({navigation}) {
         return processedText;
     };
 
+    const formatDesc = (item) => {
+        if (item.text.length > 100) {
+            return processText(item.text.slice(0,110) + '...')
+        } else {
+            return processText(item.text.slice(0,110))
+        }
+    }
+
+    const firstGroup = news.slice(0, 3);
+    const secondGroup = news.slice(3, 6);
+
     return (
         <View style={styles.blogFlexbox}>
             <View style={{display: 'flex', alignItems: 'center'}}>
@@ -149,46 +160,33 @@ function BlogList({navigation}) {
                     <Text style={[styles.mainText, {color: '#207FBF'}]}>A BLOG FOR INSPIRATION</Text>
                 </View>
             </View>
-            <ScrollView
-                horizontal={true}
-                showsHorizontalScrollIndicator={false}
-                style={{marginBottom: 18 , marginTop: 24}}
-            >
-                {news.map((item) => (
-                    <BlogItem
-                        key={item.id}
-                        item={item}
-                        title={processText(item.name).toUpperCase()}
-                        desc={processText(item.text).slice(0, 100) + '...'}
-                        date={new Date(item.created_at).toLocaleDateString()}
-                        textColor='white'
-                        img={{ uri: `https://travelcom.online/storage/${item.mainImage}` }}
-                        navigation={navigation}
-                    />
-                ))}
-            </ScrollView>
-            <ScrollView
-                horizontal={true}
-                showsHorizontalScrollIndicator={false}
-                style={{marginBottom: 18 , marginTop: 24}}
-            >
-                {news.map((item) => (
-                    <BlogItem
-                        key={item.id}
-                        item={item}
-                        title={processText(item.name).toUpperCase()}
-                        desc={processText(item.text).slice(0, 100) + '...'}
-                        date={new Date(item.created_at).toLocaleDateString()}
-                        textColor='white'
-                        img={{ uri: `https://travelcom.online/storage/${item.mainImage}` }}
-                        navigation={navigation}
-                    />
-                ))}
-            </ScrollView>
+            {[firstGroup, secondGroup].map((group, groupIndex) => (
+                group.length > 0 && (
+                    <ScrollView
+                        key={groupIndex}
+                        horizontal={true}
+                        showsHorizontalScrollIndicator={false}
+                        style={{marginBottom: 18 , marginTop: 24, paddingRight: 12}}
+                    >
+                        {group.map((item) => (
+                            <BlogItem
+                                key={item.id}
+                                item={item}
+                                title={processText(item.name).toUpperCase()}
+                                desc={formatDesc(item)}
+                                date={new Date(item.created_at).toLocaleDateString()}
+                                textColor='white'
+                                img={{ uri: `https://travelcom.online/storage/${item.mainImage}` }}
+                                navigation={navigation}
+                            />
+                        ))}
+                    </ScrollView>
+                )
+            ))}
             <View style={{display: 'flex', alignItems: 'center', paddingHorizontal: 10}}>
                 <TouchableOpacity
                     activeOpacity={0.8}
-                    style={[styles.mainBtn, {backgroundColor: 'white', width: '100%'}]}
+                    style={[styles.mainBtn, {backgroundColor: 'white', width: '100%', maxWidth: 500}]}
                     onPress={() => navigation.navigate('News')}
                 >
                     <Text style={[styles.mainText, {color: '#207FBF', textAlign: 'center'}]}>Know more</Text>
@@ -239,6 +237,7 @@ const styles = StyleSheet.create({
         marginTop: 70,
         marginBottom: 70,
         textAlign: 'center',
+        maxWidth: 500
     },
     mainBtn: {
         padding: 15,
@@ -266,11 +265,13 @@ const styles = StyleSheet.create({
     },
     directionItem: {
         width: '100%',
+        maxWidth: 500,
         height: 222,
         borderRadius: 10,
         overflow: "hidden",
         marginBottom: 15,
-        position: 'relative'
+        position: 'relative',
+        margin: 'auto',
     },
     directionInner: {
         display: 'flex',

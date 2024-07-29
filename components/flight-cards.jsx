@@ -19,7 +19,7 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                         <Text style={[styles.greyText, {marginTop: 5}]}>{flightTime} on the way there</Text>
                     </View>
                     <View style={styles.textMerger}>
-                        <Image style={styles.airlinesImg} source={airlinesImg}/>
+                        <Image style={styles.airlinesImg} source={{uri: airlinesImg}}/>
                         <Text style={styles.smallText}>{airlinesTitle}</Text>
                     </View>
                 </View>
@@ -115,7 +115,6 @@ const styles = StyleSheet.create({
     largeText: {
         fontSize: 24,
         fontFamily: 'Montserrat-Bold',
-        marginBottom: 14,
         textAlign: 'right'
     },
     smallText: {
@@ -165,9 +164,11 @@ const styles = StyleSheet.create({
         marginBottom: 15
     },
     airlinesImg: {
-        width: 18,
-        height: 18,
-        borderRadius: 100
+        width: 26,
+        height: 26,
+        borderRadius: 100,
+        borderWidth: 1,
+        borderColor: '#d6d6d6'
     },
     textMerger: {
         display: 'flex',
@@ -180,7 +181,9 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingHorizontal: 18
+        paddingHorizontal: 18,
+        flexWrap: 'wrap',
+        gap: 10
     },
     chooseBtn: {
         width: '48%',

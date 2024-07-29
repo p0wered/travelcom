@@ -45,7 +45,7 @@ export function AccordionItem({ title, content }) {
         <Animated.View style={[
             styles.accordionItem,
             isExpanded && styles.accordionItemActive,
-            { height: maxHeight }
+            {height: maxHeight, maxWidth: 500, marginHorizontal: 'auto'},
         ]}>
             <Pressable onPress={toggleAccordion}>
                 <View
@@ -57,15 +57,11 @@ export function AccordionItem({ title, content }) {
                 >
                     <Text style={[styles.mainText, { color: isExpanded ? 'white' : '#207FBF' }]}>{title}</Text>
                     <View style={styles.arrowContainer}>
-                        <Animated.View style={[styles.arrowWrapper, { opacity: animatedOpacity }]}>
-                            <ArrowActive color='white' />
-                        </Animated.View>
-                        <Animated.View style={[styles.arrowWrapper, { opacity: animatedOpacity.interpolate({
-                                inputRange: [0, 1],
-                                outputRange: [1, 0],
-                            }) }]}>
-                            <Arrow color={isExpanded ? 'white' : '#207FBF'} />
-                        </Animated.View>
+                        {isExpanded ? (
+                                <ArrowActive color='white'/>
+                            ) : (
+                                <Arrow color='white'/>
+                            )}
                     </View>
                 </View>
             </Pressable>
