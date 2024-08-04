@@ -1,21 +1,32 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {Text, ScrollView, Alert, StyleSheet, View, TouchableOpacity, TextInput, Linking} from 'react-native';
+import {
+    Text,
+    ScrollView,
+    Alert,
+    StyleSheet,
+    View,
+    TouchableOpacity,
+    TextInput,
+    Linking,
+    ActivityIndicator, Platform
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {FlightCard} from "../components/flight-cards";
 import {useFocusEffect} from "@react-navigation/native";
 import {Footer} from "../components/footer";
 import {DateInput} from "../components/input-date";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
-const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList}) => {
-    const [formDataList, setFormDataList] = useState(initialFormDataList || [{
+const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initialPassengerCount}) => {
+    const [formDataList, setFormDataList] = useState(initialFormDataList || Array(initialPassengerCount).fill({
         firstName: '',
         lastName: '',
         middleName: '',
         birthDate: null,
         gender: '',
         passport: '',
-    }]);
-    const [personCount, setPersonCount] = useState(initialFormDataList ? initialFormDataList.length : 1);
+    }));
+    const [personCount, setPersonCount] = useState(initialPassengerCount);
     const [error, setError] = useState('');
 
     const handleChange = (index, name, value) => {
@@ -54,7 +65,7 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList}) => {
         for (let i = 0; i < formDataList.length; i++) {
             const person = formDataList[i];
             for (const key in person) {
-                if (key === 'birthDate' && person[key] === null) {
+                if (key === 'birthDate' && (person[key] === null || person[key] === '')) {
                     setError(`Please select a birth date for Person ${i + 1}`);
                     return false;
                 }
@@ -81,11 +92,11 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList}) => {
                     <View style={styles.personHeaderContainer}>
                         <Text style={[styles.mainText]}>Person {index + 1}</Text>
                         {
-                            index !== 0 ? (
+                            index !== 0 && (
                                 <TouchableOpacity onPress={() => removePerson(index)} style={styles.removePersonBtn}>
                                     <Text style={styles.removePersonBtnText}>x</Text>
                                 </TouchableOpacity>
-                            ) : (<></>)
+                            )
                         }
                     </View>
                     <TextInput
@@ -114,7 +125,7 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList}) => {
                     <View style={[styles.input, {justifyContent: 'center'}]}>
                         <DateInput
                             inCheckout={true}
-                            placeholder='Birthday'
+                            placeholder='Birth Date'
                             date={formData.birthDate}
                             setDate={(date) => handleChange(index, 'birthDate', date)}
                         />
@@ -152,8 +163,9 @@ export default function CartScreen({navigation}) {
     const [cartItems, setCartItems] = useState([]);
     const [userId, setUserId] = useState(null);
     const [expandedCardId, setExpandedCardId] = useState(null);
-    const [personCounts, setPersonCounts] = useState({});
     const [formDataLists, setFormDataLists] = useState({});
+    const [personCounts, setPersonCounts] = useState({});
+    const [loading, setLoading] = useState(true);
 
     const handlePersonCountChange = (flightId, count, formDataList) => {
         setPersonCounts(prevCounts => ({
@@ -167,8 +179,7 @@ export default function CartScreen({navigation}) {
     };
 
     const calculateTotalPrice = (flight) => {
-        const count = personCounts[flight.id] || 1;
-        return flight.price * count;
+        return flight.price * flight.passengers;
     };
 
     const loadCartItems = useCallback(async () => {
@@ -196,6 +207,7 @@ export default function CartScreen({navigation}) {
             console.error('Failed to load cart items', error);
             setCartItems([]);
         }
+        setLoading(false);
     }, []);
 
     useFocusEffect(
@@ -220,16 +232,21 @@ export default function CartScreen({navigation}) {
     const handleCheckout = (flightId) => {
         setExpandedCardId(expandedCardId === flightId ? null : flightId);
         if (!formDataLists[flightId]) {
+            const flight = cartItems.find(item => item.id === flightId);
             setFormDataLists(prevLists => ({
                 ...prevLists,
-                [flightId]: [{
+                [flightId]: Array(flight.passengers).fill({
                     firstName: '',
                     lastName: '',
                     middleName: '',
                     birthDate: '',
                     gender: '',
                     passport: '',
-                }]
+                })
+            }));
+            setPersonCounts(prevCounts => ({
+                ...prevCounts,
+                [flightId]: flight.passengers
             }));
         }
     };
@@ -245,6 +262,7 @@ export default function CartScreen({navigation}) {
         const itemString = JSON.stringify({ ...flight, ...formData, totalPrice });
         const payloadData = {
             item: itemString,
+            person: formData,
             price: totalPrice,
         };
         console.log('Payload data:', JSON.stringify(payloadData, null, 2));
@@ -297,6 +315,14 @@ export default function CartScreen({navigation}) {
         }
     };
 
+    if (loading) {
+        return (
+            <View style={styles.centered}>
+                <ActivityIndicator size="large" color="#207FBF" />
+            </View>
+        );
+    }
+
     return (
         <ScrollView style={{padding: 15}}>
             <View>
@@ -308,7 +334,7 @@ export default function CartScreen({navigation}) {
                         cartItems.map((flight, index) => (
                             <View key={flight.id || index}>
                                 <FlightCard
-                                    price={calculateTotalPrice(flight)}
+                                    price={flight.price}
                                     flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
                                     depCity={flight.depCity.title}
                                     depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
@@ -336,12 +362,14 @@ export default function CartScreen({navigation}) {
                                     onCheckoutPress={() => handleCheckout(flight.id)}
                                     checkoutBtnText={expandedCardId === flight.id ? "Hide Checkout" : "Checkout"}
                                     showFavIcon={false}
+                                    personCount={flight.passengers}
                                 />
                                 {expandedCardId === flight.id && (
                                     <CheckoutForm
                                         onSubmit={(formData) => handlePayment(flight.id, formData)}
                                         onPersonCountChange={(count, formDataList) => handlePersonCountChange(flight.id, count, formDataList)}
                                         initialFormDataList={formDataLists[flight.id]}
+                                        initialPassengerCount={flight.passengers}
                                     />
                                 )}
                             </View>
@@ -436,5 +464,10 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#c93333',
         textAlign: 'center'
-    }
+    },
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
 })

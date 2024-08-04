@@ -39,9 +39,11 @@ export default function ProfileScreen ({navigation}){
     const [token, setToken] = useState(null);
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
     const [errorMsg, setErrorMsg] = useState(undefined);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [editableUser, setEditableUser] = useState(null);
+    const [lastRecoverySent, setLastRecoverySent] = useState(0);
+    const RECOVERY_COOLDOWN = 60000;
 
     useEffect(() => {
         loadUserData();
@@ -63,9 +65,8 @@ export default function ProfileScreen ({navigation}){
             }
         } catch (e) {
             console.error('Failed to load user data', e);
-        } finally {
-            setIsLoading(false);
         }
+        setIsLoading(false);
     };
 
     const resetEditableUser = () => {
@@ -111,7 +112,7 @@ export default function ProfileScreen ({navigation}){
     if (isLoading) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#0000ff" />
+                <ActivityIndicator size="large" color="#207fbf" />
             </View>
         );
     }
@@ -152,16 +153,17 @@ export default function ProfileScreen ({navigation}){
                 console.log('Server response:', response.data);
 
                 if (response.data.success && response.data.user) {
-                    setUser(response.data.user);
-                    setToken(response.data.success.token);
-                    await saveUserData(response.data.user, response.data.success.token);
+                    if (!isLogin) {
+                        setRegistrationSuccess(true);
+                    } else {
+                        setUser(response.data.user);
+                        setToken(response.data.success.token);
+                        await saveUserData(response.data.user, response.data.success.token);
+                    }
                     setErrorMsg(undefined);
                 } else {
                     console.log('User data or token not found in response');
                     Alert.alert('Error', 'User data or token not found in response');
-                }
-                if (!isLogin) {
-                    setRegistrationSuccess(true);
                 }
             } catch (error) {
                 console.error('Error response:', error.response?.data);
@@ -190,28 +192,53 @@ export default function ProfileScreen ({navigation}){
     };
 
     const handlePasswordRecovery = async () => {
+        const now = Date.now();
+        if (now - lastRecoverySent < RECOVERY_COOLDOWN) {
+            const remainingTime = Math.ceil((RECOVERY_COOLDOWN - (now - lastRecoverySent)) / 1000);
+            setErrorMsg('You can request only one recovery link per minute. Please wait.')
+            return;
+        }
         setIsLoading(true);
-        try {
-            const response = await axios({
-                method: 'post',
-                url: 'https://travelcom.online/api/auth/recover',
-                data: { email },
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (response.data.success) {
-                Alert.alert('Success', 'Check your email');
-                setIsForgotPassword(false);
-                setEmail('');
-            } else {
-                setErrorMsg('Failed to send recovery email. Please try again.');
+        if (email === '' ||  email === undefined || email === null){
+            setErrorMsg('Please enter a valid email address');
+        } else {
+            try {
+                const response = await axios({
+                    method: 'post',
+                    url: 'https://travelcom.online/api/auth/recover',
+                    data: { email },
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                });
+                if (response.status === 200) {
+                    Alert.alert('Success', 'Check your email');
+                    setIsForgotPassword(false);
+                    setEmail('');
+                    setLastRecoverySent(now);
+                    setErrorMsg(undefined)
+                } else {
+                    setErrorMsg('Failed to send recovery email. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                if (error.response) {
+                    console.error('Error response:', error.response.data);
+                    console.error('Error status:', error.response.status);
+                    if (error.response.status === 404) {
+                        setErrorMsg('Email not found. Please check your email address.')
+                    } else if (error.response.status === 429) {
+                        setErrorMsg('Too many requests. Please try again later.')
+                    } else {
+                        setErrorMsg('An error occurred. Please try again.');
+                    }
+                } else if (error.request) {
+                    setErrorMsg('No response from server. Please check your internet connection.');
+                } else {
+                    setErrorMsg('An unexpected error occurred. Please try again.');
+                }
             }
-        } catch (error) {
-            console.error('Error response:', error.response?.data);
-            setErrorMsg('An error occurred. Please try again.');
         }
         setIsLoading(false);
     };
@@ -260,6 +287,23 @@ export default function ProfileScreen ({navigation}){
         setEmail('');
         setErrorMsg(undefined);
         setIsForgotPassword(true);
+    }
+
+    // user successfully registered
+    if (registrationSuccess) {
+        return (
+            <View style={[styles.container, {backgroundColor: 'white'}]}>
+                <Text style={styles.regTitle}>Check your email box</Text>
+                <Text style={styles.textReg}>We've sent you a verification email. Please check your inbox and verify your account.</Text>
+                <TouchableOpacity onPress={resetForm}>
+                    <Text
+                        style={[styles.mainText, {color: '#207FBF', marginTop: 10, textAlign: 'center'}]}
+                    >
+                        Back to Login
+                    </Text>
+                </TouchableOpacity>
+            </View>
+        );
     }
 
     // user logged in, show profile
@@ -368,17 +412,6 @@ export default function ProfileScreen ({navigation}){
                 <Footer color='white'/>
             </ScrollView>
         )
-    }
-
-    // user successfully registered
-    if (registrationSuccess) {
-        return (
-            <View style={[styles.container, {backgroundColor: 'white'}]}>
-                <Text style={styles.title}>Check your email box</Text>
-                <Text style={styles.text}>We've sent you a verification email. Please check your inbox and verify your account.</Text>
-                <Button title="Back to Login" onPress={resetForm} />
-            </View>
-        );
     }
 
     // user not logged in, show log in
@@ -748,5 +781,17 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         marginTop: 20,
         backgroundColor: '#207FBF'
-    }
+    },
+    regTitle: {
+        fontSize: 24,
+        fontFamily: 'Montserrat-Bold',
+        textAlign: 'center',
+        marginBottom: 10
+    },
+    textReg: {
+        fontSize: 16,
+        fontFamily: 'Montserrat-Regular',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
 });

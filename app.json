@@ -13,7 +13,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "travelcom"
+      "bundleIdentifier": "travelcom",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {

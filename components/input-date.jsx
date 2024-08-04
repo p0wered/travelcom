@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import {View, TextInput, TouchableOpacity} from 'react-native';
+import { View, TextInput, TouchableOpacity, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-export const DateInput = ({date, setDate, placeholder, inCheckout}) => {
+export const DateInput = ({ date, setDate, placeholder, inCheckout }) => {
     const [showDatePicker, setShowDatePicker] = useState(false);
 
-    const handleDatePicker = (event, selectedDate) => {
+    const handleDateChange = (event, selectedDate) => {
         const currentDate = selectedDate || date;
-        setShowDatePicker(false);
+        if (Platform.OS === 'android') {
+            setShowDatePicker(false);
+        }
         setDate(currentDate);
     };
 
@@ -30,12 +32,17 @@ export const DateInput = ({date, setDate, placeholder, inCheckout}) => {
                     editable={false}
                 />
             </TouchableOpacity>
-            {showDatePicker && (
+            {(showDatePicker || Platform.OS === 'ios') && (
                 <DateTimePicker
                     value={date || new Date()}
                     mode="date"
-                    display="default"
-                    onChange={handleDatePicker}
+                    display="calendar"
+                    onChange={handleDateChange}
+                    accentColor="#207fbf"
+                    themeVariant="light"
+                    style={!inCheckout ?
+                        {position: 'absolute', right: -20, top: -8, opacity: 0.015} :
+                        {position: 'absolute', left: -26, top: -9, opacity: 0.015}}
                 />
             )}
         </View>

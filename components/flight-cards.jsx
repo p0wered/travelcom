@@ -5,7 +5,7 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                                flightTime, depTime, arrivalTime, depDate, arrivalDate, btnText, onPress, onCartScreen,
                                onCheckoutPress, checkoutBtnText, showFavIcon, favouriteIconPress, favouriteIconColor,
                                isRoundTrip, backDepTime, backDepDate, backArriveTime, backArriveDate, backDepAirport,
-                               backArriveAirport, backDepCity, backArriveCity, backFlightTime})
+                               backArriveAirport, backDepCity, backArriveCity, backFlightTime, personCount})
 {
     let btnShow;
     btnText === undefined ? btnShow = false : btnShow = true;
@@ -15,7 +15,7 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
             <View style={[styles.cardBlock, {marginBottom: 16}]}>
                 <View>
                     <View style={{marginBottom: 10}}>
-                        <Text style={styles.mainText}>{depCity} - {arrivalCity}</Text>
+                        <Text style={[styles.mainText, {fontSize: 14}]}>{depCity} - {arrivalCity}</Text>
                         <Text style={[styles.greyText, {marginTop: 5}]}>{flightTime} on the way there</Text>
                     </View>
                     <View style={styles.textMerger}>
@@ -83,6 +83,11 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
             ) : (
                 <></>
             )}
+            {personCount !== undefined ? (
+                <View style={{paddingHorizontal: 18, marginTop: 12}}>
+                    <Text style={[styles.greyText, {fontSize: 14}]}>{`For ${personCount} ${personCount === 1 ? 'person' : 'persons'}`}</Text>
+                </View>
+            ) : (<></>)}
             <View style={styles.chooseBtnWrap}>
                 <TouchableOpacity style={[styles.favouriteBtn, showFavIcon ? {display: 'flex'} : {display: 'none'}]} onPress={favouriteIconPress}>
                     <FavoriteIcon color={favouriteIconColor} stroke='black'/>
@@ -113,7 +118,7 @@ const styles = StyleSheet.create({
         color: 'black'
     },
     largeText: {
-        fontSize: 24,
+        fontSize: 22,
         fontFamily: 'Montserrat-Bold',
         textAlign: 'right'
     },

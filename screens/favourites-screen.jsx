@@ -1,14 +1,20 @@
-import {Alert, ScrollView, StyleSheet, Text, View} from "react-native";
+import {ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View} from "react-native";
 import {Footer} from "../components/footer";
 import {FlightCard} from "../components/flight-cards";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {useFocusEffect} from "@react-navigation/native";
-import {useCallback, useState} from "react";
+import React, {useCallback, useState} from "react";
 
 export default function FavouritesScreen() {
     const [favoriteItems, setFavoriteItems] = useState([]);
     const [cartItems, setCartItems] = useState([]);
     const [userId, setUserId] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [passengers, setPassengers] = useState({
+        adults: 1,
+        children: 0,
+        infants: 0,
+    });
 
     const loadFavoriteAndCartItems = useCallback(async () => {
         try {
@@ -48,6 +54,7 @@ export default function FavouritesScreen() {
             setCartItems([]);
             setUserId(null);
         }
+        setLoading(false);
     }, []);
 
     useFocusEffect(
@@ -79,7 +86,16 @@ export default function FavouritesScreen() {
             if (isInCart(flight)) {
                 updatedCart = cartItems.filter(item => item.id !== flight.id);
             } else {
-                updatedCart = [...cartItems, flight];
+                const totalPassengers = passengers.adults + passengers.children;
+                const flightWithPassengers = {
+                    ...flight,
+                    passengers: totalPassengers,
+                    passengerDetails: {
+                        adults: passengers.adults,
+                        children: passengers.children
+                    }
+                };
+                updatedCart = [...cartItems, flightWithPassengers];
             }
             await AsyncStorage.setItem(cartKey, JSON.stringify(updatedCart));
             setCartItems(updatedCart);
@@ -92,6 +108,14 @@ export default function FavouritesScreen() {
     const isInCart = (flight) => {
         return cartItems.some(item => item.id === flight.id);
     };
+
+    if (loading) {
+        return (
+            <View style={styles.centered}>
+                <ActivityIndicator size="large" color="#207FBF" />
+            </View>
+        );
+    }
 
     return (
         <ScrollView style={{padding: 15}}>
@@ -184,5 +208,10 @@ const styles = StyleSheet.create({
         fontFamily: 'Montserrat-Regular',
         fontSize: 15,
         color: 'black'
+    },
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 })

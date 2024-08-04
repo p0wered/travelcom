@@ -29,7 +29,7 @@ export function NewsItemScreen({ route }) {
             <View style={styles.newsContainer}>
                 <View style={styles.image}>
                     <Image
-                        source={{ uri: `https://travelcom.online/storage/${newsItem.mainImage}` }}
+                        source={{uri: newsItem.mainImage}}
                         style={{width: '100%', height: 222, borderRadius: 10}}
                     />
                 </View>
@@ -56,7 +56,7 @@ export function NewsItemScreen({ route }) {
                         {imagesArray.map((image, index) => (
                             <Image
                                 key={index}
-                                source={{ uri: `https://travelcom.online/storage/${image}` }}
+                                source={{uri: image}}
                                 style={styles.scrollImage}
                             />
                         ))}

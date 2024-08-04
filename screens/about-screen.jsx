@@ -2,14 +2,31 @@ import {ScrollView, Text, View, StyleSheet, Image, TouchableOpacity, Linking} fr
 import {AddressIcon} from "../components/icons/address-icon";
 import MailIcon from "../components/icons/mail-icon";
 import {Footer} from "../components/footer";
+import axios from "axios";
+import {useEffect, useState} from "react";
 
 export default function AboutScreen() {
+    const [image, setImage] = useState(null);
+
+    const fetchImage = async () => {
+        try {
+            const response = await axios.get("https://travelcom.online/api/images/get");
+            setImage(response.data.about_page_1);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    useEffect(() => {
+        fetchImage();
+    }, []);
+
     return(
         <ScrollView>
             <View style={styles.aboutFlexbox}>
                 <Text style={styles.titleText}>About the company</Text>
                 <View style={{width: '100%'}}>
-                    <Image style={styles.aboutImage} source={require('../assets/about-image-1.png')}/>
+                    <Image style={styles.aboutImage} source={{uri: image}}/>
                 </View>
                 <Text style={styles.aboutText}>
                     Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.

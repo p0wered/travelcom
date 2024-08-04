@@ -3,12 +3,11 @@ import ArrowActive from "./icons/arrow-icon-active";
 import Arrow from "./icons/arrow-icon";
 import {useEffect, useRef, useState} from "react";
 
-export function AccordionItem({ title, content }) {
+export function AccordionItem({title, content}) {
     const [isExpanded, setIsExpanded] = useState(false);
     const [headerHeight, setHeaderHeight] = useState(0);
     const [contentHeight, setContentHeight] = useState(0);
     const animatedHeight = useRef(new Animated.Value(0)).current;
-    const animatedOpacity = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -22,18 +21,11 @@ export function AccordionItem({ title, content }) {
 
     const toggleAccordion = () => {
         setIsExpanded(!isExpanded);
-        Animated.parallel([
-            Animated.timing(animatedHeight, {
-                toValue: isExpanded ? 0 : 1,
-                duration: 150,
-                useNativeDriver: false,
-            }),
-            Animated.timing(animatedOpacity, {
-                toValue: isExpanded ? 0 : 1,
-                duration: 200,
-                useNativeDriver: true,
-            })
-        ]).start();
+        Animated.timing(animatedHeight, {
+            toValue: isExpanded ? 0 : 1,
+            duration: 150,
+            useNativeDriver: false,
+        }).start();
     };
 
     const maxHeight = animatedHeight.interpolate({
@@ -45,7 +37,7 @@ export function AccordionItem({ title, content }) {
         <Animated.View style={[
             styles.accordionItem,
             isExpanded && styles.accordionItemActive,
-            {height: maxHeight, maxWidth: 500, marginHorizontal: 'auto'},
+            {height: maxHeight, width: '100%', maxWidth: 500, marginHorizontal: 'auto'},
         ]}>
             <Pressable onPress={toggleAccordion}>
                 <View
@@ -58,39 +50,36 @@ export function AccordionItem({ title, content }) {
                     <Text style={[styles.mainText, { color: isExpanded ? 'white' : '#207FBF' }]}>{title}</Text>
                     <View style={styles.arrowContainer}>
                         {isExpanded ? (
-                                <ArrowActive color='white'/>
-                            ) : (
-                                <Arrow color='white'/>
-                            )}
+                            <ArrowActive color='white'/>
+                        ) : (
+                            <Arrow color='white'/>
+                        )}
                     </View>
                 </View>
             </Pressable>
-            <View style={{ height: isExpanded ? 'auto' : 0, overflow: 'hidden' }}>
-                <View
-                    onLayout={(event) => {
-                        const { height } = event.nativeEvent.layout;
-                        setContentHeight(height);
-                    }}
-                >
-                    <View style={styles.separatorAccordion} />
-                    <Text style={{color: isExpanded ? 'white' : '#207FBF', padding: 15}}>{content}</Text>
-                </View>
+            <View style={{height: isExpanded ? 'auto' : 0, overflow: 'hidden'}}>
+                {isExpanded && (
+                    <View
+                        onLayout={(event) => {
+                            const { height } = event.nativeEvent.layout;
+                            setContentHeight(height);
+                        }}
+                    >
+                        <View style={styles.separatorAccordion} />
+                        <Text style={{color: 'white', padding: 15}}>{content}</Text>
+                    </View>
+                )}
             </View>
         </Animated.View>
     );
 }
 
-export function generateAccordionItems(faqTitles) {
-    return faqTitles.map((title, index) => (
+export function generateAccordionItems(faqData) {
+    return faqData.map((item) => (
         <AccordionItem
-            key={index}
-            title={title}
-            content='Lorem ipsum dolor sit amet, consectetuer adipiscing elit.
-            Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque
-            penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-            Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem.
-            Nulla consequat massa quis enim. Donec pede justo, fringilla vel,
-            aliquet nec, vulputate eget. '
+            key={item.id}
+            title={item.title}
+            content={item.answer}
         />
     ));
 }
@@ -127,6 +116,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        gap: 5,
         margin: 15
     },
     separatorAccordion: {

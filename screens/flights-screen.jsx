@@ -1,5 +1,5 @@
 import {
-    ActivityIndicator, Alert, Image,
+    ActivityIndicator, Alert, Image, Platform,
     ScrollView,
     StyleSheet,
     Text, TextInput,
@@ -186,7 +186,16 @@ export default function FlightsScreen() {
         }
         try {
             const cartKey = `@cart_${userId}`;
-            const updatedCart = [...cartItems, flight];
+            const totalPassengers = passengers.adults + passengers.children;
+            const flightWithPassengers = {
+                ...flight,
+                passengers: totalPassengers,
+                passengerDetails: {
+                    adults: passengers.adults,
+                    children: passengers.children
+                }
+            };
+            const updatedCart = [...cartItems, flightWithPassengers];
             await AsyncStorage.setItem(cartKey, JSON.stringify(updatedCart));
             setCartItems(updatedCart);
         } catch (error) {
@@ -293,7 +302,6 @@ export default function FlightsScreen() {
 
     const getAirportCode = (fullAirportName) => {
         if (!fullAirportName || fullAirportName.length < 3) {
-            console.warn(`Неверный формат названия аэропорта: "${fullAirportName}"`);
             return '';
         }
         return fullAirportName.slice(0, 3).toUpperCase();
@@ -327,11 +335,11 @@ export default function FlightsScreen() {
                         setSuggestions={setWhereSuggestions}
                     />
                     <RoundTripSelector roundTrip={roundTrip} setRoundTrip={setRoundTrip} setBackDate={setDateEnd}/>
-                    <View style={styles.selector}>
+                    <View style={[styles.selector, Platform.OS === 'ios' ? styles.selectorIOS : styles.selectorAndroid]}>
                         <View style={{marginVertical: 7}}>
                             <DateInput inCheckout={false} date={dateStart} setDate={setDateStart}/>
                         </View>
-                        <View style={[styles.separator, roundTrip ? {display: 'flex'} : {display: 'none'}]}/>
+                        <View style={[styles.separator, roundTrip ? {display: 'flex'} : {display: 'none'}, Platform.OS === 'ios' ? {marginRight: -10} : {marginRight: 0}]}/>
                         <View style={[{marginVertical: 7}, roundTrip ? {display: 'flex'} : {display: 'none'}]}>
                             <DateInput inCheckout={false} date={dateEnd} setDate={setDateEnd}/>
                         </View>
@@ -555,12 +563,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         overflow: "hidden",
         justifyContent: 'space-between',
-        height: 64,
         paddingHorizontal: 25,
+        height: 64,
         backgroundColor: 'white',
         borderWidth: 1,
         borderColor: '#207FBF',
         borderRadius: 10
+    },
+    selectorAndroid: {
+
+    },
+    selectorIOS: {
+
     },
     selectorText: {
         fontFamily: 'Montserrat-Bold',

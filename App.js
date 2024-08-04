@@ -11,7 +11,7 @@ import MenuIcon from "./components/icons/menu-icon";
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {Modal, StyleSheet, Text, Animated, TouchableOpacity, View, Dimensions, StatusBar} from "react-native";
+import {Modal, StyleSheet, Text, Animated, TouchableOpacity, View, Dimensions, StatusBar, Platform} from "react-native";
 import CloseIcon from "./components/icons/close-icon";
 import React from 'react';
 import {
@@ -117,11 +117,12 @@ function MainTabs(){
             fontWeight: 700,
             marginTop: 0,
         },
-        tabBarStyle: {height: 68},
+        tabBarStyle: Platform.OS === 'ios' ? {height: 88} : {height: 68},
         tabBarItemStyle: {height: 60},
         headerStyle: {
             backgroundColor: '#207FBF',
-            height: 60
+            height: Platform.OS === 'ios' ? 100 : 60,
+            borderBottomColor: '#1d73ae'
         },
         headerTintColor: 'white',
         headerTitle: '',
@@ -150,10 +151,6 @@ function MainTabs(){
                 <Tab.Screen name={'News'} component={NewsScreen} options={{tabBarButton: () => null}}/>
                 <Tab.Screen name={'About'} component={AboutScreen} options={{tabBarButton: () => null}}/>
                 <Tab.Screen name={'Contacts'} component={ContactsScreen} options={{tabBarButton: () => null}}/>
-                <Tab.Screen name={'Orders'} component={OrdersScreen} options={{tabBarButton: () => null}}/>
-                <Tab.Screen name={'Cart'} component={CartScreen} options={{tabBarButton: () => null}}/>
-                <Tab.Screen name={'Favourites'} component={FavouritesScreen} options={{tabBarButton: () => null}}/>
-                <Tab.Screen name={'Notifications'} component={NotificationScreen} options={{tabBarButton: () => null}}/>
             </Tab.Navigator>
             <Modal transparent={true} visible={menuVisible} onRequestClose={toggleMenu}>
                 <Animated.View style={[styles.modalOverlay, {opacity: fadeAnim}]}>
@@ -163,7 +160,11 @@ function MainTabs(){
                         onPress={toggleMenu}
                     />
                 </Animated.View>
-                <Animated.View style={[styles.menuContainer, {transform:[{translateX: slideAnim}]}]}>
+                <Animated.View style={[
+                    styles.menuContainer,
+                    Platform.OS === 'ios' ? {paddingTop: 40} : {paddingTop: 0},
+                    {transform: [{translateX: slideAnim}]}
+                ]}>
                     <TouchableOpacity style={styles.menuContent} activeOpacity={1}>
                         <View>
                             <View style={styles.closeBtn}>
@@ -223,12 +224,16 @@ function AppContent() {
             })}
         >
             <Stack.Screen name="MainTabs" component={MainTabs} options={{headerShown: false}}/>
-            <Stack.Screen name="Privacy"  component={PrivacyScreen}/>
-            <Stack.Screen name="Terms"  component={TermsScreen}/>
-            <Stack.Screen name="Refunds"  component={RefundsScreen}/>
-            <Stack.Screen name="FAQ"  component={FaqScreen}/>
-            <Stack.Screen name="NewsItem" component={NewsItemScreen} options={{headerTitle: 'Back'}}/>
-            <Stack.Screen name="DirectionItem" component={DirectionItemScreen} options={{headerTitle: 'Back'}}/>
+            <Stack.Screen name="Privacy"  component={PrivacyScreen} options={{headerBackTitle: 'Back'}}/>
+            <Stack.Screen name="Terms"  component={TermsScreen} options={{headerBackTitle: 'Back'}}/>
+            <Stack.Screen name="Refunds"  component={RefundsScreen} options={{headerBackTitle: 'Back'}}/>
+            <Stack.Screen name="FAQ"  component={FaqScreen} options={{headerBackTitle: 'Back'}}/>
+            <Stack.Screen name="NewsItem" component={NewsItemScreen} options={{headerBackTitle: 'Back'}}/>
+            <Stack.Screen name="DirectionItem" component={DirectionItemScreen} options={{headerBackTitle: 'Back'}}/>
+            <Stack.Screen name='Orders' component={OrdersScreen} options={{headerBackTitle: 'Back'}}/>
+            <Stack.Screen name='Cart' component={CartScreen} options={{headerBackTitle: 'Back'}}/>
+            <Stack.Screen name='Favourites' component={FavouritesScreen} options={{headerBackTitle: 'Back'}}/>
+            <Stack.Screen name='Notifications' component={NotificationScreen} options={{headerBackTitle: 'Back'}}/>
         </Stack.Navigator>
     );
 }
@@ -301,7 +306,7 @@ const styles = StyleSheet.create({
         right: 0,
         bottom: 0,
         width: 287,
-        backgroundColor: 'white',
+        backgroundColor: 'white'
     },
     menuContent: {
         flex: 1,

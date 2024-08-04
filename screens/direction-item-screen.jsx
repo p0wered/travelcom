@@ -1,4 +1,4 @@
-import {FlatList, Image, ScrollView, StyleSheet, Text, useWindowDimensions, View} from "react-native";
+import {Image, ScrollView, StyleSheet, Text, useWindowDimensions, View} from "react-native";
 import {Footer} from "../components/footer";
 import {decode} from "html-entities";
 import RenderHtml from "react-native-render-html";
@@ -29,7 +29,7 @@ export function DirectionItemScreen({ route }) {
             <View style={styles.newsContainer}>
                 <View style={styles.image}>
                     <Image
-                        source={{ uri: `https://travelcom.online/storage/${item.mainImage}` }}
+                        source={{uri: item.mainImage}}
                         style={{width: '100%', height: 222, borderRadius: 10}}
                     />
                 </View>
@@ -53,7 +53,7 @@ export function DirectionItemScreen({ route }) {
                         {imagesArray.map((image, index) => (
                             <Image
                                 key={index}
-                                source={{uri: `https://travelcom.online/storage/${image}`}}
+                                source={{uri: image}}
                                 style={styles.scrollImage}
                             />
                         ))}

@@ -70,7 +70,7 @@ export default function NewsScreen({navigation}) {
                                     desc={formatDesc(item)}
                                     date={new Date(item.created_at).toLocaleDateString()}
                                     textColor='white'
-                                    img={{uri: `https://travelcom.online/storage/${item.mainImage}`}}
+                                    img={{uri: item.mainImage}}
                                     navigation={navigation}
                                 />
                             ))}

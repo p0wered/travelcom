@@ -1,5 +1,17 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Dimensions, Linking, StyleSheet } from 'react-native';
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    FlatList,
+    Image,
+    Dimensions,
+    Linking,
+    Platform,
+    StyleSheet,
+    KeyboardAvoidingView
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Pusher from 'pusher-js/react-native';
 import * as FileSystem from 'expo-file-system';
@@ -289,7 +301,11 @@ export default function ChatScreen({navigation}){
     }
 
     return (
-        <View style={styles.container}>
+        <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.container}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+        >
             <FlatList
                 ref={flatListRef}
                 data={messages}
@@ -297,36 +313,38 @@ export default function ChatScreen({navigation}){
                 keyExtractor={(item) => item.id.toString()}
                 onContentSizeChange={() => flatListRef.current?.scrollToEnd({animated: true})}
             />
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    value={inputMessage}
-                    onChangeText={setInputMessage}
-                    placeholder="Type a message..."
-                    placeholderTextColor='#d0d0d0'
-                    multiline={true}
-                    numberOfLines={2}
-                />
-                <TouchableOpacity style={styles.attachButton} onPress={togglePicker}>
-                    <View>
-                        <PaperclipIcon/>
-                    </View>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-                    <ChatSendIcon/>
-                </TouchableOpacity>
-            </View>
-            {isPickerVisible && (
-                <View style={styles.pickerContainer}>
-                    <TouchableOpacity style={styles.pickerOption} onPress={pickImage}>
-                        <Text style={styles.blueText}>Image</Text>
+            <View>
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.input}
+                        value={inputMessage}
+                        onChangeText={setInputMessage}
+                        placeholder="Type a message..."
+                        placeholderTextColor='#d0d0d0'
+                        multiline={true}
+                        numberOfLines={2}
+                    />
+                    <TouchableOpacity style={styles.attachButton} onPress={togglePicker}>
+                        <View>
+                            <PaperclipIcon/>
+                        </View>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.pickerOption} onPress={pickDocument}>
-                        <Text style={styles.blueText}>Document</Text>
+                    <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+                        <ChatSendIcon/>
                     </TouchableOpacity>
                 </View>
-            )}
-        </View>
+                {isPickerVisible && (
+                    <View style={styles.pickerContainer}>
+                        <TouchableOpacity style={styles.pickerOption} onPress={pickImage}>
+                            <Text style={styles.blueText}>Image</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.pickerOption} onPress={pickDocument}>
+                            <Text style={styles.blueText}>Document</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
+            </View>
+        </KeyboardAvoidingView>
     );
 };
 
@@ -381,6 +399,7 @@ const styles = StyleSheet.create({
         marginTop: 5,
     },
     inputContainer: {
+        height: 70,
         flexDirection: 'row',
         padding: 10,
         backgroundColor: '#FFFFFF',

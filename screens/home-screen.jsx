@@ -1,4 +1,5 @@
 import {
+    ActivityIndicator,
     FlatList,
     Image,
     ImageBackground,
@@ -11,30 +12,80 @@ import {Footer} from "../components/footer";
 import {BlogItem} from "../components/blog-item";
 import {generateAccordionItems} from "../components/accordion-list";
 import {QuestionForm} from "../components/question-form";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import axios from "axios";
 import {useNavigation} from "@react-navigation/native";
 import {decode} from "html-entities";
+import * as SplashScreen from "expo-splash-screen";
 
 export default function HomeScreen() {
+    const [loading, setLoading] = useState(true);
+    const [mainImage, setMainImage] = useState(null);
+    const [directions, setDirections] = useState([]);
+    const [news, setNews] = useState([]);
+    const [faqData, setFaqData] = useState([]);
     const navigation = useNavigation();
-    const faqTitles = [
-        'How does Travelcom work?',
-        'How do you I find and buy air tickets?',
-        'How do I book a ticket?',
-        'How can I call you?',
-        'How do the website and the app work?',
-        'I`m afraid of scammers. Am I sure I won`t be tricked with a ticket?',
-        'How do I subscribe to the news?'
-    ];
-    const accordionItems = generateAccordionItems(faqTitles);
+    const accordionItems = generateAccordionItems(faqData);
+
+    const fetchMainImage = async () => {
+        try {
+            const response = await axios.get("https://travelcom.online/api/images/get");
+            setMainImage(response.data.mainImage);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    const fetchDirections = async () => {
+        try {
+            const response = await axios.get('https://travelcom.online/api/country/get-for-main-page');
+            setDirections(response.data);
+        } catch (error) {
+            console.error('Error fetching directions:', error);
+        }
+    };
+
+    const fetchNews = async () => {
+        try {
+            const response = await axios.get('https://travelcom.online/api/news/get-for-main-page');
+            setNews(response.data);
+        } catch (error) {
+            console.error('Error fetching news:', error);
+        }
+    };
+
+    const fetchFaqData = async () => {
+        try {
+            const response = await fetch('https://travelcom.online/api/questions/get');
+            const data = await response.json();
+            setFaqData(data);
+        } catch (error) {
+            console.error('Error fetching FAQ data:', error);
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        fetchMainImage();
+        fetchDirections();
+        fetchNews();
+        fetchFaqData();
+    }, []);
+
+    if (loading) {
+        return (
+            <View style={styles.centered}>
+                <ActivityIndicator size="large" color="#207FBF" />
+            </View>
+        );
+    }
 
     return (
         <ScrollView style={{flex: 1}}>
-            <ImageBackground source={require('../assets/main-image.jpg')} style={{width: '100%', height: 620}}>
+            <ImageBackground source={{uri: mainImage}} style={{width: '100%', height: 620}}>
                 <View style={styles.offerTravel}>
                     <View style={styles.offerTitle}>
-                        <Text style={styles.offerTitleText}>Knows what you need</Text>
+                        <Text numberOfLines={3} style={styles.offerTitleText}>Knows what you need</Text>
                     </View>
                     <View style={styles.seleneForm}>
                         <Text style={styles.formText}>
@@ -51,8 +102,8 @@ export default function HomeScreen() {
                     </View>
                 </View>
             </ImageBackground>
-            <DirectionsList navigation={navigation}/>
-            <BlogList navigation={navigation}/>
+            <DirectionsList navigation={navigation} directions={directions}/>
+            <BlogList navigation={navigation} setLoading={setLoading} news={news}/>
             <View style={styles.faqFlexbox}>
                 <Text style={styles.faqText}>FAQ</Text>
                 {accordionItems}
@@ -65,40 +116,24 @@ export default function HomeScreen() {
 
 function DirectionItem({item}) {
     const navigation = useNavigation();
-
     return (
         <TouchableOpacity
             activeOpacity={0.8}
             style={styles.directionItem}
-            onPress={() => navigation.navigate('DirectionItem', { item })}
+            onPress={() => navigation.navigate('DirectionItem', {item})}
         >
-            <Image source={{uri: `https://travelcom.online/storage/${item.mainImage}`}} style={{width: '100%', height: 222, padding: 15}}/>
+            <Image source={{uri: item.mainImage}} style={{width: '100%', height: 222, padding: 15}}/>
             <View style={styles.directionInner}>
                 <Text style={[styles.mainText, {textTransform: 'uppercase'}]}>
                     {item.name}⠀
                 </Text>
-                <Image source={{uri: `https://travelcom.online/storage/${item.icon}`}} style={{width: 20, height: 20}}/>
+                <Image source={{uri: item.icon}} style={{width: 20, height: 20}}/>
             </View>
         </TouchableOpacity>
     )
 }
 
-function DirectionsList({navigation}) {
-    const [directions, setDirections] = useState([]);
-
-    useEffect(() => {
-        fetchDirections();
-    }, []);
-
-    const fetchDirections = async () => {
-        try {
-            const response = await axios.get('https://travelcom.online/api/country/get-for-main-page');
-            setDirections(response.data);
-        } catch (error) {
-            console.error('Error fetching directions:', error);
-        }
-    };
-
+function DirectionsList({navigation, directions}) {
     return (
         <View style={styles.directionFlexbox}>
             <View style={{display: 'flex', alignItems: 'center'}}>
@@ -108,8 +143,8 @@ function DirectionsList({navigation}) {
             </View>
             <FlatList
                 scrollEnabled={false}
-                data={directions}
-                renderItem={({ item }) => <DirectionItem item={item} />}
+                data={directions.slice(0, 3)}
+                renderItem={({item}) => <DirectionItem item={item} />}
                 keyExtractor={item => item.id.toString()}
             />
             <TouchableOpacity activeOpacity={0.8} style={[styles.mainBtn, {width: '100%', maxWidth: 500, margin: 'auto'}]} onPress={() => navigation.navigate('News')}>
@@ -119,22 +154,7 @@ function DirectionsList({navigation}) {
     );
 }
 
-function BlogList({navigation}) {
-    const [news, setNews] = useState([]);
-
-    useEffect(() => {
-        fetchNews();
-    }, []);
-
-    const fetchNews = async () => {
-        try {
-            const response = await axios.get('https://travelcom.online/api/news/get-for-main-page');
-            setNews(response.data);
-        } catch (error) {
-            console.error('Error fetching news:', error);
-        }
-    };
-
+function BlogList({navigation, news}) {
     const processText = (html) => {
         let processedText = decode(html);
         processedText = processedText.replace(/<[^>]+>/g, ' ').replace(/\n/g, ' ');
@@ -176,7 +196,7 @@ function BlogList({navigation}) {
                                 desc={formatDesc(item)}
                                 date={new Date(item.created_at).toLocaleDateString()}
                                 textColor='white'
-                                img={{ uri: `https://travelcom.online/storage/${item.mainImage}` }}
+                                img={{uri: item.mainImage}}
                                 navigation={navigation}
                             />
                         ))}
@@ -216,8 +236,8 @@ const styles = StyleSheet.create({
         color: 'white',
         textAlign: 'center',
         fontSize: 32,
-        width: 200,
-        height: 117,
+        width: 220,
+        height: 120,
         textTransform: 'uppercase'
     },
     seleneForm: {
@@ -343,5 +363,10 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 0,
         left: 0,
-    }
+    },
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
 });

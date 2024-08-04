@@ -2,6 +2,7 @@ import {ScrollView, Text, View, StyleSheet} from "react-native";
 import {Footer} from "../components/footer";
 import {generateAccordionItems} from "../components/accordion-list";
 import {QuestionForm} from "../components/question-form";
+import {useEffect, useState} from "react";
 
 export function PrivacyScreen(){
     return(
@@ -100,17 +101,23 @@ export function RefundsScreen(){
 }
 
 export function FaqScreen(){
-    const faqTitles = [
-        'How does Travelcom work?',
-        'How do you I find and buy air tickets?',
-        'How do I book a ticket?',
-        'How can I call you?',
-        'How do the website and the app work?',
-        'I`m afraid of scammers. Am I sure I won`t be tricked with a ticket?',
-        'How do I subscribe to the news?'
-    ];
+    const [faqData, setFaqData] = useState([]);
+    const accordionItems = generateAccordionItems(faqData);
 
-    const accordionItems = generateAccordionItems(faqTitles)
+    const fetchFaqData = async () => {
+        try {
+            const response = await fetch('https://travelcom.online/api/questions/get');
+            const data = await response.json();
+            setFaqData(data);
+        } catch (error) {
+            console.error('Error fetching FAQ data:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchFaqData();
+    }, []);
+
 
     return(
         <ScrollView>
