@@ -1,15 +1,22 @@
 import {Pressable, Text, TextInput, View, StyleSheet, ActivityIndicator} from "react-native";
 import {SendIcon} from "./icons/send-icon";
 import axios from "axios";
-import {useState} from "react";
+import React, {useState} from "react";
 
-export function QuestionForm({ title }) {
+export function QuestionForm({title, clearErrors}) {
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
     const [question, setQuestion] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    React.useEffect(() => {
+        if (clearErrors) {
+            setError('');
+            setSuccess(false);
+        }
+    }, [clearErrors]);
 
     const handleSubmit = async () => {
         setLoading(true);
@@ -141,6 +148,7 @@ const styles = StyleSheet.create({
         fontFamily: 'Montserrat-Medium'
     },
     successText: {
+        color: 'white',
         fontSize: 14,
         fontFamily: 'Montserrat-Medium',
         textAlign: 'center'

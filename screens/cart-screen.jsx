@@ -15,7 +15,6 @@ import {FlightCard} from "../components/flight-cards";
 import {useFocusEffect} from "@react-navigation/native";
 import {Footer} from "../components/footer";
 import {DateInput} from "../components/input-date";
-import DateTimePicker from "@react-native-community/datetimepicker";
 
 const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initialPassengerCount}) => {
     const [formDataList, setFormDataList] = useState(initialFormDataList || Array(initialPassengerCount).fill({
@@ -148,9 +147,6 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
                     />
                 </View>
             ))}
-            <TouchableOpacity style={styles.payButton} onPress={addPerson}>
-                <Text style={styles.payButtonText}>Add Person</Text>
-            </TouchableOpacity>
             <TouchableOpacity style={styles.payButton} onPress={handleSubmit}>
                 <Text style={styles.payButtonText}>Pay</Text>
             </TouchableOpacity>

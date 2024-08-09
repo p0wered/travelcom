@@ -37,7 +37,7 @@ export function AccordionItem({title, content}) {
         <Animated.View style={[
             styles.accordionItem,
             isExpanded && styles.accordionItemActive,
-            {height: maxHeight, width: '100%', maxWidth: 500, marginHorizontal: 'auto'},
+            {height: maxHeight, width: '100%', maxWidth: 600, marginHorizontal: 'auto'},
         ]}>
             <Pressable onPress={toggleAccordion}>
                 <View

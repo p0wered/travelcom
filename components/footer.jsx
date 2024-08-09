@@ -6,7 +6,7 @@ import {LinkedinIcon} from "./icons/linkedin";
 import Logo from "./icons/logo";
 import {useNavigation} from "@react-navigation/native";
 
-export function FooterRaw({color, navigation}){
+export function FooterRaw({color, navigation, response}){
     return(
         <View style={[styles.footerMain, {backgroundColor: color}]}>
             <View style={styles.iconRow}>

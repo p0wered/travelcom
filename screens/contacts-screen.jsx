@@ -7,7 +7,7 @@ import {TwitterIcon} from "../components/icons/twitter-icon";
 import {LinkedinIcon} from "../components/icons/linkedin";
 import {QuestionForm} from "../components/question-form";
 
-export default function ContactsScreen() {
+export default function ContactsScreen({navigation}) {
     return(
         <ScrollView>
             <View style={styles.info}>
@@ -31,31 +31,31 @@ export default function ContactsScreen() {
                 </View>
                 <Text style={styles.blueText}>Follow us</Text>
                 <View style={styles.iconRow}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => Linking.openURL('https://instagram.com')}>
                         <InstagramIcon/>
                     </TouchableOpacity>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => Linking.openURL('https://facebook.com')}>
                         <FacebookIcon/>
                     </TouchableOpacity>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => Linking.openURL('https://twitter.com')}>
                         <TwitterIcon/>
                     </TouchableOpacity>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => Linking.openURL('https://linkedin.com')}>
                         <LinkedinIcon/>
                     </TouchableOpacity>
                 </View>
                 <View>
-                    <TouchableOpacity style={styles.contactsLink}>
-                        <Text style={styles.blueTextSmall}>Privacy Policy</Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Privacy')}>
+                        <Text style={styles.contactsLink}>Privacy Policy</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.contactsLink}>
-                        <Text style={styles.blueTextSmall}>Terms & Conditions</Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Terms')}>
+                        <Text style={styles.contactsLink}>Terms & Conditions</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.contactsLink}>
-                        <Text style={styles.blueTextSmall}>Cancellations & Refunds</Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Refunds')}>
+                        <Text style={styles.contactsLink}>Cancellations & Refunds</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.contactsLink}>
-                        <Text style={styles.blueTextSmall}>FAQ</Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('FAQ')}>
+                        <Text style={styles.contactsLink}>FAQ</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -97,6 +97,9 @@ const styles = StyleSheet.create({
         gap: 25,
     },
     contactsLink: {
+        fontSize: 15,
+        fontFamily: 'Montserrat-Medium',
+        color: '#207fbf',
         maxWidth: 200,
         paddingVertical: 12
     }

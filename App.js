@@ -36,6 +36,7 @@ import NotificationScreen from "./screens/notification-screen";
 import {NewsItemScreen} from "./screens/news-item-screen";
 import {DirectionItemScreen} from "./screens/direction-item-screen";
 import {SafeAreaProvider} from "react-native-safe-area-context";
+import {usePushNotifications} from "./usePushNotifications";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -117,11 +118,11 @@ function MainTabs(){
             fontWeight: 700,
             marginTop: 0,
         },
-        tabBarStyle: Platform.OS === 'ios' ? {height: 88} : {height: 68},
+        tabBarStyle: Platform.OS === 'ios' ? {height: 84} : {height: 68},
         tabBarItemStyle: {height: 60},
         headerStyle: {
             backgroundColor: '#207FBF',
-            height: Platform.OS === 'ios' ? 100 : 60,
+            height: Platform.OS === 'ios' ? 90 : 52,
             borderBottomColor: '#1d73ae'
         },
         headerTintColor: 'white',
@@ -129,12 +130,13 @@ function MainTabs(){
         headerLeft: () => (
             <Logo color='white' width={92} height={38}/>
         ),
-        headerLeftContainerStyle: {paddingHorizontal: 10},
+        headerLeftContainerStyle: {paddingHorizontal: 10, paddingBottom: 10},
         headerRight: () => (
             <TouchableOpacity style={{paddingHorizontal: 18}} onPress={toggleMenu}>
                 <MenuIcon/>
             </TouchableOpacity>
         ),
+        headerRightContainerStyle: {paddingBottom: 10},
     }), [toggleMenu]);
 
     return(
@@ -224,16 +226,106 @@ function AppContent() {
             })}
         >
             <Stack.Screen name="MainTabs" component={MainTabs} options={{headerShown: false}}/>
-            <Stack.Screen name="Privacy"  component={PrivacyScreen} options={{headerBackTitle: 'Back'}}/>
-            <Stack.Screen name="Terms"  component={TermsScreen} options={{headerBackTitle: 'Back'}}/>
-            <Stack.Screen name="Refunds"  component={RefundsScreen} options={{headerBackTitle: 'Back'}}/>
-            <Stack.Screen name="FAQ"  component={FaqScreen} options={{headerBackTitle: 'Back'}}/>
-            <Stack.Screen name="NewsItem" component={NewsItemScreen} options={{headerBackTitle: 'Back'}}/>
-            <Stack.Screen name="DirectionItem" component={DirectionItemScreen} options={{headerBackTitle: 'Back'}}/>
-            <Stack.Screen name='Orders' component={OrdersScreen} options={{headerBackTitle: 'Back'}}/>
-            <Stack.Screen name='Cart' component={CartScreen} options={{headerBackTitle: 'Back'}}/>
-            <Stack.Screen name='Favourites' component={FavouritesScreen} options={{headerBackTitle: 'Back'}}/>
-            <Stack.Screen name='Notifications' component={NotificationScreen} options={{headerBackTitle: 'Back'}}/>
+            <Stack.Screen
+                name="Privacy"
+                component={PrivacyScreen}
+                options={({navigation}) => ({
+                    headerBackTitle: 'Back',
+                    ...(Platform.OS === 'ios'
+                        ? { headerTitle: '' }
+                        : { headerTitle: 'Back' })
+                })}
+            />
+            <Stack.Screen
+                name="Terms"
+                component={TermsScreen}
+                options={({navigation}) => ({
+                    headerBackTitle: 'Back',
+                    ...(Platform.OS === 'ios'
+                        ? { headerTitle: '' }
+                        : { headerTitle: 'Back' })
+                })}
+            />
+            <Stack.Screen
+                name="Refunds"
+                component={RefundsScreen}
+                options={({navigation}) => ({
+                    headerBackTitle: 'Back',
+                    ...(Platform.OS === 'ios'
+                        ? { headerTitle: '' }
+                        : { headerTitle: 'Back' })
+                })}
+            />
+            <Stack.Screen
+                name="FAQ"
+                component={FaqScreen}
+                options={({navigation}) => ({
+                    headerBackTitle: 'Back',
+                    ...(Platform.OS === 'ios'
+                        ? { headerTitle: '' }
+                        : { headerTitle: 'Back' })
+                })}
+            />
+            <Stack.Screen
+                name="NewsItem"
+                component={NewsItemScreen}
+                options={({navigation}) => ({
+                    headerBackTitle: 'Back',
+                    ...(Platform.OS === 'ios'
+                        ? { headerTitle: '' }
+                        : { headerTitle: 'Back' })
+                })}
+            />
+            <Stack.Screen
+                name="DirectionItem"
+                component={DirectionItemScreen}
+                options={({navigation}) => ({
+                    headerBackTitle: 'Back',
+                    ...(Platform.OS === 'ios'
+                        ? { headerTitle: '' }
+                        : { headerTitle: 'Back' })
+                })}
+            />
+            <Stack.Screen
+                name="Orders"
+                component={OrdersScreen}
+                options={({navigation}) => ({
+                    headerBackTitle: 'Back',
+                    ...(Platform.OS === 'ios'
+                        ? { headerTitle: '' }
+                        : { headerTitle: 'Back' })
+                })}
+            />
+            <Stack.Screen
+                name="Cart"
+                component={CartScreen}
+                options={({navigation}) => ({
+                    headerBackTitle: 'Back',
+                    ...(Platform.OS === 'ios'
+                        ? { headerTitle: '' }
+                        : { headerTitle: 'Back' })
+                })}
+            />
+            <Stack.Screen
+                name="Favourites"
+                component={FavouritesScreen}
+                options={({navigation}) => ({
+                    headerBackTitle: 'Back',
+                    ...(Platform.OS === 'ios'
+                        ? { headerTitle: '' }
+                        : { headerTitle: 'Back' })
+                })}
+            />
+            <Stack.Screen
+                name="Notifications"
+                component={NotificationScreen}
+                options={({navigation}) => ({
+                    headerBackTitle: 'Back',
+                    ...(Platform.OS === 'ios'
+                        ? { headerTitle: '' }
+                        : { headerTitle: 'Back' })
+                })}
+            />
         </Stack.Navigator>
     );
 }
@@ -272,6 +364,8 @@ export default function App() {
         'Montserrat-Regular': require('./assets/fonts/Montserrat-Regular.ttf'),
         'Montserrat-Light': require('./assets/fonts/Montserrat-Light.ttf'),
     });
+    const {expoPushToken, notification} = usePushNotifications();
+    const data = JSON.stringify(notification, undefined, 2);
 
     useEffect(() => {
         if (loaded || error) {

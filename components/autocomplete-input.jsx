@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {View, TextInput, FlatList, Text, StyleSheet, ScrollView} from 'react-native';
+import {View, TextInput, FlatList, Text, StyleSheet, ScrollView, Platform} from 'react-native';
 
 export function AutoCompleteInput({ title, inputText, setInputText, suggestions, setSuggestions}) {
     const fetchSuggestions = async (text) => {
@@ -41,7 +41,7 @@ export function AutoCompleteInput({ title, inputText, setInputText, suggestions,
             <TextInput
                 style={[
                     styles.locationInput,
-                    suggestions.length > 0 ? {borderBottomStartRadius: 10, borderBottomEndRadius: 10} : {borderRadius: 10}
+                    suggestions.length > 0 ? {borderBottomStartRadius: 0, borderBottomEndRadius: 0} : {borderRadius: 10}
                 ]}
                 value={inputText}
                 onChangeText={handleTextChange}
@@ -55,9 +55,14 @@ export function AutoCompleteInput({ title, inputText, setInputText, suggestions,
                         data={suggestions}
                         keyExtractor={(item) => item}
                         renderItem={({item}) => (
-                            <Text style={styles.suggestion} onPress={() => handleSuggestionPress(item)}>
-                                {item}
-                            </Text>
+                            <>
+                                {Platform.OS === 'ios' ? (
+                                    <View style={{height: 1, backgroundColor: '#207fbf'}}/>
+                                ) : (<></>)}
+                                <Text style={styles.suggestion} onPress={() => handleSuggestionPress(item)}>
+                                    {item}
+                                </Text>
+                            </>
                         )}
                     />
                 </View>
@@ -83,9 +88,8 @@ const styles = StyleSheet.create({
         fontSize: 11,
         fontFamily: 'Montserrat-Regular',
         padding: 14,
-        backgroundColor: 'white',
         borderTopWidth: 1,
-        borderTopColor: '#207FBF',
+        borderColor: '#207fbf'
     },
     suggestionBox: {
         backgroundColor: 'white',

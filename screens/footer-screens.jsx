@@ -1,107 +1,63 @@
-import {ScrollView, Text, View, StyleSheet} from "react-native";
+import {ScrollView, Text, View, StyleSheet, ActivityIndicator} from "react-native";
 import {Footer} from "../components/footer";
 import {generateAccordionItems} from "../components/accordion-list";
 import {QuestionForm} from "../components/question-form";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
+import axios from "axios";
 
-export function PrivacyScreen(){
-    return(
-        <ScrollView>
-            <Text style={styles.titleText}>Privacy Policy</Text>
-            <View style={styles.privacyFlexbox}>
-                <Text>
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Odio tempora veritatis laudantium
-                    temporibus repellat assumenda sunt enim dolor. Vitae sunt, nihil unde harum earum officiis
-                    sequi nisi quae incidunt dolore. Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                </Text>
-                <Text>
-                    Odio tempora veritatis laudantium temporibus repellat assumenda sunt enim dolor. Vitae sunt,
-                    nihil unde harum earum officiis sequi nisi quae incidunt dolore.Lorem ipsum dolor sit amet
-                    consectetur adipisicing elit.
-                </Text>
-                <Text>
-                    Odio tempora veritatis laudantium temporibus repellat assumenda sunt enim dolor. Vitae sunt,
-                    nihil unde harum earum officiis sequi nisi quae incidunt dolore. Lorem ipsum dolor sit amet
-                    consectetur adipisicing elit. Odio tempora veritatis laudantium temporibus repellat assumenda
-                    sunt enim dolor. Vitae sunt, nihil unde harum earum officiis sequi nisi quae incidunt dolore.
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                </Text>
-                <Text>
-                    Tempora veritatis laudantium temporibus repellat assumenda sunt enim dolor. Vitae sunt,
-                    nihil unde harum earum officiis sequi nisi quae incidunt dolore.
-                </Text>
+const fetchData = async (setData, setLoading) => {
+    try {
+        const response = await axios.get('https://travelcom.online/api/information/docs');
+        setData(response.data);
+        setLoading(false);
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        setLoading(false);
+    }
+};
+
+const InfoScreen = ({ title, content }) => {
+    const [loading, setLoading] = useState(true);
+    const [data, setData] = useState(null);
+
+    useEffect(() => {
+        fetchData(setData, setLoading);
+    }, []);
+
+    if (loading) {
+        return (
+            <View style={styles.centered}>
+                <ActivityIndicator size="large" color="#207FBF" />
             </View>
-            <Footer/>
+        );
+    }
+
+    return (
+        <ScrollView>
+            <Text style={styles.titleText}>{title}</Text>
+            <View style={styles.privacyFlexbox}>
+                <Text>{data ? data[content] : `Error fetching ${content}`}</Text>
+            </View>
+            <Footer />
         </ScrollView>
-    )
+    );
+};
+
+export function PrivacyScreen() {
+    return <InfoScreen title="Privacy Policy" content="privacy_policy" />;
 }
 
-export function TermsScreen(){
-    return(
-        <ScrollView>
-            <Text style={styles.titleText}>Terms & Conditions</Text>
-            <View style={styles.privacyFlexbox}>
-                <Text>
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Odio tempora veritatis laudantium
-                    temporibus repellat assumenda sunt enim dolor. Vitae sunt, nihil unde harum earum officiis
-                    sequi nisi quae incidunt dolore. Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                </Text>
-                <Text>
-                    Odio tempora veritatis laudantium temporibus repellat assumenda sunt enim dolor. Vitae sunt,
-                    nihil unde harum earum officiis sequi nisi quae incidunt dolore.Lorem ipsum dolor sit amet
-                    consectetur adipisicing elit.
-                </Text>
-                <Text>
-                    Odio tempora veritatis laudantium temporibus repellat assumenda sunt enim dolor. Vitae sunt,
-                    nihil unde harum earum officiis sequi nisi quae incidunt dolore. Lorem ipsum dolor sit amet
-                    consectetur adipisicing elit. Odio tempora veritatis laudantium temporibus repellat assumenda
-                    sunt enim dolor. Vitae sunt, nihil unde harum earum officiis sequi nisi quae incidunt dolore.
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                </Text>
-                <Text>
-                    Tempora veritatis laudantium temporibus repellat assumenda sunt enim dolor. Vitae sunt,
-                    nihil unde harum earum officiis sequi nisi quae incidunt dolore.
-                </Text>
-            </View>
-            <Footer/>
-        </ScrollView>
-    )
+export function TermsScreen() {
+    return <InfoScreen title="Terms & Conditions" content="terms" />;
 }
 
-export function RefundsScreen(){
-    return(
-        <ScrollView>
-            <Text style={styles.titleText}>Cancellation & Refunds</Text>
-            <View style={styles.privacyFlexbox}>
-                <Text>
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Odio tempora veritatis laudantium
-                    temporibus repellat assumenda sunt enim dolor. Vitae sunt, nihil unde harum earum officiis
-                    sequi nisi quae incidunt dolore. Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                </Text>
-                <Text>
-                    Odio tempora veritatis laudantium temporibus repellat assumenda sunt enim dolor. Vitae sunt,
-                    nihil unde harum earum officiis sequi nisi quae incidunt dolore.Lorem ipsum dolor sit amet
-                    consectetur adipisicing elit.
-                </Text>
-                <Text>
-                    Odio tempora veritatis laudantium temporibus repellat assumenda sunt enim dolor. Vitae sunt,
-                    nihil unde harum earum officiis sequi nisi quae incidunt dolore. Lorem ipsum dolor sit amet
-                    consectetur adipisicing elit. Odio tempora veritatis laudantium temporibus repellat assumenda
-                    sunt enim dolor. Vitae sunt, nihil unde harum earum officiis sequi nisi quae incidunt dolore.
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                </Text>
-                <Text>
-                    Tempora veritatis laudantium temporibus repellat assumenda sunt enim dolor. Vitae sunt,
-                    nihil unde harum earum officiis sequi nisi quae incidunt dolore.
-                </Text>
-            </View>
-            <Footer/>
-        </ScrollView>
-    )
+export function RefundsScreen() {
+    return <InfoScreen title="Cancellation & Refunds" content="refunds" />;
 }
 
 export function FaqScreen(){
     const [faqData, setFaqData] = useState([]);
+    const [loading, setLoading] = useState(true);
     const accordionItems = generateAccordionItems(faqData);
 
     const fetchFaqData = async () => {
@@ -112,12 +68,20 @@ export function FaqScreen(){
         } catch (error) {
             console.error('Error fetching FAQ data:', error);
         }
+        setLoading(false);
     };
 
     useEffect(() => {
         fetchFaqData();
     }, []);
 
+    if (loading) {
+        return (
+            <View style={styles.centered}>
+                <ActivityIndicator size="large" color="#207FBF" />
+            </View>
+        );
+    }
 
     return(
         <ScrollView>
@@ -135,8 +99,7 @@ const styles = StyleSheet.create({
     privacyFlexbox: {
         display: 'flex',
         flexDirection: 'column',
-        paddingHorizontal: 15,
-        gap: 10
+        paddingHorizontal: 15
     },
     titleText: {
         fontSize: 20,
@@ -154,5 +117,10 @@ const styles = StyleSheet.create({
     faqFlexbox: {
         padding: 14,
         backgroundColor: 'white'
+    },
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 })

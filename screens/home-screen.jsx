@@ -2,7 +2,7 @@ import {
     ActivityIndicator,
     FlatList,
     Image,
-    ImageBackground,
+    ImageBackground, Platform,
     ScrollView,
     StyleSheet,
     Text, TouchableOpacity,
@@ -12,22 +12,65 @@ import {Footer} from "../components/footer";
 import {BlogItem} from "../components/blog-item";
 import {generateAccordionItems} from "../components/accordion-list";
 import {QuestionForm} from "../components/question-form";
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import axios from "axios";
-import {useNavigation} from "@react-navigation/native";
+import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import {decode} from "html-entities";
-import * as SplashScreen from "expo-splash-screen";
+import {AutoCompleteInput} from "../components/autocomplete-input";
+import {RoundTripSelector} from "../components/roundtrip-selector";
+import {DateInput} from "../components/input-date";
+import {PassengerDropdown} from "../components/passengers-selector";
+import {SearchIcon} from "../components/icons/search-icon";
+import {usePushNotifications} from "../usePushNotifications";
 
 export default function HomeScreen() {
+    const {expoPushToken, notification} = usePushNotifications();
     const [loading, setLoading] = useState(true);
     const [mainImage, setMainImage] = useState(null);
     const [directions, setDirections] = useState([]);
     const [news, setNews] = useState([]);
     const [faqData, setFaqData] = useState([]);
+    const [clearErrors, setClearErrors] = useState(false);
     const navigation = useNavigation();
     const accordionItems = generateAccordionItems(faqData);
+    const [airportFrom, setAirportFrom] = useState('');
+    const [fromSuggestions, setFromSuggestions] = useState([]);
+    const [airportTo, setAirportTo] = useState('');
+    const [whereSuggestions, setWhereSuggestions] = useState([]);
+    const [dateStart, setDateStart] = useState(new Date());
+    const [dateEnd, setDateEnd] = useState(new Date());
+    const [roundTrip, setRoundTrip] = useState(true);
+    const [passengers, setPassengers] = useState({
+        adults: 1,
+        children: 0,
+        infants: 0,
+    });
+
+    const formatDate = (date) => {
+        if (date !== null){
+            return date.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric'}).replace(/\//g, '.');
+        } else {
+            return null;
+        }
+    };
+
+    const handleSearch = () => {
+        setDateStart(formatDate(dateStart));
+        setDateEnd(formatDate(dateEnd));
+        const searchParams = {
+            airportFrom,
+            airportTo,
+            dateStart,
+            dateEnd,
+            roundTrip,
+            passengers
+        };
+        navigation.navigate('Flights', searchParams);
+    };
 
     const fetchMainImage = async () => {
+        setLoading(true);
+        console.log(expoPushToken)
         try {
             const response = await axios.get("https://travelcom.online/api/images/get");
             setMainImage(response.data.mainImage);
@@ -72,6 +115,15 @@ export default function HomeScreen() {
         fetchFaqData();
     }, []);
 
+    useFocusEffect(
+        useCallback(() => {
+            setClearErrors(true);
+            return () => {
+                setClearErrors(false);
+            };
+        }, [])
+    );
+
     if (loading) {
         return (
             <View style={styles.centered}>
@@ -82,23 +134,51 @@ export default function HomeScreen() {
 
     return (
         <ScrollView style={{flex: 1}}>
-            <ImageBackground source={{uri: mainImage}} style={{width: '100%', height: 620}}>
+            <ImageBackground source={{uri: mainImage}} style={{width: '100%', height: 'auto', paddingBottom: 140}}>
                 <View style={styles.offerTravel}>
                     <View style={styles.offerTitle}>
                         <Text numberOfLines={3} style={styles.offerTitleText}>Knows what you need</Text>
                     </View>
-                    <View style={styles.seleneForm}>
-                        <Text style={styles.formText}>
-                            For travel arrangements, questions about locations and details,
-                            you can write in the chat and our managers will help
-                        </Text>
-                        <TouchableOpacity
-                            activeOpacity={0.8}
-                            style={[styles.formBtn, styles.mainBtn]}
-                            onPress={() => navigation.navigate('Chat')}
-                        >
-                            <Text style={styles.mainText}>Go to the chat</Text>
-                        </TouchableOpacity>
+                    <View style={{backgroundColor: 'white'}}>
+                        <View style={styles.flightsInputForm}>
+                            <AutoCompleteInput
+                                title='From'
+                                inputText={airportFrom}
+                                setInputText={setAirportFrom}
+                                suggestions={fromSuggestions}
+                                setSuggestions={setFromSuggestions}
+                            />
+                            <AutoCompleteInput
+                                title='Where'
+                                inputText={airportTo}
+                                setInputText={setAirportTo}
+                                suggestions={whereSuggestions}
+                                setSuggestions={setWhereSuggestions}
+                            />
+                            <RoundTripSelector roundTrip={roundTrip} setRoundTrip={setRoundTrip} setBackDate={setDateEnd}/>
+                            <View style={[styles.selector, Platform.OS === 'ios' ? styles.selectorIOS : styles.selectorAndroid]}>
+                                <View style={{marginVertical: 7}}>
+                                    <DateInput inCheckout={false} date={dateStart} setDate={setDateStart}/>
+                                </View>
+                                <View style={[styles.separator, roundTrip ? {display: 'flex'} : {display: 'none'}, Platform.OS === 'ios' ? {marginRight: -10} : {marginRight: 0}]}/>
+                                <View style={[{marginVertical: 7}, roundTrip ? {display: 'flex'} : {display: 'none'}]}>
+                                    <DateInput inCheckout={false} date={dateEnd} setDate={setDateEnd}/>
+                                </View>
+                            </View>
+                            <PassengerDropdown passengers={passengers} setPassengers={setPassengers}/>
+                            <View style={styles.flexCenter}>
+                                <TouchableOpacity
+                                    activeOpacity={0.8}
+                                    style={[styles.searchBtn, styles.flexCenter]}
+                                    onPress={handleSearch}
+                                >
+                                    <View style={[styles.flexCenter, {gap: 4}]}>
+                                        <SearchIcon/>
+                                        <Text style={styles.btnText}>Search</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
                     </View>
                 </View>
             </ImageBackground>
@@ -108,7 +188,7 @@ export default function HomeScreen() {
                 <Text style={styles.faqText}>FAQ</Text>
                 {accordionItems}
             </View>
-            <QuestionForm title='Any other question? Write to us!'/>
+            <QuestionForm title='Any other question? Write to us!' clearErrors={clearErrors} />
             <Footer color='white'/>
         </ScrollView>
     )
@@ -170,9 +250,6 @@ function BlogList({navigation, news}) {
         }
     }
 
-    const firstGroup = news.slice(0, 3);
-    const secondGroup = news.slice(3, 6);
-
     return (
         <View style={styles.blogFlexbox}>
             <View style={{display: 'flex', alignItems: 'center'}}>
@@ -180,29 +257,24 @@ function BlogList({navigation, news}) {
                     <Text style={[styles.mainText, {color: '#207FBF'}]}>A BLOG FOR INSPIRATION</Text>
                 </View>
             </View>
-            {[firstGroup, secondGroup].map((group, groupIndex) => (
-                group.length > 0 && (
-                    <ScrollView
-                        key={groupIndex}
-                        horizontal={true}
-                        showsHorizontalScrollIndicator={false}
-                        style={{marginBottom: 18 , marginTop: 24, paddingRight: 12}}
-                    >
-                        {group.map((item) => (
-                            <BlogItem
-                                key={item.id}
-                                item={item}
-                                title={processText(item.name).toUpperCase()}
-                                desc={formatDesc(item)}
-                                date={new Date(item.created_at).toLocaleDateString()}
-                                textColor='white'
-                                img={{uri: item.mainImage}}
-                                navigation={navigation}
-                            />
-                        ))}
-                    </ScrollView>
-                )
-            ))}
+            <ScrollView
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}
+            >
+                {news.slice(0, 5).map((item) => (
+                    <BlogItem
+                        key={item.id}
+                        item={item}
+                        title={processText(item.name).toUpperCase()}
+                        desc={formatDesc(item)}
+                        date={new Date(item.created_at).toLocaleDateString()}
+                        textColor='white'
+                        img={{uri: item.mainImage}}
+                        navigation={navigation}
+                    />
+                ))}
+                <View style={{width: 12, height: 12}}/>
+            </ScrollView>
             <View style={{display: 'flex', alignItems: 'center', paddingHorizontal: 10}}>
                 <TouchableOpacity
                     activeOpacity={0.8}
@@ -315,11 +387,13 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'column',
         paddingVertical: 14,
+        paddingTop: 20,
+        gap: 15
     },
     blogBtn: {
         position: 'absolute',
         backgroundColor: 'white',
-        top: -36,
+        top: -44,
     },
     faqText: {
         fontFamily: 'Montserrat-Bold',
@@ -369,4 +443,61 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    flightsInputForm : {
+        position: "relative",
+        padding: 15,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 15,
+    },
+    flexCenter: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    selector: {
+        display: 'flex',
+        alignItems: 'center',
+        flexDirection: 'row',
+        overflow: "hidden",
+        justifyContent: 'space-between',
+        paddingHorizontal: 25,
+        height: 64,
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: '#207FBF',
+        borderRadius: 10
+    },
+    selectorAndroid: {
+
+    },
+    selectorIOS: {
+
+    },
+    selectorText: {
+        fontFamily: 'Montserrat-Bold',
+        color: '#207FBF'
+    },
+    separator: {
+        width: 86,
+        height: 1,
+        backgroundColor: '#207FBF'
+    },
+    selectorTextGrey: {
+        fontSize: 11,
+        fontFamily: 'Montserrat-Regular',
+        color: '#9B9B9A'
+    },
+    searchBtn: {
+        width: 166,
+        padding: 12,
+        borderRadius: 10,
+        backgroundColor: '#207FBF',
+    },
+    btnText: {
+        fontFamily: 'Montserrat-Bold',
+        color: 'white',
+        textAlign: 'center'
+    }
 });

@@ -33,7 +33,12 @@ const MessageContent = ({ content }) => {
         const widthMatch = content.match(/width="(\d+)2px"/);
 
         if (srcMatch && srcMatch[1]) {
-            const imageUrl = `https://travelcom.online${srcMatch[1]}`;
+            let imageUrl
+            if (srcMatch[1].startsWith('https://admin.travelcom.online')){
+                imageUrl = srcMatch[1];
+            } else {
+                imageUrl = `https://travelcom.online${srcMatch[1]}`;
+            }
             const specifiedWidth = widthMatch && widthMatch[1] ? parseInt(widthMatch[1]) : MAX_IMAGE_WIDTH;
 
             useEffect(() => {
@@ -118,15 +123,39 @@ export default function ChatScreen({navigation}){
     };
 
     const pickDocument = async () => {
-        let result = await DocumentPicker.getDocumentAsync({
-            type: '*/*',
-            copyToCacheDirectory: true,
-        });
-        console.log(result);
-        let documentData = new FormData();
-        documentData.append('image', result.output[0]);
-        console.log(documentData);
-        sendFile(documentData);
+        try {
+            let result = await DocumentPicker.getDocumentAsync({
+                type: '*/*',
+                copyToCacheDirectory: true,
+            });
+
+            console.log(result);
+
+            if (result.canceled) {
+                console.log('Document picking was cancelled');
+                return;
+            }
+
+            let documentData = new FormData();
+
+            if (Platform.OS === 'web') {
+                documentData.append('image', result.output[0]);
+            } else {
+                const fileUri = result.assets[0].uri;
+                const fileName = result.assets[0].name;
+                const fileType = result.assets[0].mimeType;
+                documentData.append('image', {
+                    uri: fileUri,
+                    name: fileName,
+                    type: fileType
+                });
+            }
+
+            console.log(documentData);
+            await sendFile(documentData);
+        } catch (error) {
+            console.error('Error picking document:', error);
+        }
     };
 
     const sendFile = async (formData) => {
@@ -298,6 +327,51 @@ export default function ChatScreen({navigation}){
                 </View>
             </View>
         )
+    }
+
+    function renderContent() {
+        return (
+            <>
+                <FlatList
+                    ref={flatListRef}
+                    data={messages}
+                    renderItem={renderMessage}
+                    keyExtractor={(item) => item.id.toString()}
+                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({animated: true})}
+                />
+                <View>
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            value={inputMessage}
+                            onChangeText={setInputMessage}
+                            placeholder="Type a message..."
+                            placeholderTextColor='#d0d0d0'
+                            multiline={true}
+                            numberOfLines={2}
+                        />
+                        <TouchableOpacity style={styles.attachButton} onPress={togglePicker}>
+                            <View>
+                                <PaperclipIcon/>
+                            </View>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+                            <ChatSendIcon/>
+                        </TouchableOpacity>
+                    </View>
+                    {isPickerVisible && (
+                        <View style={styles.pickerContainer}>
+                            <TouchableOpacity style={styles.pickerOption} onPress={pickImage}>
+                                <Text style={styles.blueText}>Image</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.pickerOption} onPress={pickDocument}>
+                                <Text style={styles.blueText}>Document</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
+            </>
+        );
     }
 
     return (

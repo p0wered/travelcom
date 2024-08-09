@@ -33,14 +33,14 @@ export function DirectionItemScreen({ route }) {
                         style={{width: '100%', height: 222, borderRadius: 10}}
                     />
                 </View>
-                <View style={{flexDirection: 'column', gap: 8}}>
+                <View style={{flexDirection: 'column'}}>
                     <Text style={styles.titleText}>{decode(item.name)}</Text>
                 </View>
                 <RenderHtml
                     contentWidth={width}
                     source={{html: processedContent}}
                     tagsStyles={{
-                        p: { ...styles.regularText, marginBottom: 10 }
+                        p: { ...styles.regularText, marginTop: 0, marginBottom: 6}
                     }}
                 />
 
@@ -80,11 +80,12 @@ const styles = StyleSheet.create({
         gap: 15
     },
     regularText: {
-        fontSize: 12,
+        fontSize: 14,
         fontFamily: 'Montserrat-Regular'
     },
     titleText: {
-        fontSize: 14,
+        fontSize: 24,
+        marginBottom: 0,
         fontFamily: 'Montserrat-Bold',
         textTransform: 'uppercase'
     },

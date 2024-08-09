@@ -2,10 +2,11 @@ import {Image, ScrollView, StyleSheet, Text, useWindowDimensions, View} from "re
 import {Footer} from "../components/footer";
 import {decode} from "html-entities";
 import RenderHtml from 'react-native-render-html';
+import React from "react";
 
 export function NewsItemScreen({ route }) {
-    const { newsItem } = route.params;
-    const { width } = useWindowDimensions();
+    const {newsItem} = route.params;
+    const {width} = useWindowDimensions();
 
     const processHtml = (html) => {
         let processedHtml = decode(html);
@@ -43,26 +44,26 @@ export function NewsItemScreen({ route }) {
                     contentWidth={width}
                     source={{ html: processedContent }}
                     tagsStyles={{
-                        p: { ...styles.regularText, marginBottom: 10 }
+                        p: { ...styles.regularText, marginBottom: 0}
                     }}
                 />
-
-                {imagesArray.length > 0 && (
-                    <ScrollView
-                        horizontal={true}
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.imageScroll}
-                    >
-                        {imagesArray.map((image, index) => (
-                            <Image
-                                key={index}
-                                source={{uri: image}}
-                                style={styles.scrollImage}
-                            />
-                        ))}
-                    </ScrollView>
-                )}
             </View>
+            {imagesArray.length > 0 && (
+                <ScrollView
+                    horizontal={true}
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.imageScroll}
+                >
+                    {imagesArray.map((image, index) => (
+                        <Image
+                            key={index}
+                            source={{uri: image}}
+                            style={styles.scrollImage}
+                        />
+                    ))}
+                    <View style={{width: 12}}/>
+                </ScrollView>
+            )}
             <Footer color='white'/>
         </ScrollView>
     );
@@ -78,26 +79,25 @@ const styles = StyleSheet.create({
     },
     newsContainer: {
         padding: 15,
-        flexDirection: 'column',
-        gap: 15
+        flexDirection: 'column'
     },
     regularText: {
-        fontSize: 12,
-        fontFamily: 'Montserrat-Regular'
+        fontSize: 14,
+        fontFamily: 'Montserrat-Regular',
+        marginTop: 15
     },
     titleText: {
-        fontSize: 14,
+        fontSize: 24,
         fontFamily: 'Montserrat-Bold',
         textTransform: 'uppercase'
     },
     imageScroll: {
-        marginTop: 20,
         marginBottom: 20,
     },
     scrollImage: {
         width: 300,
         height: 200,
         borderRadius: 10,
-        marginRight: 10,
+        marginLeft: 10,
     }
 })

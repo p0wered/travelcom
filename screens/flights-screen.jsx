@@ -23,18 +23,19 @@ import {DayIcon} from "../components/icons/day-icon";
 import {NightIcon} from "../components/icons/night-icon";
 import {CheckIcon} from "../components/icons/check-icon";
 
-export default function FlightsScreen() {
-    const [airportFrom, setAirportFrom] = useState('');
+export default function FlightsScreen({route}) {
+    const searchParams = route.params;
+    const [airportFrom, setAirportFrom] = useState(searchParams?.airportFrom || '');
     const [fromSuggestions, setFromSuggestions] = useState([]);
-    const [airportTo, setAirportTo] = useState('');
+    const [airportTo, setAirportTo] = useState(searchParams?.airportTo || '');
     const [whereSuggestions, setWhereSuggestions] = useState([]);
-    const [dateStart, setDateStart] = useState(new Date());
-    const [dateEnd, setDateEnd] = useState(new Date());
-    const [roundTrip, setRoundTrip] = useState(true);
+    const [dateStart, setDateStart] = useState(searchParams?.dateStart || new Date());
+    const [dateEnd, setDateEnd] = useState(searchParams?.dateEnd || new Date());
     const [isLoading, setIsLoading] = useState(false);
-    const [passengers, setPassengers] = useState({
+    const [roundTrip, setRoundTrip] = useState(searchParams?.roundTrip ?? true);
+    const [passengers, setPassengers] = useState(searchParams?.passengers || {
         adults: 1,
-        children: 1,
+        children: 0,
         infants: 0,
     });
     const [flightResults, setFlightResults] = useState([]);
@@ -55,6 +56,14 @@ export default function FlightsScreen() {
 
     useEffect(() => {
         checkAuth();
+        console.log(route)
+    }, []);
+
+    useEffect(() => {
+        if (searchParams !== undefined) {
+            console.log(searchParams)
+            handleSearch();
+        }
     }, []);
 
     const checkAuth = async () => {
@@ -250,6 +259,7 @@ export default function FlightsScreen() {
     };
 
     const handleSearch = async () => {
+        console.log('Searching...')
         const payload = {
             adults: passengers.adults,
             airportFrom: getAirportCode(airportFrom),
@@ -308,11 +318,16 @@ export default function FlightsScreen() {
     };
 
     const formatDate = (date) => {
-        if (date !== null){
-            return date.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric'}).replace(/\//g, '.');
+        if (searchParams === undefined) {
+            if (date !== null){
+                return date.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric'}).replace(/\//g, '.');
+            } else {
+                return null;
+            }
         } else {
-            return null;
+            return date;
         }
+
     };
 
     return(
@@ -415,7 +430,7 @@ export default function FlightsScreen() {
                                 />
                                 <TextInput
                                     style={styles.filtersInput}
-                                    placeholder='up to 1000$'
+                                    placeholder='up to 1000€'
                                     placeholderTextColor='#bebebe'
                                     value={maxPrice}
                                     onChangeText={setMaxPrice}

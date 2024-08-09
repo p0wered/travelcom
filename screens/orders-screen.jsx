@@ -109,9 +109,19 @@ export default function OrdersScreen(){
             }
         };
 
+
         const clientsData = Object.keys(flightData)
             .filter(key => !isNaN(parseInt(key)))
             .map(key => flightData[key]);
+
+        const isPaymentDisabled = () => {
+            const createdAt = new Date(item.created_at);
+            const now = new Date();
+            const diffInMinutes = (now - createdAt) / (1000 * 60);
+            return diffInMinutes > 30;
+        };
+
+        const paymentDisabled = isPaymentDisabled();
 
         return (
             <View style={styles.orderContainer}>
@@ -154,7 +164,8 @@ export default function OrdersScreen(){
                         </View>
                     ))}
                 </View>
-                <View style={{paddingHorizontal: 15, paddingBottom: 15}}>
+
+                <View style={[{paddingHorizontal: 15, paddingBottom: 15}, paymentDisabled ? {display: 'none'} : {display: 'block'}]}>
                     <TouchableOpacity
                         style={styles.chooseBtn}
                         activeOpacity={0.8}
