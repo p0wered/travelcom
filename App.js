@@ -37,7 +37,6 @@ import {NewsItemScreen} from "./screens/news-item-screen";
 import {DirectionItemScreen} from "./screens/direction-item-screen";
 import {SafeAreaProvider} from "react-native-safe-area-context";
 import {usePushNotifications} from "./usePushNotifications";
-import {useChatNotifications, usePusherNotification} from "./useChatNotification";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -368,7 +367,6 @@ export default function App() {
 
     const {expoPushToken, notification} = usePushNotifications();
     console.log(expoPushToken);
-    usePusherNotification(loaded && !error);
 
     useEffect(() => {
         if (loaded || error) {
