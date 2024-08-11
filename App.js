@@ -37,6 +37,7 @@ import {NewsItemScreen} from "./screens/news-item-screen";
 import {DirectionItemScreen} from "./screens/direction-item-screen";
 import {SafeAreaProvider} from "react-native-safe-area-context";
 import {usePushNotifications} from "./usePushNotifications";
+import {useChatNotifications, usePusherNotification} from "./useChatNotification";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -364,8 +365,10 @@ export default function App() {
         'Montserrat-Regular': require('./assets/fonts/Montserrat-Regular.ttf'),
         'Montserrat-Light': require('./assets/fonts/Montserrat-Light.ttf'),
     });
+
     const {expoPushToken, notification} = usePushNotifications();
-    const data = JSON.stringify(notification, undefined, 2);
+    console.log(expoPushToken);
+    usePusherNotification(loaded && !error);
 
     useEffect(() => {
         if (loaded || error) {

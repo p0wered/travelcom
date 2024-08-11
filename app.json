@@ -22,7 +22,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.travelcom",
-      "googleServicesFile": ".google-services.json"
+      "googleServicesFile": "./android/app/google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"

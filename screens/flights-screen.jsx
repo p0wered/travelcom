@@ -13,7 +13,7 @@ import {FlightCard} from "../components/flight-cards";
 import {AutoCompleteInput} from "../components/autocomplete-input";
 import {DateInput} from "../components/input-date";
 import {PassengerDropdown} from "../components/passengers-selector";
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import {RoundTripSelector} from "../components/roundtrip-selector";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -24,20 +24,22 @@ import {NightIcon} from "../components/icons/night-icon";
 import {CheckIcon} from "../components/icons/check-icon";
 
 export default function FlightsScreen({route}) {
-    const searchParams = route.params;
+    const [searchParams, setSearchParams] = useState(() => route.params);
     const [airportFrom, setAirportFrom] = useState(searchParams?.airportFrom || '');
     const [fromSuggestions, setFromSuggestions] = useState([]);
     const [airportTo, setAirportTo] = useState(searchParams?.airportTo || '');
     const [whereSuggestions, setWhereSuggestions] = useState([]);
     const [dateStart, setDateStart] = useState(searchParams?.dateStart || new Date());
     const [dateEnd, setDateEnd] = useState(searchParams?.dateEnd || new Date());
-    const [isLoading, setIsLoading] = useState(false);
     const [roundTrip, setRoundTrip] = useState(searchParams?.roundTrip ?? true);
+    const [isLoading, setIsLoading] = useState(false);
     const [passengers, setPassengers] = useState(searchParams?.passengers || {
         adults: 1,
         children: 0,
         infants: 0,
     });
+    const [paramsUpdated, setParamsUpdated] = useState(false);
+    const prevSearchParamsRef = useRef();
     const [flightResults, setFlightResults] = useState([]);
     const [visibleFlights, setVisibleFlights] = useState(12);
     const [userId, setUserId] = useState(null);
@@ -56,15 +58,34 @@ export default function FlightsScreen({route}) {
 
     useEffect(() => {
         checkAuth();
-        console.log(route)
     }, []);
 
     useEffect(() => {
-        if (searchParams !== undefined) {
-            console.log(searchParams)
-            handleSearch();
+        if (route.params && JSON.stringify(route.params) !== JSON.stringify(prevSearchParamsRef.current)) {
+            setSearchParams(route.params);
+            setAirportFrom(route.params.airportFrom || '');
+            setAirportTo(route.params.airportTo || '');
+            setDateStart(route.params.dateStart || new Date());
+            setDateEnd(route.params.dateEnd || new Date());
+            setRoundTrip(route.params.roundTrip ?? true);
+            setPassengers(route.params.passengers || {
+                adults: 1,
+                children: 0,
+                infants: 0,
+            });
+            setParamsUpdated(true);
+            prevSearchParamsRef.current = route.params;
         }
-    }, []);
+    }, [route.params]);
+
+    useEffect(() => {
+        if (paramsUpdated) {
+            console.log('Got on flights screen', searchParams);
+            handleSearch();
+            setParamsUpdated(false);
+        }
+    }, [paramsUpdated, searchParams]);
+
 
     const checkAuth = async () => {
         try {
@@ -75,6 +96,55 @@ export default function FlightsScreen({route}) {
             }
         } catch (error) {
             console.error('Failed to get user data', error);
+        }
+    };
+
+    const handleSearch = async () => {
+        console.log('Searching...')
+        const payload = {
+            adults: passengers.adults,
+            airportFrom: getAirportCode(airportFrom),
+            airportTo: getAirportCode(airportTo),
+            children: passengers.children,
+            dateEnd: formatDate(dateEnd),
+            dateStart: formatDate(dateStart),
+            infants: passengers.infants,
+            isRoundtrip: roundTrip
+        };
+        console.log(payload);
+        if (airportFrom === '' || airportTo === '') {
+            setErrorMsg('Please fill all fields');
+        } else {
+            setIsLoading(true);
+            try {
+                const response = await axios.post('https://travelcom.online/api/crpo/getFlights', payload);
+                if (response.data.success === false) {
+                    setErrorMsg(response.data.message || 'No flights found');
+                    setFlightResults([]);
+                    setFilteredResults([]);
+                    setVisibleFlights(0);
+                    setAvailableAirlines([]);
+                } else {
+                    setFlightResults(response.data);
+                    setFilteredResults(response.data);
+                    setVisibleFlights(12);
+                    console.log('response:', JSON.stringify(response.data, null, 2));
+                    const airlines = [...new Set(response.data.map(flight => flight.provider.supplier.title))];
+                    const logos = [...new Set(response.data.map(flight => flight.providerLogo))];
+                    setAvailableAirlines(airlines);
+                    setAirlinesLogos(logos);
+                }
+            } catch (error) {
+                if (error.response) {
+                    setErrorMsg(error.response.data.message);
+                } else if (error.request) {
+                    setErrorMsg('No response from server');
+                } else {
+                    setErrorMsg(error.message || 'Error fetching flights');
+                }
+            } finally {
+                setIsLoading(false);
+            }
         }
     };
 
@@ -135,7 +205,6 @@ export default function FlightsScreen({route}) {
                 if (cartString) {
                     const loadedCart = JSON.parse(cartString);
                     setCartItems(loadedCart);
-                    console.log(loadedCart);
                 } else {
                     setCartItems([]);
                 }
@@ -258,76 +327,20 @@ export default function FlightsScreen({route}) {
         return favoriteItems.some(item => item.id === flight.id);
     };
 
-    const handleSearch = async () => {
-        console.log('Searching...')
-        const payload = {
-            adults: passengers.adults,
-            airportFrom: getAirportCode(airportFrom),
-            airportTo: getAirportCode(airportTo),
-            children: passengers.children,
-            dateEnd: formatDate(dateEnd),
-            dateStart: formatDate(dateStart),
-            infants: passengers.infants,
-            isRoundtrip: roundTrip
-        };
-        if (airportFrom === '' || airportTo === '') {
-            setErrorMsg('Please fill all fields');
-        } else {
-            setIsLoading(true);
-            try {
-                const response = await axios.post('https://travelcom.online/api/crpo/getFlights', payload);
-                if (response.data.success === false) {
-                    setErrorMsg(response.data.message || 'No flights found');
-                    setFlightResults([]);
-                    setFilteredResults([]);
-                    setVisibleFlights(0);
-                    setAvailableAirlines([]);
-                } else {
-                    setFlightResults(response.data);
-                    setFilteredResults(response.data);
-                    setVisibleFlights(12);
-                    console.log('response:', JSON.stringify(response.data, null, 2));
-                    const airlines = [...new Set(response.data.map(flight => flight.provider.supplier.title))];
-                    const logos = [...new Set(response.data.map(flight => flight.providerLogo))];
-                    setAvailableAirlines(airlines);
-                    setAirlinesLogos(logos);
-                }
-            } catch (error) {
-                if (error.response) {
-                    setErrorMsg(error.response.data.message);
-                } else if (error.request) {
-                    setErrorMsg('No response from server');
-                } else {
-                    setErrorMsg(error.message || 'Error fetching flights');
-                }
-            } finally {
-                setIsLoading(false);
-            }
-        }
-    };
-
     const handleShowMore = () => {
         setVisibleFlights(prevVisible => Math.min(prevVisible + 12, filteredResults.length));
     };
 
     const getAirportCode = (fullAirportName) => {
-        if (!fullAirportName || fullAirportName.length < 3) {
-            return '';
-        }
         return fullAirportName.slice(0, 3).toUpperCase();
     };
 
     const formatDate = (date) => {
-        if (searchParams === undefined) {
-            if (date !== null){
-                return date.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric'}).replace(/\//g, '.');
-            } else {
-                return null;
-            }
+        if (date !== null){
+            return date.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric'}).replace(/\//g, '.');
         } else {
-            return date;
+            return null;
         }
-
     };
 
     return(

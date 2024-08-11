@@ -131,9 +131,17 @@ export default function ProfileScreen ({navigation}){
             ? 'https://travelcom.online/api/auth/login'
             : 'https://travelcom.online/api/auth/register';
 
-        const authData = isLogin
+        let baseAuthData = isLogin
             ? {email, password}
             : {name, email, phone, password, password_confirmation: passwordConfirmation};
+
+        const pushTokenString = await AsyncStorage.getItem('@PushToken');
+        let authData = { ...baseAuthData };
+
+        if (pushTokenString) {
+            const pushToken = JSON.parse(pushTokenString);
+            authData.push_token = pushToken.data;
+        }
 
         if (!isLogin && password !== passwordConfirmation) {
             setErrorMsg('Passwords must match')

@@ -21,10 +21,8 @@ import {RoundTripSelector} from "../components/roundtrip-selector";
 import {DateInput} from "../components/input-date";
 import {PassengerDropdown} from "../components/passengers-selector";
 import {SearchIcon} from "../components/icons/search-icon";
-import {usePushNotifications} from "../usePushNotifications";
 
 export default function HomeScreen() {
-    const {expoPushToken, notification} = usePushNotifications();
     const [loading, setLoading] = useState(true);
     const [mainImage, setMainImage] = useState(null);
     const [directions, setDirections] = useState([]);
@@ -46,17 +44,7 @@ export default function HomeScreen() {
         infants: 0,
     });
 
-    const formatDate = (date) => {
-        if (date !== null){
-            return date.toLocaleDateString('ru-RU', {day: '2-digit', month: '2-digit', year: 'numeric'}).replace(/\//g, '.');
-        } else {
-            return null;
-        }
-    };
-
     const handleSearch = () => {
-        setDateStart(formatDate(dateStart));
-        setDateEnd(formatDate(dateEnd));
         const searchParams = {
             airportFrom,
             airportTo,
@@ -65,12 +53,12 @@ export default function HomeScreen() {
             roundTrip,
             passengers
         };
+        console.log('Sending to flights screen', searchParams)
         navigation.navigate('Flights', searchParams);
     };
 
     const fetchMainImage = async () => {
         setLoading(true);
-        console.log(expoPushToken)
         try {
             const response = await axios.get("https://travelcom.online/api/images/get");
             setMainImage(response.data.mainImage);
@@ -141,6 +129,7 @@ export default function HomeScreen() {
                     </View>
                     <View style={{backgroundColor: 'white'}}>
                         <View style={styles.flightsInputForm}>
+                            <Text style={[styles.mainBlueText, {textAlign: 'center'}]}>Search for flights</Text>
                             <AutoCompleteInput
                                 title='From'
                                 inputText={airportFrom}
@@ -499,5 +488,10 @@ const styles = StyleSheet.create({
         fontFamily: 'Montserrat-Bold',
         color: 'white',
         textAlign: 'center'
+    },
+    mainBlueText: {
+        color: '#207FBF',
+        fontSize: 18,
+        fontFamily: 'Montserrat-Bold'
     }
 });

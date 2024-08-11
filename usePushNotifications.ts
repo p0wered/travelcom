@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
-
 import Constants from "expo-constants";
-
 import { Platform } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface PushNotificationState {
     expoPushToken?: Notifications.ExpoPushToken;
     notification?: Notifications.Notification;
 }
+
+const PUSH_TOKEN_STORAGE_KEY = '@PushToken';
 
 export const usePushNotifications = (): PushNotificationState => {
     Notifications.setNotificationHandler({
@@ -66,10 +67,64 @@ export const usePushNotifications = (): PushNotificationState => {
         return token;
     }
 
+    async function savePushTokenToStorage(token: Notifications.ExpoPushToken) {
+        try {
+            await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, JSON.stringify(token));
+            console.log('Push token saved to AsyncStorage');
+        } catch (error) {
+            console.error('Error saving push token to AsyncStorage:', error);
+        }
+    }
+
+    async function getPushTokenFromStorage(): Promise<Notifications.ExpoPushToken | null> {
+        try {
+            const tokenString = await AsyncStorage.getItem(PUSH_TOKEN_STORAGE_KEY);
+            if (tokenString) {
+                return JSON.parse(tokenString);
+            }
+        } catch (error) {
+            console.error('Error getting push token from AsyncStorage:', error);
+        }
+        return null;
+    }
+
+    async function savePushTokenToServer(token: Notifications.ExpoPushToken) {
+        try {
+            const response = await fetch('https://travelcom.online/api/push/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ token: token.data }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save push token');
+            }
+
+            console.log('Push token saved successfully to server');
+        } catch (error) {
+            console.error('Error saving push token to server:', error);
+        }
+    }
+
     useEffect(() => {
-        registerForPushNotificationsAsync().then((token) => {
-            setExpoPushToken(token);
-        });
+        async function setupPushNotifications() {
+            const storedToken = await getPushTokenFromStorage();
+            if (storedToken) {
+                setExpoPushToken(storedToken);
+                savePushTokenToServer(storedToken);
+            } else {
+                const newToken = await registerForPushNotificationsAsync();
+                if (newToken) {
+                    setExpoPushToken(newToken);
+                    savePushTokenToStorage(newToken);
+                    savePushTokenToServer(newToken);
+                }
+            }
+        }
+
+        setupPushNotifications();
 
         notificationListener.current =
             Notifications.addNotificationReceivedListener((notification) => {
