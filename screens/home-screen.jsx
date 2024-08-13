@@ -207,7 +207,7 @@ function DirectionsList({navigation, directions}) {
         <View style={styles.directionFlexbox}>
             <View style={{display: 'flex', alignItems: 'center'}}>
                 <View style={styles.directionTitle}>
-                    <Text style={[styles.mainText, {textAlign: 'center'}]}>TRENDING DIRECTIONS</Text>
+                    <Text style={styles.mainText}>TRENDING DIRECTIONS</Text>
                 </View>
             </View>
             <FlatList
@@ -216,9 +216,6 @@ function DirectionsList({navigation, directions}) {
                 renderItem={({item}) => <DirectionItem item={item} />}
                 keyExtractor={item => item.id.toString()}
             />
-            <TouchableOpacity activeOpacity={0.8} style={[styles.mainBtn, {width: '100%', maxWidth: 500, margin: 'auto'}]} onPress={() => navigation.navigate('News')}>
-                <Text style={[styles.mainText, {width: 140, textAlign: 'center'}]}>Know more</Text>
-            </TouchableOpacity>
         </View>
     );
 }
@@ -334,13 +331,12 @@ const styles = StyleSheet.create({
     },
     directionTitle: {
         position: 'absolute',
-        width: 200,
         top: -55,
         height: 100,
         paddingLeft: 12,
         paddingRight: 12,
         paddingTop: 20,
-        paddingBottom: 20,
+        paddingBottom: 60,
         borderRadius: 10,
         backgroundColor: '#207FBF'
     },
@@ -368,7 +364,7 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'column',
         padding: 14,
-        marginBottom: 50,
+        marginBottom: 5,
     },
     blogFlexbox: {
         position: 'relative',

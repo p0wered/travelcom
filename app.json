@@ -2,7 +2,7 @@
   "expo": {
     "name": "Travelcom",
     "slug": "travelcom",
-    "version": "1.0.6",
+    "version": "1.0.8",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -11,11 +11,19 @@
       "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
+    "notification": {
+      "iosDisplayInForeground": true
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "travelcom",
       "buildNumber": "1",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,12 +31,21 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.travelcom",
-      "googleServicesFile": "./android/app/google-services.json"
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "@react-native-firebase/app",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
       [
         "expo-font",
         {
@@ -39,8 +56,7 @@
             "./assets/fonts/Montserrat-Medium.ttf"
           ]
         }
-      ],
-      "@react-native-firebase/app"
+      ]
     ],
     "extra": {
       "eas": {

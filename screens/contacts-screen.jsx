@@ -6,8 +6,11 @@ import {FacebookIcon} from "../components/icons/facebook-icon";
 import {TwitterIcon} from "../components/icons/twitter-icon";
 import {LinkedinIcon} from "../components/icons/linkedin";
 import {QuestionForm} from "../components/question-form";
+import {useInformationContext} from "../contextProvider";
 
 export default function ContactsScreen({navigation}) {
+    const {information, error} = useInformationContext();
+
     return(
         <ScrollView>
             <View style={styles.info}>
@@ -17,7 +20,7 @@ export default function ContactsScreen({navigation}) {
                         <Text style={styles.blueText}>Address</Text>
                     </View>
                     <Text style={styles.blueTextSmall}>
-                        International House, 55 Longsmith Street, Gloucester, UKВ
+                        {information.site_address}
                     </Text>
                 </View>
                 <View>
@@ -25,23 +28,23 @@ export default function ContactsScreen({navigation}) {
                         <MailIcon color="#207FBF"/>
                         <Text style={styles.blueText}>E-mail</Text>
                     </View>
-                    <TouchableOpacity onPress={() => Linking.openURL('mailto:info@travelcom.com')}>
-                        <Text style={styles.blueTextSmall}>info@travelcom.com</Text>
+                    <TouchableOpacity onPress={() => Linking.openURL(`mailto:${information.site_email}`)}>
+                        <Text style={styles.blueTextSmall}>{information.site_email}</Text>
                     </TouchableOpacity>
                 </View>
                 <Text style={styles.blueText}>Follow us</Text>
                 <View style={styles.iconRow}>
-                    <TouchableOpacity onPress={() => Linking.openURL('https://instagram.com')}>
-                        <InstagramIcon/>
+                    <TouchableOpacity onPress={() => Linking.openURL(information.instagram)}>
+                        <InstagramIcon />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => Linking.openURL('https://facebook.com')}>
-                        <FacebookIcon/>
+                    <TouchableOpacity onPress={() => Linking.openURL(information.facebook)}>
+                        <FacebookIcon />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => Linking.openURL('https://twitter.com')}>
-                        <TwitterIcon/>
+                    <TouchableOpacity onPress={() => Linking.openURL(information.twitter)}>
+                        <TwitterIcon />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => Linking.openURL('https://linkedin.com')}>
-                        <LinkedinIcon/>
+                    <TouchableOpacity onPress={() => Linking.openURL(information.linkedin)}>
+                        <LinkedinIcon />
                     </TouchableOpacity>
                 </View>
                 <View>

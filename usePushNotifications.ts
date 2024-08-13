@@ -4,6 +4,7 @@ import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useNotification} from "./contextNotifications";
 
 export interface PushNotificationState {
     expoPushToken?: Notifications.ExpoPushToken;
@@ -13,11 +14,14 @@ export interface PushNotificationState {
 const PUSH_TOKEN_STORAGE_KEY = '@PushToken';
 
 export const usePushNotifications = (): PushNotificationState => {
+    const { notificationsEnabled } = useNotification();
+
     Notifications.setNotificationHandler({
         handleNotification: async () => ({
-            shouldPlaySound: false,
-            shouldShowAlert: true,
-            shouldSetBadge: false,
+            shouldPlaySound: notificationsEnabled,
+            shouldShowAlert: notificationsEnabled,
+            shouldSetBadge: notificationsEnabled,
+            sound: 'default'
         }),
     });
 
@@ -97,11 +101,9 @@ export const usePushNotifications = (): PushNotificationState => {
                 },
                 body: JSON.stringify({ token: token.data }),
             });
-
             if (!response.ok) {
                 throw new Error('Failed to save push token');
             }
-
             console.log('Push token saved successfully to server');
         } catch (error) {
             console.error('Error saving push token to server:', error);
@@ -126,24 +128,32 @@ export const usePushNotifications = (): PushNotificationState => {
 
         setupPushNotifications();
 
-        notificationListener.current =
-            Notifications.addNotificationReceivedListener((notification) => {
+        if (notificationsEnabled) {
+            notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
                 setNotification(notification);
             });
 
-        responseListener.current =
-            Notifications.addNotificationResponseReceivedListener((response) => {
+            responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
                 console.log(response);
             });
+        } else {
+            if (notificationListener.current) {
+                Notifications.removeNotificationSubscription(notificationListener.current);
+            }
+            if (responseListener.current) {
+                Notifications.removeNotificationSubscription(responseListener.current);
+            }
+        }
 
         return () => {
-            Notifications.removeNotificationSubscription(
-                notificationListener.current!
-            );
-
-            Notifications.removeNotificationSubscription(responseListener.current!);
+            if (notificationListener.current) {
+                Notifications.removeNotificationSubscription(notificationListener.current);
+            }
+            if (responseListener.current) {
+                Notifications.removeNotificationSubscription(responseListener.current);
+            }
         };
-    }, []);
+    }, [notificationsEnabled]);
 
     return {
         expoPushToken,

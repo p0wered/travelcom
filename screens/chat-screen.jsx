@@ -19,8 +19,9 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import {ChatSendIcon} from "../components/icons/chat-send-icon";
 import {PaperclipIcon} from "../components/icons/paperclip-icon";
-import {useNavigation} from "@react-navigation/native";
+import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import axios from "axios";
+import {useNotification} from "../contextNotifications";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MAX_IMAGE_WIDTH = SCREEN_WIDTH * 0.7;
@@ -55,9 +56,17 @@ const MessageContent = ({ content }) => {
     } else if (content.startsWith('<a')) {
         const hrefMatch = content.match(/href="([^"]*)"/);
         const imgSrcMatch = content.match(/src="([^"]*)"/);
+
+        let docUrl;
+        if (hrefMatch[1].startsWith('https://admin.travelcom.online')){
+            docUrl = hrefMatch[1];
+        } else {
+            docUrl = `https://travelcom.online${hrefMatch[1]}`;
+        }
+
         if (hrefMatch && hrefMatch[1] && imgSrcMatch && imgSrcMatch[1]) {
             return (
-                <TouchableOpacity onPress={() => Linking.openURL(`https://travelcom.online${hrefMatch[1]}`)}>
+                <TouchableOpacity onPress={() => Linking.openURL(docUrl)}>
                     <Image source={{ uri: imgSrcMatch[1] }} style={styles.documentIcon} />
                     <Text style={styles.documentText}>Open document</Text>
                 </TouchableOpacity>
@@ -86,7 +95,7 @@ const OutgoingMessage = ({ message, time }) => (
 );
 
 
-export default function ChatScreen({navigation}){
+export default function ChatScreen({navigation, route}){
     const navigate = useNavigation();
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
@@ -96,6 +105,17 @@ export default function ChatScreen({navigation}){
     const [isPickerVisible, setIsPickerVisible] = useState(false);
     const [loggedIn, setLoggedIn] = useState(false);
     const flatListRef = useRef();
+    const { notificationsEnabled, setNotificationsEnabled } = useNotification();
+    const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
+    const {setIsInputFocused} = route.params;
+
+    useFocusEffect(
+        React.useCallback(() => {
+            setNotificationsEnabled(false);
+            return () => {
+                setNotificationsEnabled(true);
+            };
+        }, [notificationsEnabled]));
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -265,7 +285,13 @@ export default function ChatScreen({navigation}){
             if (data && Array.isArray(data.messages)) {
                 setMessages(data.messages);
                 setChatId(data.id);
-                setTimeout(() => flatListRef.current?.scrollToEnd({animated: false}), 100);
+                setShouldScrollToBottom(true);
+                setTimeout(() => {
+                    flatListRef.current?.scrollToEnd({animated: false});
+                    requestAnimationFrame(() => {
+                        flatListRef.current?.scrollToEnd({animated: false});
+                    });
+                }, 100);
             } else {
                 console.error('Unexpected data format:', data);
                 setMessages([]);
@@ -274,6 +300,21 @@ export default function ChatScreen({navigation}){
             console.error('Error fetching messages:', error);
         }
     }, []);
+
+    useEffect(() => {
+        if (messages.length > 0) {
+            setTimeout(() => {
+                flatListRef.current?.scrollToEnd({animated: false});
+            }, 100);
+        }
+    }, [messages]);
+
+    const handleScroll = (event) => {
+        const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
+        const paddingToBottom = 20;
+        const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+        setShouldScrollToBottom(isCloseToBottom);
+    };
 
     const sendMessage = async () => {
         if (inputMessage.trim() === '' || !userData || !userToken || !chatId) return;
@@ -300,6 +341,8 @@ export default function ChatScreen({navigation}){
         } catch (error) {
             console.error('Error sending message:', error);
         }
+        setShouldScrollToBottom(true);
+        flatListRef.current?.scrollToEnd({animated: true});
     };
 
     const formatTime = (dateString) => {
@@ -337,7 +380,19 @@ export default function ChatScreen({navigation}){
                     data={messages}
                     renderItem={renderMessage}
                     keyExtractor={(item) => item.id.toString()}
-                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({animated: true})}
+                    onContentSizeChange={() => {
+                        if (shouldScrollToBottom) {
+                            flatListRef.current?.scrollToEnd({animated: false});
+                        }
+                    }}
+                    onLayout={() => {
+                        if (messages.length > 0) {
+                            flatListRef.current?.scrollToEnd({animated: false});
+                        }
+                    }}
+                    onScroll={handleScroll}
+                    scrollEventThrottle={400}
+                    maintainVisibleContentPosition={{minIndexForVisible: 0}}
                 />
                 <View>
                     <View style={styles.inputContainer}>
@@ -349,6 +404,8 @@ export default function ChatScreen({navigation}){
                             placeholderTextColor='#d0d0d0'
                             multiline={true}
                             numberOfLines={2}
+                            onFocus={Platform.OS === 'android' ? () => setIsInputFocused(true) : undefined}
+                            onBlur={Platform.OS === 'android' ? () => setIsInputFocused(false) : undefined}
                         />
                         <TouchableOpacity style={styles.attachButton} onPress={togglePicker}>
                             <View>
@@ -374,52 +431,21 @@ export default function ChatScreen({navigation}){
         );
     }
 
-    return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={styles.container}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-        >
-            <FlatList
-                ref={flatListRef}
-                data={messages}
-                renderItem={renderMessage}
-                keyExtractor={(item) => item.id.toString()}
-                onContentSizeChange={() => flatListRef.current?.scrollToEnd({animated: true})}
-            />
-            <View>
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={styles.input}
-                        value={inputMessage}
-                        onChangeText={setInputMessage}
-                        placeholder="Type a message..."
-                        placeholderTextColor='#d0d0d0'
-                        multiline={true}
-                        numberOfLines={2}
-                    />
-                    <TouchableOpacity style={styles.attachButton} onPress={togglePicker}>
-                        <View>
-                            <PaperclipIcon/>
-                        </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-                        <ChatSendIcon/>
-                    </TouchableOpacity>
-                </View>
-                {isPickerVisible && (
-                    <View style={styles.pickerContainer}>
-                        <TouchableOpacity style={styles.pickerOption} onPress={pickImage}>
-                            <Text style={styles.blueText}>Image</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.pickerOption} onPress={pickDocument}>
-                            <Text style={styles.blueText}>Document</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
-            </View>
-        </KeyboardAvoidingView>
-    );
+    if (Platform.OS === 'ios') {
+        return (
+            <KeyboardAvoidingView
+                behavior="padding"
+                style={styles.container}
+                keyboardVerticalOffset={89}
+            >
+                {renderContent()}
+            </KeyboardAvoidingView>
+        );
+    } else {
+        return (
+            <>{renderContent()}</>
+        )
+    }
 };
 
 

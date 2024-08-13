@@ -37,6 +37,8 @@ import {NewsItemScreen} from "./screens/news-item-screen";
 import {DirectionItemScreen} from "./screens/direction-item-screen";
 import {SafeAreaProvider} from "react-native-safe-area-context";
 import {usePushNotifications} from "./usePushNotifications";
+import {InformationProvider} from "./contextProvider";
+import {NotificationProvider} from "./contextNotifications";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -48,6 +50,7 @@ function MainTabs(){
     const [menuVisible, setMenuVisible] = useState(false);
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(width)).current;
+    const [isInputFocused, setIsInputFocused] = useState(false);
 
     const toggleMenu = () => {
         if (menuVisible) {
@@ -93,7 +96,7 @@ function MainTabs(){
     const navigateToAbout = createNavigationFunction('About');
     const navigateToContacts = createNavigationFunction('Contacts');
 
-    const tabScreenOptions = useCallback(({ route }) => ({
+    const tabScreenOptions = useCallback(({route}) => ({
         tabBarIcon: ({color}) => {
             let iconName;
             let routeName = route.name;
@@ -118,8 +121,12 @@ function MainTabs(){
             fontWeight: 700,
             marginTop: 0,
         },
-        tabBarStyle: Platform.OS === 'ios' ? {height: 84} : {height: 68},
-        tabBarItemStyle: {height: 60},
+        tabBarStyle: {
+            height: isInputFocused ? 0 : (Platform.OS === 'ios' ? 84 : 68),
+            opacity: isInputFocused ? 0 : 1,
+            overflow: 'hidden',
+        },
+        tabBarItemStyle: isInputFocused ? {height: 0} : {height: 60, display: 'flex', flexDirection: 'column'},
         headerStyle: {
             backgroundColor: '#207FBF',
             height: Platform.OS === 'ios' ? 90 : 52,
@@ -137,7 +144,7 @@ function MainTabs(){
             </TouchableOpacity>
         ),
         headerRightContainerStyle: {paddingBottom: 10},
-    }), [toggleMenu]);
+    }), [isInputFocused, toggleMenu]);
 
     return(
         <>
@@ -147,7 +154,7 @@ function MainTabs(){
                 <Tab.Screen name={'Travel'} component={HomeScreen}/>
                 <Tab.Screen name={'Hotels'} component={HotelsScreen}/>
                 <Tab.Screen name={'Flights'} component={FlightsScreen}/>
-                <Tab.Screen name={'Chat'} component={ChatScreen}/>
+                <Tab.Screen name={'Chat'} component={ChatScreen} initialParams={{setIsInputFocused}}/>
                 <Tab.Screen name={'Profile'} component={ProfileScreen}/>
                 <Tab.Screen name={'Help'} component={HelpScreen} options={{tabBarButton: () => null}}/>
                 <Tab.Screen name={'News'} component={NewsScreen} options={{tabBarButton: () => null}}/>
@@ -217,6 +224,9 @@ function MainTabs(){
 const Stack = createNativeStackNavigator();
 
 function AppContent() {
+    const {expoPushToken, notification} = usePushNotifications();
+    console.log(expoPushToken);
+
     return (
         <Stack.Navigator
             screenOptions={() => ({
@@ -365,9 +375,6 @@ export default function App() {
         'Montserrat-Light': require('./assets/fonts/Montserrat-Light.ttf'),
     });
 
-    const {expoPushToken, notification} = usePushNotifications();
-    console.log(expoPushToken);
-
     useEffect(() => {
         if (loaded || error) {
             SplashScreen.hideAsync();
@@ -382,8 +389,12 @@ export default function App() {
         <ErrorBoundary>
             <SafeAreaProvider>
                 <NavigationContainer>
-                    <AppContent/>
-                    <StatusBar barStyle='light-content' backgroundColor='#207fbf'/>
+                    <NotificationProvider>
+                        <InformationProvider>
+                            <AppContent />
+                            <StatusBar barStyle='light-content' backgroundColor='#207fbf' />
+                        </InformationProvider>
+                    </NotificationProvider>
                 </NavigationContainer>
             </SafeAreaProvider>
         </ErrorBoundary>

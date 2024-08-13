@@ -1,6 +1,6 @@
 {
   "name": "travelcom",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "main": "expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
@@ -47,7 +47,8 @@
     "react-native-vector-icons": "^10.1.0",
     "react-native-web": "~0.19.10",
     "react-native-webview": "13.8.6",
-    "typescript": "~5.3.3"
+    "typescript": "~5.3.3",
+    "expo-build-properties": "~0.12.5"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

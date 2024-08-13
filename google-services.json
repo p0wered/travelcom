@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "924969198176",
+    "project_id": "travelcom-2f6f1",
+    "storage_bucket": "travelcom-2f6f1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:924969198176:android:cad4826aecad102a3ed905",
+        "android_client_info": {
+          "package_name": "com.travelcom"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCw4xSL9DI8pdJPbjno6goSrToFPAoYFy0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

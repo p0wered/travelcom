@@ -5,34 +5,40 @@ import {TwitterIcon} from "./icons/twitter-icon";
 import {LinkedinIcon} from "./icons/linkedin";
 import Logo from "./icons/logo";
 import {useNavigation} from "@react-navigation/native";
+import {useInformationContext} from "../contextProvider";
 
-export function FooterRaw({color, navigation, response}){
-    return(
-        <View style={[styles.footerMain, {backgroundColor: color}]}>
+export function FooterRaw({color, navigation}) {
+    const {information, error} = useInformationContext();
+
+    if (error) return <Text>Error loading footer information</Text>;
+    if (!information) return null;
+
+    return (
+        <View style={[styles.footerMain, { backgroundColor: color }]}>
             <View style={styles.iconRow}>
-                <TouchableOpacity onPress={() => Linking.openURL('https://instagram.com')}>
-                    <InstagramIcon/>
+                <TouchableOpacity onPress={() => Linking.openURL(information.instagram)}>
+                    <InstagramIcon />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => Linking.openURL('https://facebook.com')}>
-                    <FacebookIcon/>
+                <TouchableOpacity onPress={() => Linking.openURL(information.facebook)}>
+                    <FacebookIcon />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => Linking.openURL('https://twitter.com')}>
-                    <TwitterIcon/>
+                <TouchableOpacity onPress={() => Linking.openURL(information.twitter)}>
+                    <TwitterIcon />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => Linking.openURL('https://linkedin.com')}>
-                    <LinkedinIcon/>
+                <TouchableOpacity onPress={() => Linking.openURL(information.linkedin)}>
+                    <LinkedinIcon />
                 </TouchableOpacity>
             </View>
-            <Logo color='#207FBF' width={140} height={60}/>
+            <Logo color='#207FBF' width={140} height={60} />
             <View>
-                <Text style={styles.footerLinkBlue}>Travelcom Limited</Text>
+                <Text style={styles.footerLinkBlue}>{information.site_name}</Text>
             </View>
-            <TouchableOpacity onPress={() => Linking.openURL('mailto:info@travelcom.com')}>
-                <Text style={styles.footerLinkBlue}>info@travelcom.com</Text>
+            <TouchableOpacity onPress={() => Linking.openURL(`mailto:${information.site_email}`)}>
+                <Text style={styles.footerLinkBlue}>{information.site_email}</Text>
             </TouchableOpacity>
             <TouchableOpacity>
                 <Text style={styles.footerLinkBlue}>
-                    63-66 Hatton Garden, Fifth Floor Suite 23, London, England, EC1N 8LE
+                    {information.site_address}
                 </Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('Privacy')}>
@@ -47,15 +53,15 @@ export function FooterRaw({color, navigation, response}){
             <TouchableOpacity onPress={() => navigation.navigate('FAQ')}>
                 <Text style={styles.footerLink}>FAQ</Text>
             </TouchableOpacity>
-            <Text style={styles.footerSmallText}>Copyright ©Travelcom. All Rights Reserved </Text>
+            <Text style={styles.footerSmallText}>{information.copyright}</Text>
         </View>
     )
 }
 
-export function Footer({color}){
+export function Footer({ color }) {
     const navigation = useNavigation();
-    return(
-        <FooterRaw color={color} navigation={navigation}/>
+    return (
+        <FooterRaw color={color} navigation={navigation} />
     )
 }
 

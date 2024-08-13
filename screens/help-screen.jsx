@@ -1,11 +1,14 @@
 import {StyleSheet, ScrollView} from "react-native";
 import {Footer} from "../components/footer";
 import {QuestionForm} from "../components/question-form";
+import {useInformationContext} from "../contextProvider";
 
 export default function HelpScreen() {
+    const {information, error} = useInformationContext();
+
     return(
         <ScrollView>
-            <QuestionForm title='If you have any questions or problems with the registration, please contact us'/>
+            <QuestionForm title={information.help_text}/>
             <Footer color='white'/>
         </ScrollView>
     )
