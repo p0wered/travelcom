@@ -175,7 +175,7 @@ export default function CartScreen({navigation}) {
     };
 
     const calculateTotalPrice = (flight) => {
-        return flight.price * flight.passengers;
+        return flight.price;
     };
 
     const loadCartItems = useCallback(async () => {
@@ -352,6 +352,7 @@ export default function CartScreen({navigation}) {
                                     backArriveCity={flight.isRoundtrip ? flight.back_ticket?.arriveCity.title : undefined}
                                     backFlightTime={flight.isRoundtrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
                                     isRoundTrip={flight.isRoundtrip}
+                                    baggageInfo={flight.baggage.piece}
                                     btnText="Remove"
                                     onPress={() => removeFromCart(flight.id)}
                                     onCartScreen={true}

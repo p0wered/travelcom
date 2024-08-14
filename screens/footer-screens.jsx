@@ -1,9 +1,10 @@
-import {ScrollView, Text, View, StyleSheet, ActivityIndicator} from "react-native";
+import {ScrollView, Text, View, StyleSheet, ActivityIndicator, useWindowDimensions} from "react-native";
 import {Footer} from "../components/footer";
 import {generateAccordionItems} from "../components/accordion-list";
 import {QuestionForm} from "../components/question-form";
 import React, {useEffect, useState} from "react";
 import axios from "axios";
+import RenderHtml from "react-native-render-html";
 
 const fetchData = async (setData, setLoading) => {
     try {
@@ -19,6 +20,7 @@ const fetchData = async (setData, setLoading) => {
 const InfoScreen = ({ title, content }) => {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState(null);
+    const { width } = useWindowDimensions();
 
     useEffect(() => {
         fetchData(setData, setLoading);
@@ -33,10 +35,17 @@ const InfoScreen = ({ title, content }) => {
     }
 
     return (
-        <ScrollView>
+        <ScrollView style={{backgroundColor: '#EDEDED'}}>
             <Text style={styles.titleText}>{title}</Text>
             <View style={styles.privacyFlexbox}>
-                <Text>{data ? data[content] : `Error fetching ${content}`}</Text>
+                {data && data[content] ? (
+                    <RenderHtml
+                        contentWidth={width}
+                        source={{html: data[content]}}
+                    />
+                ) : (
+                    <Text>{`Error fetching ${content}`}</Text>
+                )}
             </View>
             <Footer />
         </ScrollView>

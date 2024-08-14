@@ -40,6 +40,8 @@ export const DateInput = ({ date, setDate, placeholder, inCheckout }) => {
                     onChange={handleDateChange}
                     accentColor="#207fbf"
                     themeVariant="light"
+                    maximumDate={inCheckout ? new Date() : undefined}
+                    minimumDate={inCheckout ? undefined : new Date()}
                     style={!inCheckout ?
                         {position: 'absolute', right: -20, top: -8, opacity: 0.015} :
                         {position: 'absolute', left: -26, top: -9, opacity: 0.015}}

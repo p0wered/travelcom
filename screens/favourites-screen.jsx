@@ -152,6 +152,7 @@ export default function FavouritesScreen() {
                                 backArriveCity={isRoundTrip ? flight.back_ticket?.arriveCity.title : undefined}
                                 backFlightTime={isRoundTrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
                                 isRoundTrip={isRoundTrip}
+                                baggageInfo={flight.baggage.piece}
                                 btnText={inCart ? "Remove from cart" : "Add to cart"}
                                 onPress={() => toggleCart(flight)}
                                 favouriteIconColor='black'

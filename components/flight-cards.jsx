@@ -5,10 +5,12 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                                flightTime, depTime, arrivalTime, depDate, arrivalDate, btnText, onPress, onCartScreen,
                                onCheckoutPress, checkoutBtnText, showFavIcon, favouriteIconPress, favouriteIconColor,
                                isRoundTrip, backDepTime, backDepDate, backArriveTime, backArriveDate, backDepAirport,
-                               backArriveAirport, backDepCity, backArriveCity, backFlightTime, personCount})
+                               backArriveAirport, backDepCity, backArriveCity, backFlightTime, personCount, baggageInfo})
 {
     let btnShow;
     btnText === undefined ? btnShow = false : btnShow = true;
+
+
 
     return(
         <View style={styles.flightsCard}>
@@ -17,6 +19,10 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                     <View style={{marginBottom: 10}}>
                         <Text style={[styles.mainText, {fontSize: 14}]}>{depCity} - {arrivalCity}</Text>
                         <Text style={[styles.greyText, {marginTop: 5}]}>{flightTime} on the way there</Text>
+                        {baggageInfo !== undefined ? (
+                            <Text style={[styles.greyText, {marginTop: 5}]}>{`${baggageInfo === 0 ? `No baggage` : `${baggageInfo} free pieces of baggage`}`}</Text>
+                            ) : (<></>)
+                        }
                     </View>
                     <View style={styles.textMerger}>
                         <Image style={styles.airlinesImg} source={{uri: airlinesImg}}/>

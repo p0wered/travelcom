@@ -114,6 +114,12 @@ export default function FlightsScreen({route}) {
         console.log(payload);
         if (airportFrom === '' || airportTo === '') {
             setErrorMsg('Please fill all fields');
+            setAvailableAirlines([]);
+            setVisibleFlights(0);
+        } else if (formatDate(dateStart) > formatDate(dateEnd)){
+            setErrorMsg('Please select valid dates');
+            setAvailableAirlines([]);
+            setVisibleFlights(0);
         } else {
             setIsLoading(true);
             try {
@@ -512,6 +518,7 @@ export default function FlightsScreen({route}) {
                                 backArriveCity={isRoundTrip ? flight.back_ticket?.arriveCity.title : undefined}
                                 backFlightTime={isRoundTrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
                                 isRoundTrip={isRoundTrip}
+                                baggageInfo={flight.baggage.piece}
                                 btnText={inCart ? "Remove from cart" : "Add to cart"}
                                 onPress={() => inCart ? removeFromCart(flight) : addToCart(flight)}
                                 favouriteIconPress={() => toggleFavorite(flight)}
@@ -529,7 +536,7 @@ export default function FlightsScreen({route}) {
                     <></>
                 )}
 
-                {visibleFlights < filteredResults.length && (
+                {visibleFlights < filteredResults.length && !errorMsg && (
                     <TouchableOpacity
                         activeOpacity={0.8}
                         style={[styles.showMoreBtn, {paddingVertical: 18}]}
