@@ -17,10 +17,10 @@ const fetchData = async (setData, setLoading) => {
     }
 };
 
-const InfoScreen = ({ title, content }) => {
+const InfoScreen = ({title, content}) => {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState(null);
-    const { width } = useWindowDimensions();
+    const {width} = useWindowDimensions();
 
     useEffect(() => {
         fetchData(setData, setLoading);

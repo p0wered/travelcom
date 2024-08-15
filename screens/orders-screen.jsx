@@ -109,7 +109,6 @@ export default function OrdersScreen(){
             }
         };
 
-
         const clientsData = Object.keys(flightData)
             .filter(key => !isNaN(parseInt(key)))
             .map(key => flightData[key]);
@@ -118,7 +117,7 @@ export default function OrdersScreen(){
             const createdAt = new Date(item.created_at);
             const now = new Date();
             const diffInMinutes = (now - createdAt) / (1000 * 60);
-            return diffInMinutes > 30;
+            return diffInMinutes > 20;
         };
 
         const paymentDisabled = isPaymentDisabled();
@@ -127,7 +126,7 @@ export default function OrdersScreen(){
             <View style={styles.orderContainer}>
                 <FlightCard
                     key={flightData.id}
-                    price={flightData.price * clientsData.length}
+                    price={flightData.price}
                     flightTime={`${flightData.duration.flight.hour}h, ${flightData.duration.flight.minute}min`}
                     depCity={flightData.depCity.title}
                     depAirport={`${flightData.depAirport.title}, ${flightData.depAirport.code}`}

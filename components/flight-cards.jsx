@@ -1,4 +1,4 @@
-import {Image, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {Image, Platform, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import {FavoriteIcon} from "./icons/favorite-icon";
 
 export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalCity, depAirport, arrivalAirport,
@@ -19,10 +19,6 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                     <View style={{marginBottom: 10}}>
                         <Text style={[styles.mainText, {fontSize: 14}]}>{depCity} - {arrivalCity}</Text>
                         <Text style={[styles.greyText, {marginTop: 5}]}>{flightTime} on the way there</Text>
-                        {baggageInfo !== undefined ? (
-                            <Text style={[styles.greyText, {marginTop: 5}]}>{`${baggageInfo === 0 ? `No baggage` : `${baggageInfo} free pieces of baggage`}`}</Text>
-                            ) : (<></>)
-                        }
                     </View>
                     <View style={styles.textMerger}>
                         <Image style={styles.airlinesImg} source={{uri: airlinesImg}}/>
@@ -30,7 +26,11 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                     </View>
                 </View>
                 <View>
-                    <Text style={styles.largeText}>{price} €</Text>
+                    <Text style={styles.largeText} adjustsFontSizeToFit={true}>{price} €</Text>
+                    {baggageInfo !== undefined ? (
+                        <Text adjustsFontSizeToFit={true} style={[styles.greyText, {textAlign: 'right', maxWidth: 128, marginTop: 2}]}>{`${baggageInfo === 0 ? `No baggage` : `${baggageInfo} free pieces of baggage`}`}</Text>
+                    ) : (<></>)
+                    }
                 </View>
             </View>
             <View style={styles.cardBlock}>
@@ -124,9 +124,9 @@ const styles = StyleSheet.create({
         color: 'black'
     },
     largeText: {
-        fontSize: 22,
+        fontSize: Platform.OS === 'ios' ? 22 : 19,
         fontFamily: 'Montserrat-Bold',
-        textAlign: 'right'
+        textAlign: 'right',
     },
     smallText: {
         fontSize: 12,
@@ -193,7 +193,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         paddingHorizontal: 18,
-        flexWrap: 'wrap',
         gap: 10
     },
     chooseBtn: {

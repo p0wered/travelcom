@@ -1,12 +1,17 @@
-import {ScrollView, Text, View, StyleSheet, Image, TouchableOpacity, Linking} from "react-native";
+import {ScrollView, Text, View, StyleSheet, Image, TouchableOpacity, Linking, useWindowDimensions} from "react-native";
 import {AddressIcon} from "../components/icons/address-icon";
 import MailIcon from "../components/icons/mail-icon";
 import {Footer} from "../components/footer";
 import axios from "axios";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
+import {useInformationContext} from "../contextProvider";
+import RenderHtml from "react-native-render-html";
 
 export default function AboutScreen() {
     const [image, setImage] = useState(null);
+    const [text, setText] = useState(null);
+    const {information} = useInformationContext();
+    const {width} = useWindowDimensions();
 
     const fetchImage = async () => {
         try {
@@ -17,8 +22,18 @@ export default function AboutScreen() {
         }
     }
 
+    const fetchData = async () => {
+        try {
+            const response = await axios.get('https://travelcom.online/api/information/docs');
+            setText(response.data.about);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    };
+
     useEffect(() => {
         fetchImage();
+        fetchData();
     }, []);
 
     return(
@@ -28,36 +43,17 @@ export default function AboutScreen() {
                 <View style={{width: '100%'}}>
                     <Image style={styles.aboutImage} source={{uri: image}}/>
                 </View>
-                <Text style={styles.aboutText}>
-                    Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.
-                    Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus
-                    mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa
-                    quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo,
-                    rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium.
-                    Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus.
-                </Text>
-                <Text style={styles.aboutText}>
-                    Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus
-                    in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque
-                    rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi.
-                    Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper
-                    libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar,
-                    hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero
-                    venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo.
-                </Text>
-                <Text style={styles.aboutText}>
-                    Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum
-                    sodales, augue velit cursus nunc,Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean
-                    commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient
-                    montes, nascetur ridiculus mus.
-                </Text>
+                <RenderHtml
+                    contentWidth={width}
+                    source={{html: text}}
+                />
                 <View>
                     <View style={styles.merger}>
                         <AddressIcon/>
                         <Text style={styles.blueText}>Address</Text>
                     </View>
                     <Text style={styles.blueTextSmall}>
-                        International House, 55 Longsmith Street, Gloucester, UKВ
+                        {information.site_address}
                     </Text>
                 </View>
                 <View>
@@ -65,8 +61,8 @@ export default function AboutScreen() {
                         <MailIcon color='#207FBF'/>
                         <Text style={styles.blueText}>E-mail</Text>
                     </View>
-                    <TouchableOpacity onPress={() => Linking.openURL('mailto:info@travelcom.com')}>
-                        <Text style={styles.blueTextSmall}>info@travelcom.com</Text>
+                    <TouchableOpacity onPress={() => Linking.openURL(`mailto:${information.site_email}`)}>
+                        <Text style={styles.blueTextSmall}>{information.site_email}</Text>
                     </TouchableOpacity>
                 </View>
                 <Footer/>

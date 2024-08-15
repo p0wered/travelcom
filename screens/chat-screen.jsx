@@ -10,7 +10,7 @@ import {
     Linking,
     Platform,
     StyleSheet,
-    KeyboardAvoidingView
+    KeyboardAvoidingView, ActivityIndicator
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Pusher from 'pusher-js/react-native';
@@ -24,7 +24,7 @@ import axios from "axios";
 import {useNotification} from "../contextNotifications";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const MAX_IMAGE_WIDTH = SCREEN_WIDTH * 0.7;
+const MAX_IMAGE_WIDTH = SCREEN_WIDTH * 0.6;
 
 const MessageContent = ({ content }) => {
     const [imageSize, setImageSize] = useState({width: 250, height: 250});
@@ -76,8 +76,8 @@ const MessageContent = ({ content }) => {
     return <Text style={styles.messageText}>{content}</Text>;
 };
 
-const IncomingMessage = ({ message, time }) => (
-    <View style={styles.incomingMessageContainer}>
+const IncomingMessage = ({message, time}) => (
+    <View style={[styles.incomingMessageContainer]}>
         <View style={styles.incomingMessageBubble}>
             <MessageContent content={message} />
             <Text style={styles.messageTime}>{time}</Text>
@@ -85,8 +85,8 @@ const IncomingMessage = ({ message, time }) => (
     </View>
 );
 
-const OutgoingMessage = ({ message, time }) => (
-    <View style={styles.outgoingMessageContainer}>
+const OutgoingMessage = ({message, time}) => (
+    <View style={[styles.outgoingMessageContainer]}>
         <View style={styles.outgoingMessageBubble}>
             <MessageContent content={message} />
             <Text style={styles.messageTime}>{time}</Text>
@@ -104,9 +104,9 @@ export default function ChatScreen({navigation, route}){
     const [chatId, setChatId] = useState(null);
     const [isPickerVisible, setIsPickerVisible] = useState(false);
     const [loggedIn, setLoggedIn] = useState(false);
-    const flatListRef = useRef();
+    const [loading, setLoading] = useState(true);
     const { notificationsEnabled, setNotificationsEnabled } = useNotification();
-    const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
+    const flatListRef = useRef();
     const {setIsInputFocused} = route.params;
 
     useFocusEffect(
@@ -262,7 +262,6 @@ export default function ChatScreen({navigation, route}){
                 }
                 return prevMessages;
             });
-            flatListRef.current?.scrollToEnd({animated: true});
         });
 
         return () => {
@@ -272,7 +271,7 @@ export default function ChatScreen({navigation, route}){
 
     const fetchMessages = useCallback(async (token) => {
         if (!token) return;
-
+        setLoading(true);
         try {
             const response = await fetch('https://travelcom.online/api/chat/get_messages', {
                 method: 'GET',
@@ -285,13 +284,6 @@ export default function ChatScreen({navigation, route}){
             if (data && Array.isArray(data.messages)) {
                 setMessages(data.messages);
                 setChatId(data.id);
-                setShouldScrollToBottom(true);
-                setTimeout(() => {
-                    flatListRef.current?.scrollToEnd({animated: false});
-                    requestAnimationFrame(() => {
-                        flatListRef.current?.scrollToEnd({animated: false});
-                    });
-                }, 100);
             } else {
                 console.error('Unexpected data format:', data);
                 setMessages([]);
@@ -299,22 +291,8 @@ export default function ChatScreen({navigation, route}){
         } catch (error) {
             console.error('Error fetching messages:', error);
         }
+        setLoading(false);
     }, []);
-
-    useEffect(() => {
-        if (messages.length > 0) {
-            setTimeout(() => {
-                flatListRef.current?.scrollToEnd({animated: false});
-            }, 100);
-        }
-    }, [messages]);
-
-    const handleScroll = (event) => {
-        const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
-        const paddingToBottom = 20;
-        const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
-        setShouldScrollToBottom(isCloseToBottom);
-    };
 
     const sendMessage = async () => {
         if (inputMessage.trim() === '' || !userData || !userToken || !chatId) return;
@@ -341,8 +319,6 @@ export default function ChatScreen({navigation, route}){
         } catch (error) {
             console.error('Error sending message:', error);
         }
-        setShouldScrollToBottom(true);
-        flatListRef.current?.scrollToEnd({animated: true});
     };
 
     const formatTime = (dateString) => {
@@ -376,23 +352,11 @@ export default function ChatScreen({navigation, route}){
         return (
             <>
                 <FlatList
+                    inverted={true}
                     ref={flatListRef}
-                    data={messages}
+                    data={[...messages].reverse()}
                     renderItem={renderMessage}
                     keyExtractor={(item) => item.id.toString()}
-                    onContentSizeChange={() => {
-                        if (shouldScrollToBottom) {
-                            flatListRef.current?.scrollToEnd({animated: false});
-                        }
-                    }}
-                    onLayout={() => {
-                        if (messages.length > 0) {
-                            flatListRef.current?.scrollToEnd({animated: false});
-                        }
-                    }}
-                    onScroll={handleScroll}
-                    scrollEventThrottle={400}
-                    maintainVisibleContentPosition={{minIndexForVisible: 0}}
                 />
                 <View>
                     <View style={styles.inputContainer}>
@@ -428,6 +392,14 @@ export default function ChatScreen({navigation, route}){
                     )}
                 </View>
             </>
+        );
+    }
+
+    if (loading) {
+        return (
+            <View style={styles.centered}>
+                <ActivityIndicator size="large" color="#207FBF" />
+            </View>
         );
     }
 
@@ -562,5 +534,10 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: 'Montserrat-Regular',
         textAlign: 'center'
+    },
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     }
 });
