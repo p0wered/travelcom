@@ -66,13 +66,20 @@ export default function FlightsScreen({route}) {
             setAirportFrom(route.params.airportFrom || '');
             setAirportTo(route.params.airportTo || '');
             setDateStart(route.params.dateStart || new Date());
-            setDateEnd(route.params.dateEnd || new Date());
             setRoundTrip(route.params.roundTrip ?? true);
+
+            if (route.params.roundTrip) {
+                setDateEnd(route.params.dateEnd);
+            } else {
+                setDateEnd(null);
+            }
+
             setPassengers(route.params.passengers || {
                 adults: 1,
                 children: 0,
                 infants: 0,
             });
+
             setParamsUpdated(true);
             prevSearchParamsRef.current = route.params;
         }
@@ -106,17 +113,22 @@ export default function FlightsScreen({route}) {
             airportFrom: getAirportCode(airportFrom),
             airportTo: getAirportCode(airportTo),
             children: passengers.children,
-            dateEnd: formatDate(dateEnd),
             dateStart: formatDate(dateStart),
             infants: passengers.infants,
             isRoundtrip: roundTrip
         };
+
+        if (roundTrip) {
+            payload.dateEnd = formatDate(dateEnd);
+        }
+
         console.log(payload);
+
         if (airportFrom === '' || airportTo === '') {
             setErrorMsg('Please fill all fields');
             setAvailableAirlines([]);
             setVisibleFlights(0);
-        } else if (formatDate(dateStart) > formatDate(dateEnd)){
+        } else if (roundTrip && formatDate(dateStart) > formatDate(dateEnd)) {
             setErrorMsg('Please select valid dates');
             setAvailableAirlines([]);
             setVisibleFlights(0);

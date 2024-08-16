@@ -29,6 +29,11 @@ const MAX_IMAGE_WIDTH = SCREEN_WIDTH * 0.6;
 const MessageContent = ({ content }) => {
     const [imageSize, setImageSize] = useState({width: 250, height: 250});
 
+    const detectUrls = (text) => {
+        const urlRegex = /(https?:\/\/(?:www\.|(?!www))[^\s.]+\.[^\s]{2,}|www\.[^\s]+\.[^\s]{2,}|[^\s]+\.[^\s]{2,})/gi;
+        return text.split(urlRegex);
+    };
+
     if (content.startsWith('<img')) {
         const srcMatch = content.match(/src="([^"]*)"/);
         const widthMatch = content.match(/width="(\d+)2px"/);
@@ -72,8 +77,31 @@ const MessageContent = ({ content }) => {
                 </TouchableOpacity>
             );
         }
+    } else {
+        const parts = detectUrls(content);
+        return (
+            <Text style={styles.messageText}>
+                {parts.map((part, index) => {
+                    if (part.match(/^(https?:\/\/|www\.|[a-zA-Z0-9-]+\.[a-zA-Z]{2,})/i)) {
+                        let url = part;
+                        if (!part.startsWith('http://') && !part.startsWith('https://')) {
+                            url = 'https://' + part;
+                        }
+                        return (
+                            <Text
+                                key={index}
+                                style={styles.link}
+                                onPress={() => Linking.openURL(url)}
+                            >
+                                {part}
+                            </Text>
+                        );
+                    }
+                    return <Text key={index}>{part}</Text>;
+                })}
+            </Text>
+        );
     }
-    return <Text style={styles.messageText}>{content}</Text>;
 };
 
 const IncomingMessage = ({message, time}) => (
@@ -351,13 +379,21 @@ export default function ChatScreen({navigation, route}){
     function renderContent() {
         return (
             <>
-                <FlatList
-                    inverted={true}
-                    ref={flatListRef}
-                    data={[...messages].reverse()}
-                    renderItem={renderMessage}
-                    keyExtractor={(item) => item.id.toString()}
-                />
+                {
+                    loading && messages.length === 0 ? (
+                        <View style={styles.centered}>
+                            <ActivityIndicator size="large" color="#207FBF" />
+                        </View>
+                    ) : (
+                        <FlatList
+                            inverted={true}
+                            ref={flatListRef}
+                            data={[...messages].reverse()}
+                            renderItem={renderMessage}
+                            keyExtractor={(item) => item.id.toString()}
+                        />
+                    )
+                }
                 <View>
                     <View style={styles.inputContainer}>
                         <TextInput
@@ -392,14 +428,6 @@ export default function ChatScreen({navigation, route}){
                     )}
                 </View>
             </>
-        );
-    }
-
-    if (loading) {
-        return (
-            <View style={styles.centered}>
-                <ActivityIndicator size="large" color="#207FBF" />
-            </View>
         );
     }
 
@@ -539,5 +567,9 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-    }
+    },
+    link: {
+        color: '#207FBF',
+        textDecorationLine: 'underline',
+    },
 });
