@@ -39,6 +39,7 @@ import {SafeAreaProvider} from "react-native-safe-area-context";
 import {usePushNotifications} from "./usePushNotifications";
 import {InformationProvider} from "./contextProvider";
 import {NotificationProvider} from "./contextNotifications";
+import {GestureHandlerRootView} from "react-native-gesture-handler";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -225,7 +226,6 @@ const Stack = createNativeStackNavigator();
 
 function AppContent() {
     const {expoPushToken, notification} = usePushNotifications();
-    console.log(expoPushToken);
 
     return (
         <Stack.Navigator
@@ -391,8 +391,10 @@ export default function App() {
                 <NavigationContainer>
                     <NotificationProvider>
                         <InformationProvider>
-                            <AppContent />
-                            <StatusBar barStyle='light-content' backgroundColor='#207fbf' />
+                            <GestureHandlerRootView>
+                                <AppContent />
+                                <StatusBar barStyle='light-content' backgroundColor='#207fbf' />
+                            </GestureHandlerRootView>
                         </InformationProvider>
                     </NotificationProvider>
                 </NavigationContainer>

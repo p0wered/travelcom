@@ -2,9 +2,10 @@ import {ScrollView, Text, View, StyleSheet, ActivityIndicator, useWindowDimensio
 import {Footer} from "../components/footer";
 import {generateAccordionItems} from "../components/accordion-list";
 import {QuestionForm} from "../components/question-form";
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import axios from "axios";
 import RenderHtml from "react-native-render-html";
+import {useFocusEffect} from "@react-navigation/native";
 
 const fetchData = async (setData, setLoading) => {
     try {
@@ -67,7 +68,17 @@ export function RefundsScreen() {
 export function FaqScreen(){
     const [faqData, setFaqData] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [clearErrors, setClearErrors] = useState(false);
     const accordionItems = generateAccordionItems(faqData);
+
+    useFocusEffect(
+        useCallback(() => {
+            setClearErrors(true);
+            return () => {
+                setClearErrors(false);
+            };
+        }, [])
+    );
 
     const fetchFaqData = async () => {
         try {
@@ -98,7 +109,7 @@ export function FaqScreen(){
                 <Text style={styles.faqText}>FAQ</Text>
                 {accordionItems}
             </View>
-            <QuestionForm title='Any other question? Write to us!'/>
+            <QuestionForm title='Any other question? Write to us!' clearErrors={clearErrors}/>
             <Footer color='white'/>
         </ScrollView>
     )

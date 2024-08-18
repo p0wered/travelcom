@@ -7,9 +7,21 @@ import {TwitterIcon} from "../components/icons/twitter-icon";
 import {LinkedinIcon} from "../components/icons/linkedin";
 import {QuestionForm} from "../components/question-form";
 import {useInformationContext} from "../contextProvider";
+import {useCallback, useState} from "react";
+import {useFocusEffect} from "@react-navigation/native";
 
 export default function ContactsScreen({navigation}) {
     const {information, error} = useInformationContext();
+    const [clearErrors, setClearErrors] = useState(false);
+
+    useFocusEffect(
+        useCallback(() => {
+            setClearErrors(true);
+            return () => {
+                setClearErrors(false);
+            };
+        }, [])
+    );
 
     return(
         <ScrollView>
@@ -62,7 +74,7 @@ export default function ContactsScreen({navigation}) {
                     </TouchableOpacity>
                 </View>
             </View>
-            <QuestionForm title='Any other question? Write to us!'/>
+            <QuestionForm title='Any other question? Write to us!' clearErrors={clearErrors}/>
         </ScrollView>
     )
 }

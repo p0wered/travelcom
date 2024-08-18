@@ -155,10 +155,19 @@ export default function FlightsScreen({route}) {
             } catch (error) {
                 if (error.response) {
                     setErrorMsg(error.response.data.message);
+                    setFilteredResults([]);
+                    setVisibleFlights(0);
+                    setAvailableAirlines([]);
                 } else if (error.request) {
                     setErrorMsg('No response from server');
+                    setFilteredResults([]);
+                    setVisibleFlights(0);
+                    setAvailableAirlines([]);
                 } else {
                     setErrorMsg(error.message || 'Error fetching flights');
+                    setFilteredResults([]);
+                    setVisibleFlights(0);
+                    setAvailableAirlines([]);
                 }
             } finally {
                 setIsLoading(false);

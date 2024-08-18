@@ -177,7 +177,7 @@ export default function HomeScreen() {
                 <Text style={styles.faqText}>FAQ</Text>
                 {accordionItems}
             </View>
-            <QuestionForm title='Any other question? Write to us!' clearErrors={clearErrors} />
+            <QuestionForm title='Any other question? Write to us!' clearErrors={clearErrors}/>
             <Footer color='white'/>
         </ScrollView>
     )

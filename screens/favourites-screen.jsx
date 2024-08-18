@@ -124,7 +124,7 @@ export default function FavouritesScreen() {
                 {favoriteItems.length === 0 ? (
                     <Text style={[styles.mainText, {paddingBottom: 100}]}>You have no favorite flights</Text>
                 ) : (
-                    favoriteItems.map((flight, index) => {
+                    [...favoriteItems].reverse().map((flight, index) => {
                         const inCart = isInCart(flight);
                         const isRoundTrip = flight.isRoundtrip || false;
                         return (

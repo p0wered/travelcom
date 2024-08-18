@@ -1,5 +1,6 @@
 import {Image, Platform, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import {FavoriteIcon} from "./icons/favorite-icon";
+import {CheckIcon} from "./icons/check-icon";
 
 export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalCity, depAirport, arrivalAirport,
                                flightTime, depTime, arrivalTime, depDate, arrivalDate, btnText, onPress, onCartScreen,
@@ -28,7 +29,11 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                 <View>
                     <Text style={styles.largeText} adjustsFontSizeToFit={true}>{price} €</Text>
                     {baggageInfo !== undefined ? (
-                        <Text adjustsFontSizeToFit={true} style={[styles.greyText, {textAlign: 'right', maxWidth: 128, marginTop: 2}]}>{`${baggageInfo === 0 ? `No baggage` : `${baggageInfo} free pieces of baggage`}`}</Text>
+                        <View style={{flexDirection: 'row', gap: 3, justifyContent: 'flex-end', alignItems: 'center', marginTop: 2}}>
+                            <Text adjustsFontSizeToFit={true} style={[styles.greyText, {textAlign: 'right', maxWidth: 128}]}>Baggage</Text>
+                            <CheckIcon color={baggageInfo !== 0 ? '#207fbf' : 'grey'} width={18} height={18}/>
+                        </View>
+
                     ) : (<></>)
                     }
                 </View>

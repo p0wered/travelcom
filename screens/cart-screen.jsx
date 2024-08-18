@@ -8,7 +8,7 @@ import {
     TouchableOpacity,
     TextInput,
     Linking,
-    ActivityIndicator, Platform
+    ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {FlightCard} from "../components/flight-cards";
@@ -30,9 +30,13 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
 
     const handleChange = (index, name, value) => {
         const newFormDataList = [...formDataList];
+        if (name === 'passport') {
+            value = value.slice(0, 9);
+        }
         newFormDataList[index] = { ...newFormDataList[index], [name]: value };
         setFormDataList(newFormDataList);
         setError('');
+        validateForm(newFormDataList);
     };
 
     useEffect(() => {
@@ -72,6 +76,10 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
                     setError(`Please fill in all fields for Person ${i + 1}`);
                     return false;
                 }
+                if (key === 'passport' && person[key].length < 9) {
+                    setError(`Passport number for Person ${i + 1} must be 9 digits`);
+                    return false;
+                }
             }
         }
         return true;
@@ -90,13 +98,6 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
                 <View key={index} style={styles.personContainer}>
                     <View style={styles.personHeaderContainer}>
                         <Text style={[styles.mainText]}>Person {index + 1}</Text>
-                        {
-                            index !== 0 && (
-                                <TouchableOpacity onPress={() => removePerson(index)} style={styles.removePersonBtn}>
-                                    <Text style={styles.removePersonBtnText}>x</Text>
-                                </TouchableOpacity>
-                            )
-                        }
                     </View>
                     <TextInput
                         style={styles.input}
@@ -325,9 +326,9 @@ export default function CartScreen({navigation}) {
                 <Text style={styles.titleText}>Shopping cart</Text>
                 {
                     cartItems.length === 0 ? (
-                        <Text style={[styles.mainText, {paddingBottom: 100}]}>Your cart is empty</Text>
+                        <Text style={[styles.mainText, {paddingBottom: 100, fontFamily: 'Montserrat-Regular'}]}>Your cart is empty</Text>
                     ) : (
-                        cartItems.map((flight, index) => (
+                        [...cartItems].reverse().map((flight, index) => (
                             <View key={flight.id || index}>
                                 <FlightCard
                                     price={flight.price}

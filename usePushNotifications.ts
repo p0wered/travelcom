@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
-import Constants from "expo-constants";
 import { Platform } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNotification} from "./contextNotifications";
@@ -48,7 +47,7 @@ export const usePushNotifications = (): PushNotificationState => {
                 finalStatus = status;
             }
             if (finalStatus !== "granted") {
-                alert("Failed to get push token for push notification");
+                console.log("Failed to get push token for push notification");
                 return;
             }
 
@@ -56,7 +55,7 @@ export const usePushNotifications = (): PushNotificationState => {
                 projectId: 'e4df6cb8-b629-4ea9-80f0-ba9c2c4d8abd',
             });
         } else {
-            alert("Must be using a physical device for Push notifications");
+            console.log("Must be using a physical device for Push notifications");
         }
 
         if (Platform.OS === "android") {

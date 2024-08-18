@@ -14,6 +14,9 @@ export function QuestionForm({title, clearErrors}) {
     React.useEffect(() => {
         if (clearErrors) {
             setError('');
+            setEmail('');
+            setPhone('')
+            setQuestion('');
             setSuccess(false);
         }
     }, [clearErrors]);
@@ -72,7 +75,7 @@ export function QuestionForm({title, clearErrors}) {
                     onChangeText={setEmail}
                 />
                 <TextInput
-                    style={[styles.questionInput, { height: 107 }]}
+                    style={[styles.questionInput, {height: 107, paddingTop: 15}]}
                     placeholder='Your question'
                     placeholderTextColor='grey'
                     multiline={true}

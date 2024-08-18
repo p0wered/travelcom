@@ -2,13 +2,25 @@ import {StyleSheet, ScrollView} from "react-native";
 import {Footer} from "../components/footer";
 import {QuestionForm} from "../components/question-form";
 import {useInformationContext} from "../contextProvider";
+import {useCallback, useState} from "react";
+import {useFocusEffect} from "@react-navigation/native";
 
 export default function HelpScreen() {
     const {information, error} = useInformationContext();
+    const [clearErrors, setClearErrors] = useState(false);
+
+    useFocusEffect(
+        useCallback(() => {
+            setClearErrors(true);
+            return () => {
+                setClearErrors(false);
+            };
+        }, [])
+    );
 
     return(
         <ScrollView>
-            <QuestionForm title={information.help_text}/>
+            <QuestionForm title={information.help_text} clearErrors={clearErrors}/>
             <Footer color='white'/>
         </ScrollView>
     )

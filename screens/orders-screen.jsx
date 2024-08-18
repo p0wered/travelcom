@@ -216,9 +216,9 @@ const styles = StyleSheet.create({
         backgroundColor: '#f5f5f5',
     },
     mainText: {
-        fontSize: 15,
+        fontSize: 13,
         fontFamily: 'Montserrat-Bold',
-        marginBottom: 8
+        marginBottom: 5
     },
     listContent: {
         padding: 15
@@ -244,10 +244,10 @@ const styles = StyleSheet.create({
     },
     clientInfo: {
         flexDirection: 'column',
-        gap: 12
+        gap: 5
     },
     clientInfoText: {
-        fontSize: 14,
+        fontSize: 13,
         fontFamily: 'Montserrat-Regular',
     },
     titleText: {

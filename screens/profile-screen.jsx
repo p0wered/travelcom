@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
     View,
     TextInput,
-    Button,
     StyleSheet,
     Alert,
     ScrollView,
@@ -22,7 +21,7 @@ import ExitIcon from "../components/icons/exit-icon";
 import {Footer} from "../components/footer";
 import MailIcon from "../components/icons/mail-icon";
 import {PasswordIcon} from "../components/icons/password-icon";
-import {useNavigation} from "@react-navigation/native";
+import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import {PersonIcon} from "../components/icons/person-icon";
 import {PhoneIcon} from "../components/icons/phone-icon";
 
@@ -55,13 +54,25 @@ export default function ProfileScreen ({navigation}){
         }
     }, [user]);
 
+    useFocusEffect(
+        useCallback(() => {
+            loadUserData();
+        }, [])
+    );
+
     const loadUserData = async () => {
         try {
-            const userJson = await AsyncStorage.getItem('@user');
             const tokenString = await AsyncStorage.getItem('@token');
-            if (userJson && tokenString) {
-                setUser(JSON.parse(userJson));
+            if (tokenString) {
                 setToken(tokenString);
+                const response = await axios.get('https://travelcom.online/api/user/my', {
+                    headers: {
+                        'Authorization': `Bearer ${tokenString}`
+                    }
+                });
+                if (response.data) {
+                    setUser(response.data);
+                }
             }
         } catch (e) {
             console.error('Failed to load user data', e);
