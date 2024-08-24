@@ -10,11 +10,6 @@ export default function FavouritesScreen() {
     const [cartItems, setCartItems] = useState([]);
     const [userId, setUserId] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [passengers, setPassengers] = useState({
-        adults: 1,
-        children: 0,
-        infants: 0,
-    });
 
     const loadFavoriteAndCartItems = useCallback(async () => {
         try {
@@ -86,16 +81,17 @@ export default function FavouritesScreen() {
             if (isInCart(flight)) {
                 updatedCart = cartItems.filter(item => item.id !== flight.id);
             } else {
-                const totalPassengers = passengers.adults + passengers.children;
-                const flightWithPassengers = {
-                    ...flight,
-                    passengers: totalPassengers,
-                    passengerDetails: {
-                        adults: passengers.adults,
-                        children: passengers.children
-                    }
-                };
-                updatedCart = [...cartItems, flightWithPassengers];
+                const favoriteItem = favoriteItems.find(item => item.id === flight.id);
+                if (favoriteItem) {
+                    const flightWithPassengers = {
+                        ...flight,
+                        passengers: favoriteItem.passengers,
+                        passengerDetails: favoriteItem.passengerDetails
+                    };
+                    updatedCart = [...cartItems, flightWithPassengers];
+                } else {
+                    alert('Failed to add item to cart');
+                }
             }
             await AsyncStorage.setItem(cartKey, JSON.stringify(updatedCart));
             setCartItems(updatedCart);
@@ -152,7 +148,7 @@ export default function FavouritesScreen() {
                                 backArriveCity={isRoundTrip ? flight.back_ticket?.arriveCity.title : undefined}
                                 backFlightTime={isRoundTrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
                                 isRoundTrip={isRoundTrip}
-                                baggageInfo={flight.baggage.piece}
+                                baggageInfo={flight.baggage}
                                 btnText={inCart ? "Remove from cart" : "Add to cart"}
                                 onPress={() => toggleCart(flight)}
                                 favouriteIconColor='black'

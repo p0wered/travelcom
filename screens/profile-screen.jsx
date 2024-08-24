@@ -40,13 +40,10 @@ export default function ProfileScreen ({navigation}){
     const [errorMsg, setErrorMsg] = useState(undefined);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
+    const [hasUnread, setHasUnread] = useState(false);
     const [editableUser, setEditableUser] = useState(null);
     const [lastRecoverySent, setLastRecoverySent] = useState(0);
     const RECOVERY_COOLDOWN = 60000;
-
-    useEffect(() => {
-        loadUserData();
-    }, []);
 
     useEffect(() => {
         if (user) {
@@ -57,6 +54,7 @@ export default function ProfileScreen ({navigation}){
     useFocusEffect(
         useCallback(() => {
             loadUserData();
+            fetchNotifications();
         }, [])
     );
 
@@ -78,6 +76,26 @@ export default function ProfileScreen ({navigation}){
             console.error('Failed to load user data', e);
         }
         setIsLoading(false);
+    };
+
+    const fetchNotifications = async () => {
+        const tokenString = await AsyncStorage.getItem('@token');
+        if (tokenString) {
+            try {
+                const response = await axios.get('https://travelcom.online/api/notifications/count', {
+                    headers: {Authorization: `Bearer ${tokenString}`}
+                });
+                console.log(response.data)
+                if (response.data > 0){
+                    setHasUnread(true);
+                } else {
+                    setHasUnread(false);
+                }
+            } catch (error) {
+                console.error('Error fetching notifications count:', error);
+                setHasUnread(false);
+            }
+        }
     };
 
     const resetEditableUser = () => {
@@ -286,6 +304,7 @@ export default function ProfileScreen ({navigation}){
     };
 
     const changeToRegister = () => {
+        setName('');
         setPassword('');
         setEmail('');
         setIsLogin(false);
@@ -294,6 +313,7 @@ export default function ProfileScreen ({navigation}){
     }
 
     const changeToLogin = () => {
+        setName('');
         setPassword('');
         setEmail('');
         setIsLogin(true);
@@ -415,7 +435,7 @@ export default function ProfileScreen ({navigation}){
                             activeOpacity={0.6}
                             onPress={() => navigation.navigate('Notifications')}
                         >
-                            <NotificationIcon/>
+                            <NotificationIcon unread={hasUnread}/>
                             <Text style={styles.mediumText}>Notifications</Text>
                         </TouchableOpacity>
                     </View>

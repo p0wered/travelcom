@@ -16,15 +16,22 @@ import {useFocusEffect} from "@react-navigation/native";
 import {Footer} from "../components/footer";
 import {DateInput} from "../components/input-date";
 
-const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initialPassengerCount}) => {
-    const [formDataList, setFormDataList] = useState(initialFormDataList || Array(initialPassengerCount).fill({
-        firstName: '',
-        lastName: '',
-        middleName: '',
-        birthDate: null,
-        gender: '',
-        passport: '',
-    }));
+const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initialPassengerCount, passengerDetails}) => {
+    const [formDataList, setFormDataList] = useState(initialFormDataList ||
+        [
+            ...Array(passengerDetails.adults).fill({type: 'Adult'}),
+            ...Array(passengerDetails.children).fill({type: 'Child'}),
+            ...Array(passengerDetails.infants).fill({type: 'Infant'})
+        ].map(passenger => ({
+            ...passenger,
+            firstName: '',
+            lastName: '',
+            middleName: '',
+            birthDate: null,
+            gender: '',
+            passport: '',
+        }))
+    );
     const [personCount, setPersonCount] = useState(initialPassengerCount);
     const [error, setError] = useState('');
 
@@ -94,60 +101,63 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
 
     return (
         <ScrollView style={styles.formContainer}>
-            {formDataList.map((formData, index) => (
-                <View key={index} style={styles.personContainer}>
-                    <View style={styles.personHeaderContainer}>
-                        <Text style={[styles.mainText]}>Person {index + 1}</Text>
-                    </View>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="First Name"
-                        placeholderTextColor="#bebebe"
-                        value={formData.firstName}
-                        onChangeText={(text) => handleChange(index, 'firstName', text)}
-                        autoComplete='name'
-                    />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Last Name"
-                        placeholderTextColor="#bebebe"
-                        value={formData.lastName}
-                        onChangeText={(text) => handleChange(index, 'lastName', text)}
-                    />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Middle Name"
-                        placeholderTextColor="#bebebe"
-                        value={formData.middleName}
-                        onChangeText={(text) => handleChange(index, 'middleName', text)}
-                        autoComplete='name-middle'
-                    />
-                    <View style={[styles.input, {justifyContent: 'center'}]}>
-                        <DateInput
-                            inCheckout={true}
-                            placeholder='Birth Date'
-                            date={formData.birthDate}
-                            setDate={(date) => handleChange(index, 'birthDate', date)}
+            {formDataList.map((formData, index) => {
+                const typeIndex = formDataList.filter((data, i) => data.type === formData.type && i < index).length + 1;
+                return (
+                    <View key={index} style={styles.personContainer}>
+                        <View style={styles.personHeaderContainer}>
+                            <Text style={[styles.mainText]}>{formData.type} {typeIndex}</Text>
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="First Name"
+                            placeholderTextColor="#bebebe"
+                            value={formData.firstName}
+                            onChangeText={(text) => handleChange(index, 'firstName', text)}
+                            autoComplete='name'
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Last Name"
+                            placeholderTextColor="#bebebe"
+                            value={formData.lastName}
+                            onChangeText={(text) => handleChange(index, 'lastName', text)}
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Middle Name"
+                            placeholderTextColor="#bebebe"
+                            value={formData.middleName}
+                            onChangeText={(text) => handleChange(index, 'middleName', text)}
+                            autoComplete='name-middle'
+                        />
+                        <View style={[styles.input, {justifyContent: 'center'}]}>
+                            <DateInput
+                                inCheckout={true}
+                                placeholder='Birth Date'
+                                date={formData.birthDate}
+                                setDate={(date) => handleChange(index, 'birthDate', date)}
+                            />
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Gender"
+                            placeholderTextColor="#bebebe"
+                            value={formData.gender}
+                            onChangeText={(text) => handleChange(index, 'gender', text)}
+                            autoComplete='gender'
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Passport"
+                            placeholderTextColor="#bebebe"
+                            value={formData.passport}
+                            onChangeText={(text) => handleChange(index, 'passport', text)}
+                            keyboardType='number-pad'
                         />
                     </View>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Gender"
-                        placeholderTextColor="#bebebe"
-                        value={formData.gender}
-                        onChangeText={(text) => handleChange(index, 'gender', text)}
-                        autoComplete='gender'
-                    />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Passport"
-                        placeholderTextColor="#bebebe"
-                        value={formData.passport}
-                        onChangeText={(text) => handleChange(index, 'passport', text)}
-                        keyboardType='number-pad'
-                    />
-                </View>
-            ))}
+                );
+            })}
             <TouchableOpacity style={styles.payButton} onPress={handleSubmit}>
                 <Text style={styles.payButtonText}>Pay</Text>
             </TouchableOpacity>
@@ -232,14 +242,19 @@ export default function CartScreen({navigation}) {
             const flight = cartItems.find(item => item.id === flightId);
             setFormDataLists(prevLists => ({
                 ...prevLists,
-                [flightId]: Array(flight.passengers).fill({
+                [flightId]: [
+                    ...Array(flight.passengerDetails.adults).fill({type: 'Adult'}),
+                    ...Array(flight.passengerDetails.children).fill({type: 'Child'}),
+                    ...Array(flight.passengerDetails.infants).fill({type: 'Infant'})
+                ].map(passenger => ({
+                    ...passenger,
                     firstName: '',
                     lastName: '',
                     middleName: '',
                     birthDate: '',
                     gender: '',
                     passport: '',
-                })
+                }))
             }));
             setPersonCounts(prevCounts => ({
                 ...prevCounts,
@@ -353,7 +368,7 @@ export default function CartScreen({navigation}) {
                                     backArriveCity={flight.isRoundtrip ? flight.back_ticket?.arriveCity.title : undefined}
                                     backFlightTime={flight.isRoundtrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
                                     isRoundTrip={flight.isRoundtrip}
-                                    baggageInfo={flight.baggage.piece}
+                                    baggageInfo={flight.baggage}
                                     btnText="Remove"
                                     onPress={() => removeFromCart(flight.id)}
                                     onCartScreen={true}
@@ -368,6 +383,7 @@ export default function CartScreen({navigation}) {
                                         onPersonCountChange={(count, formDataList) => handlePersonCountChange(flight.id, count, formDataList)}
                                         initialFormDataList={formDataLists[flight.id]}
                                         initialPassengerCount={flight.passengers}
+                                        passengerDetails={flight.passengerDetails}
                                     />
                                 )}
                             </View>

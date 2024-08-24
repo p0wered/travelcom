@@ -150,6 +150,7 @@ export default function OrdersScreen(){
                     isRoundTrip={isRoundTrip}
                     onCartScreen={false}
                     showFavIcon={false}
+                    onOrderScreen={true}
                 />
                 <View style={styles.clientsContainer}>
                     <Text style={styles.mainText}>Created at:</Text>
@@ -162,6 +163,10 @@ export default function OrdersScreen(){
                             </View>
                         </View>
                     ))}
+                    <View style={{marginBottom: 8, flexDirection: 'row'}}>
+                        <Text style={[styles.clientInfoText, {fontFamily: 'Montserrat-Bold'}]}>Status:  </Text>
+                        <Text style={styles.clientInfoText}>{item.status}</Text>
+                    </View>
                 </View>
 
                 <View style={[{paddingHorizontal: 15, paddingBottom: 15}, paymentDisabled ? {display: 'none'} : {display: 'block'}]}>

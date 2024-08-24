@@ -6,12 +6,35 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                                flightTime, depTime, arrivalTime, depDate, arrivalDate, btnText, onPress, onCartScreen,
                                onCheckoutPress, checkoutBtnText, showFavIcon, favouriteIconPress, favouriteIconColor,
                                isRoundTrip, backDepTime, backDepDate, backArriveTime, backArriveDate, backDepAirport,
-                               backArriveAirport, backDepCity, backArriveCity, backFlightTime, personCount, baggageInfo})
+                               backArriveAirport, backDepCity, backArriveCity, backFlightTime, personCount, baggageInfo,
+                               onOrderScreen})
 {
     let btnShow;
     btnText === undefined ? btnShow = false : btnShow = true;
 
-
+    function renderBaggageInfo(){
+        return(
+            <>
+                <View style={{flexDirection: 'row', gap: 3, justifyContent: 'flex-end', alignItems: 'center', marginTop: 2}}>
+                    <Text adjustsFontSizeToFit={true} style={[styles.greyText, {textAlign: 'right'}]}>Carry-on luggage</Text>
+                    <CheckIcon color='#207fbf' width={18} height={18}/>
+                </View>
+                {baggageInfo.piece !== undefined ? (
+                    <View style={{flexDirection: 'row', gap: 3, justifyContent: 'flex-end', alignItems: 'center', marginTop: 2}}>
+                        <Text adjustsFontSizeToFit={true} style={[styles.greyText, {textAlign: 'right', maxWidth: 128}]}>Baggage</Text>
+                        <CheckIcon color={baggageInfo.piece !== 0 && baggageInfo.piece ? '#207fbf' : 'grey'} width={18} height={18}/>
+                    </View>
+                ) : (<></>)
+                }
+                {baggageInfo.weight !== null ? (
+                    <View style={{flexDirection: 'row', gap: 3, justifyContent: 'flex-end', alignItems: 'center', marginTop: 2}}>
+                        <Text adjustsFontSizeToFit={true} style={[styles.greyText, {textAlign: 'right', maxWidth: 128}]}>Baggage up to {baggageInfo.weight} kg</Text>
+                    </View>
+                ) : (<></>)
+                }
+            </>
+        )
+    }
 
     return(
         <View style={styles.flightsCard}>
@@ -28,17 +51,10 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                 </View>
                 <View>
                     <Text style={styles.largeText} adjustsFontSizeToFit={true}>{price} €</Text>
-                    {baggageInfo !== undefined ? (
-                        <View style={{flexDirection: 'row', gap: 3, justifyContent: 'flex-end', alignItems: 'center', marginTop: 2}}>
-                            <Text adjustsFontSizeToFit={true} style={[styles.greyText, {textAlign: 'right', maxWidth: 128}]}>Baggage</Text>
-                            <CheckIcon color={baggageInfo !== 0 ? '#207fbf' : 'grey'} width={18} height={18}/>
-                        </View>
-
-                    ) : (<></>)
-                    }
+                    {onOrderScreen !== true ? renderBaggageInfo() : (<></>)}
                 </View>
             </View>
-            <View style={styles.cardBlock}>
+            <View style={[styles.cardBlock]}>
                 <View style={{display: 'flex', flexDirection: 'row'}}>
                     <View style={{marginRight: 26}}>
                         <View style={{marginBottom: 16}}>
