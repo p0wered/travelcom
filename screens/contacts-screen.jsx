@@ -26,6 +26,9 @@ export default function ContactsScreen({navigation}) {
     return(
         <ScrollView>
             <View style={styles.info}>
+                <Text style={[styles.blueTextSmall, {fontSize: 18}]}>
+                    {information.site_name}
+                </Text>
                 <View>
                     <View style={styles.merger}>
                         <AddressIcon/>

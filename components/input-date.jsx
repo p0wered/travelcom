@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-export const DateInput = ({ date, setDate, placeholder, inCheckout }) => {
+export const DateInput = ({date, setDate, placeholder, inCheckout, onlyNextDates}) => {
     const [showDatePicker, setShowDatePicker] = useState(false);
 
     const handleDateChange = (event, selectedDate) => {
@@ -40,8 +40,8 @@ export const DateInput = ({ date, setDate, placeholder, inCheckout }) => {
                     onChange={handleDateChange}
                     accentColor="#207fbf"
                     themeVariant="light"
-                    maximumDate={inCheckout ? new Date() : undefined}
-                    minimumDate={inCheckout ? undefined : new Date()}
+                    minimumDate={onlyNextDates ? new Date() : undefined}
+                    maximumDate={onlyNextDates ? undefined : new Date()}
                     style={!inCheckout ?
                         {position: 'absolute', right: -20, top: -8, opacity: 0.015} :
                         {position: 'absolute', left: -26, top: -9, opacity: 0.015}}

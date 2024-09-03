@@ -26,7 +26,7 @@ import {useNotification} from "../contextNotifications";
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MAX_IMAGE_WIDTH = SCREEN_WIDTH * 0.6;
 
-const MessageContent = ({ content }) => {
+const MessageContent = ({content, navigation}) => {
     const [imageSize, setImageSize] = useState({width: 250, height: 250});
 
     const detectUrls = (text) => {
@@ -91,7 +91,7 @@ const MessageContent = ({ content }) => {
                             <Text
                                 key={index}
                                 style={styles.link}
-                                onPress={() => Linking.openURL(url)}
+                                onPress={() => navigation.navigate('InAppBrowser', {url: url})}
                             >
                                 {part}
                             </Text>
@@ -104,19 +104,19 @@ const MessageContent = ({ content }) => {
     }
 };
 
-const IncomingMessage = ({message, time}) => (
+const IncomingMessage = ({message, time, navigation}) => (
     <View style={[styles.incomingMessageContainer]}>
         <View style={styles.incomingMessageBubble}>
-            <MessageContent content={message} />
+            <MessageContent content={message} navigation={navigation}/>
             <Text style={styles.messageTime}>{time}</Text>
         </View>
     </View>
 );
 
-const OutgoingMessage = ({message, time}) => (
+const OutgoingMessage = ({message, time, navigation}) => (
     <View style={[styles.outgoingMessageContainer]}>
         <View style={styles.outgoingMessageBubble}>
-            <MessageContent content={message} />
+            <MessageContent content={message} navigation={navigation}/>
             <Text style={styles.messageTime}>{time}</Text>
         </View>
     </View>
@@ -362,6 +362,7 @@ export default function ChatScreen({navigation, route}){
             <MessageComponent
                 message={item.text}
                 time={formatTime(item.created_at)}
+                navigation={navigation}
             />
         );
     };

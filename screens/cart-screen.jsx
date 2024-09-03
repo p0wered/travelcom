@@ -7,7 +7,6 @@ import {
     View,
     TouchableOpacity,
     TextInput,
-    Linking,
     ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -30,6 +29,7 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
             birthDate: null,
             gender: '',
             passport: '',
+            docExp: ''
         }))
     );
     const [personCount, setPersonCount] = useState(initialPassengerCount);
@@ -50,42 +50,24 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
         onPersonCountChange(personCount, formDataList);
     }, [personCount, formDataList]);
 
-    const addPerson = () => {
-        const newFormDataList = [...formDataList, {
-            firstName: '',
-            lastName: '',
-            middleName: '',
-            birthDate: null,
-            gender: '',
-            passport: '',
-        }];
-        setFormDataList(newFormDataList);
-        setPersonCount(prevState => prevState + 1);
-    };
-
-    const removePerson = (index) => {
-        if (formDataList.length > 1) {
-            const newFormDataList = formDataList.filter((_, i) => i !== index);
-            setFormDataList(newFormDataList);
-            setPersonCount(prevState => prevState - 1);
-        }
-    };
-
     const validateForm = () => {
         for (let i = 0; i < formDataList.length; i++) {
             const person = formDataList[i];
             for (const key in person) {
-                if (key === 'birthDate' && (person[key] === null || person[key] === '')) {
-                    setError(`Please select a birth date for Person ${i + 1}`);
-                    return false;
-                }
-                if (key !== 'birthDate' && person[key].trim() === '') {
-                    setError(`Please fill in all fields for Person ${i + 1}`);
-                    return false;
-                }
-                if (key === 'passport' && person[key].length < 9) {
-                    setError(`Passport number for Person ${i + 1} must be 9 digits`);
-                    return false;
+                if (key === 'birthDate' || key === 'docExp') {
+                    if (person[key] === null || person[key] === '') {
+                        setError(`Please select a ${key === 'birthDate' ? 'birth date' : 'document expiration date'} for Person ${i + 1}`);
+                        return false;
+                    }
+                } else {
+                    if (typeof person[key] !== 'string' || person[key].trim() === '') {
+                        setError(`Please fill in all fields for Person ${i + 1}`);
+                        return false;
+                    }
+                    if (key === 'passport' && person[key].length < 9) {
+                        setError(`Passport number for Person ${i + 1} must be 9 digits`);
+                        return false;
+                    }
                 }
             }
         }
@@ -136,6 +118,7 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
                                 inCheckout={true}
                                 placeholder='Birth Date'
                                 date={formData.birthDate}
+                                onlyNextDates={false}
                                 setDate={(date) => handleChange(index, 'birthDate', date)}
                             />
                         </View>
@@ -155,6 +138,15 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
                             onChangeText={(text) => handleChange(index, 'passport', text)}
                             keyboardType='number-pad'
                         />
+                        <View style={[styles.input, {justifyContent: 'center'}]}>
+                            <DateInput
+                                inCheckout={true}
+                                onlyNextDates={true}
+                                placeholder='Date of expiracy'
+                                date={formData.docExp}
+                                setDate={(date) => handleChange(index, 'docExp', date)}
+                            />
+                        </View>
                     </View>
                 );
             })}
@@ -254,6 +246,7 @@ export default function CartScreen({navigation}) {
                     birthDate: '',
                     gender: '',
                     passport: '',
+                    docExp: ''
                 }))
             }));
             setPersonCounts(prevCounts => ({
@@ -271,12 +264,27 @@ export default function CartScreen({navigation}) {
         }
 
         const totalPrice = calculateTotalPrice(flight);
-        const itemString = JSON.stringify({ ...flight, ...formData, totalPrice });
-        const payloadData = {
-            item: itemString,
-            person: formData,
-            price: totalPrice,
+        const extendedItem = {
+            ...flight,
+            totalPrice,
         };
+
+        const persons = formData.map(person => ({
+            firstName: person.firstName,
+            lastName: person.lastName,
+            middleName: person.middleName,
+            birthDate: person.birthDate,
+            gender: person.gender,
+            passport: person.passport,
+            docExp: person.docExp
+        }));
+
+        const payloadData = {
+            price: totalPrice,
+            item: JSON.stringify(extendedItem),
+            persons: JSON.stringify(persons)
+        };
+
         console.log('Payload data:', JSON.stringify(payloadData, null, 2));
 
         try {
@@ -306,13 +314,13 @@ export default function CartScreen({navigation}) {
 
             if (responseText.startsWith('http')) {
                 console.log('Opening URL:', responseText);
-                Linking.openURL(responseText);
+                navigation.navigate('InAppBrowser', {url: responseText});
             } else {
                 try {
                     const data = JSON.parse(responseText);
                     if (data.url) {
                         console.log('Opening URL from JSON:', data.url);
-                        Linking.openURL(data.url);
+                        navigation.navigate('InAppBrowser', { url: data.url });
                     } else {
                         throw new Error('No URL in JSON response');
                     }

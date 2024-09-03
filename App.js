@@ -40,6 +40,7 @@ import {usePushNotifications} from "./usePushNotifications";
 import {InformationProvider} from "./contextProvider";
 import {NotificationProvider} from "./contextNotifications";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
+import {InAppBrowser} from "./components/in-app-browser";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -193,7 +194,7 @@ function MainTabs(){
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.sideBarBtn} onPress={navigateToTravel}>
                                     <TravelIcon/>
-                                    <Text style={styles.btnText}>Travel</Text>
+                                    <Text style={styles.btnText}>Travel organization</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.sideBarBtn} onPress={navigateToHelp}>
                                     <HelpIcon/>
@@ -336,6 +337,16 @@ function AppContent() {
                         : { headerTitle: 'Back' })
                 })}
             />
+            <Stack.Screen
+                name="InAppBrowser"
+                component={InAppBrowser}
+                options={({navigation}) => ({
+                    headerBackTitle: 'Back',
+                    ...(Platform.OS === 'ios'
+                        ? { headerTitle: '' }
+                        : { headerTitle: 'Back' })
+                })}
+            />
         </Stack.Navigator>
     );
 }
@@ -430,11 +441,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
-        paddingHorizontal: 50,
+        paddingHorizontal: 30,
         paddingVertical: 10
     },
     btnText: {
-        fontSize: 24,
+        fontSize: 17,
         fontFamily: 'Montserrat-Bold',
         color: '#207FBF'
     },

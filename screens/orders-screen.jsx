@@ -1,11 +1,21 @@
-import {ActivityIndicator, FlatList, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {
+    ActivityIndicator,
+    FlatList,
+    Linking,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from "react-native";
 import React, {useEffect, useState} from "react";
 import {FlightCard} from "../components/flight-cards";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {Footer} from "../components/footer";
 
 
-export default function OrdersScreen(){
+export default function OrdersScreen({navigation}){
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -54,7 +64,8 @@ export default function OrdersScreen(){
             const data = await response.json();
             const parsedOrders = data.map(order => ({
                 ...order,
-                item: JSON.parse(order.item)
+                item: JSON.parse(order.item),
+                persons: JSON.parse(order.persons)
             }));
             setOrders(parsedOrders);
             console.log(parsedOrders)
@@ -96,6 +107,8 @@ export default function OrdersScreen(){
     }
 
     const renderFlightCard = ({ item }) => {
+        const isAdmin = item.admin;
+        const flightPrice = item.price || item.item.price;
         const flightData = item.item;
         const isRoundTrip = flightData.isRoundtrip || false;
         if (!flightData) {
@@ -105,9 +118,17 @@ export default function OrdersScreen(){
 
         const handlePayPress = () => {
             if (item.payment_link) {
-                Linking.openURL(item.payment_link).catch(err => console.error("Couldn't open payment link", err));
+                navigation.navigate('InAppBrowser', {url: item.payment_link});
             }
         };
+
+        const downloadTicket = () => {
+            if (item.ticket_link) {
+                Linking.openURL(item.ticket_link);
+            } else {
+                alert('Cannot download ticket');
+            }
+        }
 
         const clientsData = Object.keys(flightData)
             .filter(key => !isNaN(parseInt(key)))
@@ -122,64 +143,109 @@ export default function OrdersScreen(){
 
         const paymentDisabled = isPaymentDisabled();
 
-        return (
-            <View style={styles.orderContainer}>
-                <FlightCard
-                    key={flightData.id}
-                    price={flightData.price}
-                    flightTime={`${flightData.duration.flight.hour}h, ${flightData.duration.flight.minute}min`}
-                    depCity={flightData.depCity.title}
-                    depAirport={`${flightData.depAirport.title}, ${flightData.depAirport.code}`}
-                    depTime={flightData.depTime}
-                    depDate={flightData.depDate}
-                    arrivalCity={flightData.arriveCity.title}
-                    arrivalTime={flightData.arriveTime}
-                    arrivalDate={flightData.arriveDate}
-                    arrivalAirport={`${flightData.arriveAirport.title}, ${flightData.arriveAirport.code}`}
-                    airlinesTitle={flightData.provider.supplier.title}
-                    airlinesImg={flightData.providerLogo}
-                    backDepTime={isRoundTrip ? flightData.back_ticket?.depTime : undefined}
-                    backDepDate={isRoundTrip ? flightData.back_ticket?.depDate : undefined}
-                    backDepAirport={isRoundTrip ? `${flightData.back_ticket?.depAirport.title}, ${flightData.back_ticket?.depAirport.code}` : undefined}
-                    backDepCity={isRoundTrip ? flightData.back_ticket?.depCity.title : undefined}
-                    backArriveTime={isRoundTrip ? flightData.back_ticket?.arriveTime : undefined}
-                    backArriveDate={isRoundTrip ? flightData.back_ticket?.arriveDate : undefined}
-                    backArriveAirport={isRoundTrip ? `${flightData.back_ticket?.arriveAirport.title}, ${flightData.back_ticket?.arriveAirport.code}` : undefined}
-                    backArriveCity={isRoundTrip ? flightData.back_ticket?.arriveCity.title : undefined}
-                    backFlightTime={isRoundTrip ? `${flightData.back_ticket?.duration.flight.hour}h, ${flightData.back_ticket?.duration.flight.minute}min` : undefined}
-                    isRoundTrip={isRoundTrip}
-                    onCartScreen={false}
-                    showFavIcon={false}
-                    onOrderScreen={true}
-                />
-                <View style={styles.clientsContainer}>
-                    <Text style={styles.mainText}>Created at:</Text>
-                    <Text style={[styles.clientInfoText, {marginBottom: 8}]}>{formatDate(item.created_at)}</Text>
-                    {clientsData.map((clientData, index) => (
-                        <View style={{marginBottom: 10}} key={index}>
-                            <Text style={styles.mainText}>Person {index + 1} Information</Text>
+        function ButtonAdmin({item}) {
+            if (item.status === 'Created' || item.status === 'created' && !paymentDisabled) {
+                return(
+                    <View style={[item.admin !== 1 ? {paddingHorizontal: 15, marginBottom: 15} : {marginBottom: 10}]}>
+                        <TouchableOpacity
+                            style={styles.chooseBtn}
+                            activeOpacity={0.8}
+                            onPress={handlePayPress}
+                        >
+                            <Text style={styles.btnText}>Pay</Text>
+                        </TouchableOpacity>
+                    </View>
+                )
+            } else if (item.status === 'Payed' || item.status === 'payed' && item.ticket_link) {
+                return(
+                    <View style={item.admin !== 1 ? {paddingHorizontal: 15, paddingBottom: 15} : {paddingTop: 15}}>
+                        <TouchableOpacity
+                            style={styles.chooseBtn}
+                            activeOpacity={0.8}
+                            onPress={downloadTicket}
+                        >
+                            <Text style={styles.btnText}>Download ticket</Text>
+                        </TouchableOpacity>
+                    </View>
+                )
+            }
+        }
+
+        if (isAdmin === 1) {
+            return (
+                <View style={styles.adminFlight}>
+                    <View style={styles.adminFlightBox}>
+                        <View style={{gap: 8}}>
+                            <Text style={[styles.clientInfoText, {fontFamily: 'Montserrat-Bold'}]}>Admin created travel</Text>
+                            <View style={{flexDirection: 'row'}}>
+                                <Text style={[styles.clientInfoText, {fontFamily: 'Montserrat-Bold'}]}>Status:  </Text>
+                                <Text style={styles.clientInfoText}>{item.status}</Text>
+                            </View>
                             <View>
-                                {renderClientInfo(clientData)}
+                                <Text style={styles.mainText}>Created at:</Text>
+                                <Text style={[styles.clientInfoText]}>{formatDate(item.created_at)}</Text>
                             </View>
                         </View>
-                    ))}
-                    <View style={{marginBottom: 8, flexDirection: 'row'}}>
-                        <Text style={[styles.clientInfoText, {fontFamily: 'Montserrat-Bold'}]}>Status:  </Text>
-                        <Text style={styles.clientInfoText}>{item.status}</Text>
+                        <Text style={styles.largeText} adjustsFontSizeToFit={true}>{flightPrice} €</Text>
                     </View>
+                    <ButtonAdmin item={item}/>
                 </View>
-
-                <View style={[{paddingHorizontal: 15, paddingBottom: 15}, paymentDisabled ? {display: 'none'} : {display: 'block'}]}>
-                    <TouchableOpacity
-                        style={styles.chooseBtn}
-                        activeOpacity={0.8}
-                        onPress={handlePayPress}
-                    >
-                        <Text style={styles.btnText}>Pay</Text>
-                    </TouchableOpacity>
+            )
+        } else {
+            return (
+                <View style={styles.orderContainer}>
+                    <FlightCard
+                        key={flightData.id}
+                        price={flightData.price || flightPrice}
+                        flightTime={`${flightData.duration.flight.hour}h, ${flightData.duration.flight.minute}min`}
+                        depCity={flightData.depCity.title}
+                        depAirport={`${flightData.depAirport.title}, ${flightData.depAirport.code}`}
+                        depTime={flightData.depTime}
+                        depDate={flightData.depDate}
+                        arrivalCity={flightData.arriveCity.title}
+                        arrivalTime={flightData.arriveTime}
+                        arrivalDate={flightData.arriveDate}
+                        arrivalAirport={`${flightData.arriveAirport.title}, ${flightData.arriveAirport.code}`}
+                        airlinesTitle={flightData.provider.supplier.title}
+                        airlinesImg={flightData.providerLogo}
+                        backDepTime={isRoundTrip ? flightData.back_ticket?.depTime : undefined}
+                        backDepDate={isRoundTrip ? flightData.back_ticket?.depDate : undefined}
+                        backDepAirport={isRoundTrip ? `${flightData.back_ticket?.depAirport.title}, ${flightData.back_ticket?.depAirport.code}` : undefined}
+                        backDepCity={isRoundTrip ? flightData.back_ticket?.depCity.title : undefined}
+                        backArriveTime={isRoundTrip ? flightData.back_ticket?.arriveTime : undefined}
+                        backArriveDate={isRoundTrip ? flightData.back_ticket?.arriveDate : undefined}
+                        backArriveAirport={isRoundTrip ? `${flightData.back_ticket?.arriveAirport.title}, ${flightData.back_ticket?.arriveAirport.code}` : undefined}
+                        backArriveCity={isRoundTrip ? flightData.back_ticket?.arriveCity.title : undefined}
+                        backFlightTime={isRoundTrip ? `${flightData.back_ticket?.duration.flight.hour}h, ${flightData.back_ticket?.duration.flight.minute}min` : undefined}
+                        isRoundTrip={isRoundTrip}
+                        onCartScreen={false}
+                        showFavIcon={false}
+                        onOrderScreen={true}
+                    />
+                    <View style={styles.clientsContainer}>
+                        <Text style={styles.mainText}>Created at:</Text>
+                        <Text style={[styles.clientInfoText, {marginBottom: 8}]}>{formatDate(item.created_at)}</Text>
+                        {
+                            item.persons !== null ? (
+                                item.persons.map((clientData, index) => (
+                                    <View style={{marginBottom: 10}} key={index}>
+                                        <Text style={styles.mainText}>Person {index + 1} Information</Text>
+                                        <View>
+                                            {renderClientInfo(clientData)}
+                                        </View>
+                                    </View>
+                                ))
+                            ) : (<></>)
+                        }
+                        <View style={{marginBottom: 8, flexDirection: 'row'}}>
+                            <Text style={[styles.clientInfoText, {fontFamily: 'Montserrat-Bold'}]}>Status:  </Text>
+                            <Text style={styles.clientInfoText}>{item.status}</Text>
+                        </View>
+                    </View>
+                    <ButtonAdmin item={item}/>
                 </View>
-            </View>
-        );
+            );
+        }
     };
 
     if (loading) {
@@ -278,4 +344,20 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         backgroundColor: '#207FBF'
     },
+    adminFlight: {
+        backgroundColor: 'white',
+        padding: 15,
+        borderRadius: 10,
+        marginBottom: 10
+    },
+    largeText: {
+        fontSize: Platform.OS === 'ios' ? 22 : 19,
+        fontFamily: 'Montserrat-Bold',
+        textAlign: 'right',
+    },
+    adminFlightBox: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    }
 });

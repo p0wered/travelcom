@@ -124,6 +124,12 @@ export default function FlightsScreen({route}) {
 
         console.log(payload);
 
+        setDayFlightsOnly(false);
+        setNightFlightsOnly(false);
+        setMinPrice('');
+        setMaxPrice('');
+        setSelectedAirlines([]);
+
         if (airportFrom === '' || airportTo === '') {
             setErrorMsg('Please fill all fields');
             setAvailableAirlines([]);
@@ -177,16 +183,16 @@ export default function FlightsScreen({route}) {
 
     const applyFilters = () => {
         let filtered = [...flightResults];
-        if (dayFlightsOnly) {
+        if (dayFlightsOnly || nightFlightsOnly) {
             filtered = filtered.filter(flight => {
                 const depHour = parseInt(flight.depTime.split(':')[0]);
-                return depHour >= 6 && depHour < 22;
-            });
-        }
-        if (nightFlightsOnly) {
-            filtered = filtered.filter(flight => {
-                const depHour = parseInt(flight.depTime.split(':')[0]);
-                return depHour < 6 || depHour >= 22;
+                if (dayFlightsOnly && !nightFlightsOnly) {
+                    return depHour >= 6 && depHour < 22;
+                } else if (nightFlightsOnly && !dayFlightsOnly) {
+                    return depHour < 6 || depHour >= 22;
+                } else {
+                    return true;
+                }
             });
         }
         if (minPrice !== '') {
@@ -403,11 +409,11 @@ export default function FlightsScreen({route}) {
                     <RoundTripSelector roundTrip={roundTrip} setRoundTrip={setRoundTrip} setBackDate={setDateEnd}/>
                     <View style={[styles.selector, Platform.OS === 'ios' ? styles.selectorIOS : styles.selectorAndroid]}>
                         <View style={{marginVertical: 7}}>
-                            <DateInput inCheckout={false} date={dateStart} setDate={setDateStart}/>
+                            <DateInput inCheckout={false} onlyNextDates={true} date={dateStart} setDate={setDateStart}/>
                         </View>
                         <View style={[styles.separator, roundTrip ? {display: 'flex'} : {display: 'none'}, Platform.OS === 'ios' ? {marginRight: -10} : {marginRight: 0}]}/>
                         <View style={[{marginVertical: 7}, roundTrip ? {display: 'flex'} : {display: 'none'}]}>
-                            <DateInput inCheckout={false} date={dateEnd} setDate={setDateEnd}/>
+                            <DateInput inCheckout={false} onlyNextDates={true} date={dateEnd} setDate={setDateEnd}/>
                         </View>
                     </View>
                     <PassengerDropdown passengers={passengers} setPassengers={setPassengers}/>

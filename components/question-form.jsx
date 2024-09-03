@@ -1,4 +1,4 @@
-import {Pressable, Text, TextInput, View, StyleSheet, ActivityIndicator} from "react-native";
+import {Pressable, Text, TextInput, View, StyleSheet, ActivityIndicator, Platform} from "react-native";
 import {SendIcon} from "./icons/send-icon";
 import axios from "axios";
 import React, {useState} from "react";
@@ -75,7 +75,7 @@ export function QuestionForm({title, clearErrors}) {
                     onChangeText={setEmail}
                 />
                 <TextInput
-                    style={[styles.questionInput, {height: 107, paddingTop: 15}]}
+                    style={[styles.questionInput, {height: 107}, Platform.OS === 'ios' ? {paddingTop: 15} : {paddingTop: 0}]}
                     placeholder='Your question'
                     placeholderTextColor='grey'
                     multiline={true}
