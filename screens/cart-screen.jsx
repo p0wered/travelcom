@@ -17,12 +17,8 @@ import {DateInput} from "../components/input-date";
 
 const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initialPassengerCount, passengerDetails}) => {
     const [formDataList, setFormDataList] = useState(initialFormDataList ||
-        [
-            ...Array(passengerDetails.adults).fill({type: 'Adult'}),
-            ...Array(passengerDetails.children).fill({type: 'Child'}),
-            ...Array(passengerDetails.infants).fill({type: 'Infant'})
-        ].map(passenger => ({
-            ...passenger,
+        passengerDetails.map(type => ({
+            type,
             firstName: '',
             lastName: '',
             middleName: '',
@@ -234,12 +230,8 @@ export default function CartScreen({navigation}) {
             const flight = cartItems.find(item => item.id === flightId);
             setFormDataLists(prevLists => ({
                 ...prevLists,
-                [flightId]: [
-                    ...Array(flight.passengerDetails.adults).fill({type: 'Adult'}),
-                    ...Array(flight.passengerDetails.children).fill({type: 'Child'}),
-                    ...Array(flight.passengerDetails.infants).fill({type: 'Infant'})
-                ].map(passenger => ({
-                    ...passenger,
+                [flightId]: flight.passengerDetails.map(type => ({
+                    type,
                     firstName: '',
                     lastName: '',
                     middleName: '',
@@ -251,7 +243,7 @@ export default function CartScreen({navigation}) {
             }));
             setPersonCounts(prevCounts => ({
                 ...prevCounts,
-                [flightId]: flight.passengers
+                [flightId]: flight.passengerDetails.length
             }));
         }
     };
@@ -383,14 +375,14 @@ export default function CartScreen({navigation}) {
                                     onCheckoutPress={() => handleCheckout(flight.id)}
                                     checkoutBtnText={expandedCardId === flight.id ? "Hide Checkout" : "Checkout"}
                                     showFavIcon={false}
-                                    personCount={flight.passengers}
+                                    personCount={flight.passengerDetails.length}
                                 />
                                 {expandedCardId === flight.id && (
                                     <CheckoutForm
                                         onSubmit={(formData) => handlePayment(flight.id, formData)}
                                         onPersonCountChange={(count, formDataList) => handlePersonCountChange(flight.id, count, formDataList)}
                                         initialFormDataList={formDataLists[flight.id]}
-                                        initialPassengerCount={flight.passengers}
+                                        initialPassengerCount={flight.passengerDetails.length}
                                         passengerDetails={flight.passengerDetails}
                                     />
                                 )}

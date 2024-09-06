@@ -119,6 +119,8 @@ export default function OrdersScreen({navigation}){
         const handlePayPress = () => {
             if (item.payment_link) {
                 navigation.navigate('InAppBrowser', {url: item.payment_link});
+            } else {
+                alert('Error opening payment page');
             }
         };
 
@@ -126,7 +128,7 @@ export default function OrdersScreen({navigation}){
             if (item.ticket_link) {
                 Linking.openURL(item.ticket_link);
             } else {
-                alert('Cannot download ticket');
+                alert('Error downloading ticket');
             }
         }
 
@@ -156,7 +158,7 @@ export default function OrdersScreen({navigation}){
                         </TouchableOpacity>
                     </View>
                 )
-            } else if (item.status === 'Payed' || item.status === 'payed' && item.ticket_link) {
+            } else if (item.ticket_link) {
                 return(
                     <View style={item.admin !== 1 ? {paddingHorizontal: 15, paddingBottom: 15} : {paddingTop: 15}}>
                         <TouchableOpacity

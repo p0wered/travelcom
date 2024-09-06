@@ -102,7 +102,7 @@ export default function FlightsScreen({route}) {
                 setUserId(user.id);
             }
         } catch (error) {
-            console.error('Failed to get user data', error);
+            console.error('No user data', error);
         }
     };
 
@@ -227,28 +227,42 @@ export default function FlightsScreen({route}) {
         );
     };
 
+    javascript
+
     const loadCartItems = useCallback(async () => {
         try {
-            const userString = await AsyncStorage.getItem('@user');
-            if (userString) {
-                const user = JSON.parse(userString);
-                setUserId(user.id);
-                const cartKey = `@cart_${user.id}`;
-                const cartString = await AsyncStorage.getItem(cartKey);
-                if (cartString) {
-                    const loadedCart = JSON.parse(cartString);
-                    setCartItems(loadedCart);
-                } else {
-                    setCartItems([]);
-                }
-            } else {
+            const token = await AsyncStorage.getItem('@token');
+            if (!token) {
                 setCartItems([]);
                 setUserId(null);
+                return [];
+            }
+
+            const response = await axios.get('https://travelcom.online/api/cart/my', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.data && Array.isArray(response.data)) {
+                const parsedCartItems = response.data.map(item => {
+                    return {
+                        ...item,
+                        item: JSON.parse(item.item)
+                    };
+                });
+                setCartItems(parsedCartItems);
+                setUserId(parsedCartItems[0]?.user_id || null);
+                return parsedCartItems;
+            } else {
+                throw new Error('Invalid response format');
             }
         } catch (error) {
             console.error('Failed to load cart items', error);
+            Alert.alert('Error', error.message || 'Failed to load cart items');
             setCartItems([]);
             setUserId(null);
+            return [];
         }
     }, []);
 
@@ -296,23 +310,39 @@ export default function FlightsScreen({route}) {
             return;
         }
         try {
-            const cartKey = `@cart_${userId}`;
             const totalPassengers = passengers.adults + passengers.children + passengers.infants;
-            const flightWithPassengers = {
+            const passengerDetailsList = [
+                ...Array(passengers.adults).fill('Adult'),
+                ...Array(passengers.children).fill('Child'),
+                ...Array(passengers.infants).fill('Infant')
+            ];
+
+            const itemToAdd = {
                 ...flight,
-                passengers: totalPassengers,
-                passengerDetails: {
-                    adults: passengers.adults,
-                    children: passengers.children,
-                    infants: passengers.infants
-                }
+                personCount: totalPassengers,
+                personDetails: passengerDetailsList,
+                isRoundtrip: roundTrip
             };
-            const updatedCart = [...cartItems, flightWithPassengers];
-            await AsyncStorage.setItem(cartKey, JSON.stringify(updatedCart));
-            setCartItems(updatedCart);
+
+            const response = await axios.post('https://travelcom.online/api/cart/add', {
+                item: JSON.stringify(itemToAdd)
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${await AsyncStorage.getItem('@token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 200) {
+                const updatedCartItems = await loadCartItems();  // Получаем обновленные элементы корзины
+                setCartItems(updatedCartItems);  // Обновляем состояние
+                Alert.alert('Success', 'Flight added to cart');
+            } else {
+                throw new Error('Failed to add flight to cart');
+            }
         } catch (error) {
             console.error('Failed to add flight to cart', error);
-            Alert.alert('Error', 'Failed to add flight to cart');
+            Alert.alert('Error', error.message || 'Failed to add flight to cart');
         }
     };
 
@@ -322,13 +352,24 @@ export default function FlightsScreen({route}) {
             return;
         }
         try {
-            const updatedCart = cartItems.filter(item => item.id !== flight.id);
-            const cartKey = `@cart_${userId}`;
-            await AsyncStorage.setItem(cartKey, JSON.stringify(updatedCart));
-            setCartItems(updatedCart);
+            const response = await axios.post('https://travelcom.online/api/cart/delete', {
+                flightId: flight.id
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${await AsyncStorage.getItem('@token')}`
+                }
+            });
+
+            if (response.status === 200) {
+                const updatedCartItems = await loadCartItems();  // Получаем обновленные элементы корзины
+                setCartItems(updatedCartItems);  // Обновляем состояние
+                Alert.alert('Success', 'Flight removed from cart');
+            } else {
+                throw new Error('Failed to remove flight from cart');
+            }
         } catch (error) {
             console.error('Failed to remove flight from cart', error);
-            Alert.alert('Error', 'Failed to remove flight from cart');
+            Alert.alert('Error', error.message || 'Failed to remove flight from cart');
         }
     };
 
