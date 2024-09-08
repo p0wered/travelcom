@@ -14,6 +14,7 @@ import {FlightCard} from "../components/flight-cards";
 import {useFocusEffect} from "@react-navigation/native";
 import {Footer} from "../components/footer";
 import {DateInput} from "../components/input-date";
+import axios from "axios";
 
 const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initialPassengerCount, passengerDetails}) => {
     const [formDataList, setFormDataList] = useState(initialFormDataList ||
@@ -179,25 +180,30 @@ export default function CartScreen({navigation}) {
 
     const loadCartItems = useCallback(async () => {
         try {
-            const userString = await AsyncStorage.getItem('@user');
-            if (userString) {
-                const user = JSON.parse(userString);
-                setUserId(user.id);
-                const cartKey = `@cart_${user.id}`;
-                const cartString = await AsyncStorage.getItem(cartKey);
-                console.log('Loaded cart string:', cartString);
-                if (cartString) {
-                    const loadedCart = JSON.parse(cartString);
-                    console.log('Loaded cart:', loadedCart);
-                    setCartItems(loadedCart);
-                } else {
-                    console.log('Cart is empty');
-                    setCartItems([]);
-                }
-            } else {
-                console.log('User not found');
+            const token = await AsyncStorage.getItem('@token');
+            if (!token) {
+                console.log('Token not found');
                 setCartItems([]);
+                setLoading(false);
+                return;
             }
+
+            const response = await axios.get('https://travelcom.online/api/cart/my', {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            const loadedCart = response.data.map(item => {
+                const parsedItem = JSON.parse(item.item);
+                return {
+                    ...parsedItem,
+                    cartItemId: item.id
+                };
+            });
+
+            console.log('Loaded cart:', loadedCart);
+            setCartItems(loadedCart);
         } catch (error) {
             console.error('Failed to load cart items', error);
             setCartItems([]);
@@ -211,13 +217,27 @@ export default function CartScreen({navigation}) {
         }, [loadCartItems])
     );
 
-    const removeFromCart = async (flightId) => {
+    const removeFromCart = async (cartItemId) => {
         try {
-            const updatedCart = cartItems.filter(item => item.id !== flightId);
-            const cartKey = `@cart_${userId}`;
-            await AsyncStorage.setItem(cartKey, JSON.stringify(updatedCart));
-            setCartItems(updatedCart);
-            console.log('Updated cart:', updatedCart);
+            const token = await AsyncStorage.getItem('@token');
+            if (!token) {
+                throw new Error('Authorization token not found');
+            }
+
+            const response = await axios.post('https://travelcom.online/api/cart/delete', {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                data: {id: cartItemId}
+            });
+
+            if (response.status === 200) {
+                const updatedCart = cartItems.filter(item => item.cartItemId !== cartItemId);
+                setCartItems(updatedCart);
+                console.log('Item removed from cart successfully');
+            } else {
+                throw new Error('Failed to remove item from cart');
+            }
         } catch (error) {
             console.error('Failed to remove flight from cart', error);
             Alert.alert('Error', 'Failed to remove flight from cart');
@@ -230,7 +250,7 @@ export default function CartScreen({navigation}) {
             const flight = cartItems.find(item => item.id === flightId);
             setFormDataLists(prevLists => ({
                 ...prevLists,
-                [flightId]: flight.passengerDetails.map(type => ({
+                [flightId]: flight.personDetails.map(type => ({
                     type,
                     firstName: '',
                     lastName: '',
@@ -243,13 +263,13 @@ export default function CartScreen({navigation}) {
             }));
             setPersonCounts(prevCounts => ({
                 ...prevCounts,
-                [flightId]: flight.passengerDetails.length
+                [flightId]: flight.personDetails.length
             }));
         }
     };
 
     const handlePayment = async (flightId, formData) => {
-        const flight = cartItems.find(item => item.id === flightId);
+        const flight = cartItems.find(item => item.cartItemId === flightId);
         if (!flight) {
             console.error('Flight not found');
             return;
@@ -339,62 +359,60 @@ export default function CartScreen({navigation}) {
         <ScrollView style={{padding: 15}}>
             <View>
                 <Text style={styles.titleText}>Shopping cart</Text>
-                {
-                    cartItems.length === 0 ? (
-                        <Text style={[styles.mainText, {paddingBottom: 100, fontFamily: 'Montserrat-Regular'}]}>Your cart is empty</Text>
-                    ) : (
-                        [...cartItems].reverse().map((flight, index) => (
-                            <View key={flight.id || index}>
-                                <FlightCard
-                                    price={flight.price}
-                                    flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
-                                    depCity={flight.depCity.title}
-                                    depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
-                                    depTime={flight.depTime}
-                                    depDate={flight.depDate}
-                                    arrivalCity={flight.arriveCity.title}
-                                    arrivalTime={flight.arriveTime}
-                                    arrivalDate={flight.arriveDate}
-                                    arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
-                                    airlinesTitle={flight.provider.supplier.title}
-                                    airlinesImg={flight.providerLogo}
-                                    backDepTime={flight.isRoundtrip ? flight.back_ticket?.depTime : undefined}
-                                    backDepDate={flight.isRoundtrip ? flight.back_ticket?.depDate : undefined}
-                                    backDepAirport={flight.isRoundtrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}
-                                    backDepCity={flight.isRoundtrip ? flight.back_ticket?.depCity.title : undefined}
-                                    backArriveTime={flight.isRoundtrip ? flight.back_ticket?.arriveTime : undefined}
-                                    backArriveDate={flight.isRoundtrip ? flight.back_ticket?.arriveDate : undefined}
-                                    backArriveAirport={flight.isRoundtrip ? `${flight.back_ticket?.arriveAirport.title}, ${flight.back_ticket?.arriveAirport.code}` : undefined}
-                                    backArriveCity={flight.isRoundtrip ? flight.back_ticket?.arriveCity.title : undefined}
-                                    backFlightTime={flight.isRoundtrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
-                                    isRoundTrip={flight.isRoundtrip}
-                                    baggageInfo={flight.baggage}
-                                    btnText="Remove"
-                                    onPress={() => removeFromCart(flight.id)}
-                                    onCartScreen={true}
-                                    onCheckoutPress={() => handleCheckout(flight.id)}
-                                    checkoutBtnText={expandedCardId === flight.id ? "Hide Checkout" : "Checkout"}
-                                    showFavIcon={false}
-                                    personCount={flight.passengerDetails.length}
+                {cartItems.length === 0 ? (
+                    <Text style={[styles.mainText, {paddingBottom: 100, fontFamily: 'Montserrat-Regular'}]}>Your cart is empty</Text>
+                ) : (
+                    [...cartItems].map((flight) => (
+                        <View key={flight.id}>
+                            <FlightCard
+                                price={flight.price}
+                                flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
+                                depCity={flight.depCity.title}
+                                depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
+                                depTime={flight.depTime}
+                                depDate={flight.depDate}
+                                arrivalCity={flight.arriveCity.title}
+                                arrivalTime={flight.arriveTime}
+                                arrivalDate={flight.arriveDate}
+                                arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
+                                airlinesTitle={flight.provider.supplier.title}
+                                airlinesImg={flight.providerLogo}
+                                backDepTime={flight.isRoundtrip ? flight.back_ticket?.depTime : undefined}
+                                backDepDate={flight.isRoundtrip ? flight.back_ticket?.depDate : undefined}
+                                backDepAirport={flight.isRoundtrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}
+                                backDepCity={flight.isRoundtrip ? flight.back_ticket?.depCity.title : undefined}
+                                backArriveTime={flight.isRoundtrip ? flight.back_ticket?.arriveTime : undefined}
+                                backArriveDate={flight.isRoundtrip ? flight.back_ticket?.arriveDate : undefined}
+                                backArriveAirport={flight.isRoundtrip ? `${flight.back_ticket?.arriveAirport.title}, ${flight.back_ticket?.arriveAirport.code}` : undefined}
+                                backArriveCity={flight.isRoundtrip ? flight.back_ticket?.arriveCity.title : undefined}
+                                backFlightTime={flight.isRoundtrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
+                                isRoundTrip={flight.isRoundtrip}
+                                baggageInfo={flight.baggage}
+                                btnText="Remove"
+                                onPress={() => removeFromCart(flight.cartItemId)}
+                                onCartScreen={true}
+                                onCheckoutPress={() => handleCheckout(flight.id)}
+                                checkoutBtnText={expandedCardId === flight.id ? "Hide Checkout" : "Checkout"}
+                                showFavIcon={false}
+                                personCount={flight.personCount}
+                            />
+                            {expandedCardId === flight.id && (
+                                <CheckoutForm
+                                    onSubmit={(formData) => handlePayment(flight.id, formData)}
+                                    onPersonCountChange={(count, formDataList) => handlePersonCountChange(flight.id, count, formDataList)}
+                                    initialFormDataList={formDataLists[flight.id]}
+                                    initialPassengerCount={flight.personCount}
+                                    passengerDetails={flight.personDetails}
                                 />
-                                {expandedCardId === flight.id && (
-                                    <CheckoutForm
-                                        onSubmit={(formData) => handlePayment(flight.id, formData)}
-                                        onPersonCountChange={(count, formDataList) => handlePersonCountChange(flight.id, count, formDataList)}
-                                        initialFormDataList={formDataLists[flight.id]}
-                                        initialPassengerCount={flight.passengerDetails.length}
-                                        passengerDetails={flight.passengerDetails}
-                                    />
-                                )}
-                            </View>
-                        ))
-                    )}
+                            )}
+                        </View>
+                    ))
+                )}
             </View>
             <Footer/>
         </ScrollView>
     );
 }
-
 
 const styles = StyleSheet.create({
     titleText: {

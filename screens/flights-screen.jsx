@@ -17,13 +17,14 @@ import {useCallback, useEffect, useRef, useState} from "react";
 import {RoundTripSelector} from "../components/roundtrip-selector";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {useFocusEffect} from "@react-navigation/native";
+import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import Arrow from "../components/icons/arrow-icon";
 import {DayIcon} from "../components/icons/day-icon";
 import {NightIcon} from "../components/icons/night-icon";
 import {CheckIcon} from "../components/icons/check-icon";
 
-export default function FlightsScreen({route}) {
+export default function FlightsScreen({route, navigation}) {
+    const navigate = useNavigation();
     const [searchParams, setSearchParams] = useState(() => route.params);
     const [airportFrom, setAirportFrom] = useState(searchParams?.airportFrom || '');
     const [fromSuggestions, setFromSuggestions] = useState([]);
@@ -55,6 +56,7 @@ export default function FlightsScreen({route}) {
     const [filteredResults, setFilteredResults] = useState([]);
     const [favoriteItems, setFavoriteItems] = useState([]);
     const [errorMsg, setErrorMsg] = useState(undefined);
+    const [addLoading, setAddLoading] = useState(null);
 
     useEffect(() => {
         checkAuth();
@@ -227,8 +229,6 @@ export default function FlightsScreen({route}) {
         );
     };
 
-    javascript
-
     const loadCartItems = useCallback(async () => {
         try {
             const token = await AsyncStorage.getItem('@token');
@@ -305,8 +305,10 @@ export default function FlightsScreen({route}) {
     );
 
     const addToCart = async (flight) => {
+        setAddLoading(true);
         if (!userId) {
             Alert.alert('Error', 'Please log in to add flights to cart');
+            setAddLoading(false);
             return;
         }
         try {
@@ -334,9 +336,10 @@ export default function FlightsScreen({route}) {
             });
 
             if (response.status === 200) {
-                const updatedCartItems = await loadCartItems();  // Получаем обновленные элементы корзины
-                setCartItems(updatedCartItems);  // Обновляем состояние
-                Alert.alert('Success', 'Flight added to cart');
+                const updatedCartItems = await loadCartItems();
+                setCartItems(updatedCartItems);
+                setAddLoading(false);
+                navigation.navigate('Cart')
             } else {
                 throw new Error('Failed to add flight to cart');
             }
@@ -344,6 +347,7 @@ export default function FlightsScreen({route}) {
             console.error('Failed to add flight to cart', error);
             Alert.alert('Error', error.message || 'Failed to add flight to cart');
         }
+        setAddLoading(false);
     };
 
     const removeFromCart = async (flight) => {
@@ -353,7 +357,7 @@ export default function FlightsScreen({route}) {
         }
         try {
             const response = await axios.post('https://travelcom.online/api/cart/delete', {
-                flightId: flight.id
+                id: flight.id
             }, {
                 headers: {
                     'Authorization': `Bearer ${await AsyncStorage.getItem('@token')}`
@@ -361,8 +365,8 @@ export default function FlightsScreen({route}) {
             });
 
             if (response.status === 200) {
-                const updatedCartItems = await loadCartItems();  // Получаем обновленные элементы корзины
-                setCartItems(updatedCartItems);  // Обновляем состояние
+                const updatedCartItems = await loadCartItems();
+                setCartItems(updatedCartItems);
                 Alert.alert('Success', 'Flight removed from cart');
             } else {
                 throw new Error('Failed to remove flight from cart');
@@ -374,7 +378,7 @@ export default function FlightsScreen({route}) {
     };
 
     const isInCart = (flight) => {
-        return cartItems.some(item => item.id === flight.id);
+        return cartItems.some(item => item.item.id === flight.id);
     };
 
     const toggleFavorite = async (flight) => {
@@ -572,40 +576,38 @@ export default function FlightsScreen({route}) {
                     const inFavorites = isInFavorites(flight);
                     const isRoundTrip = flight.isRoundtrip || false;
                     return (
-                        <>
-                            <FlightCard
-                                key={flight.id}
-                                price={flight.price}
-                                flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
-                                depCity={flight.depCity.title}
-                                depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
-                                depTime={flight.depTime}
-                                depDate={flight.depDate}
-                                arrivalCity={flight.arriveCity.title}
-                                arrivalTime={flight.arriveTime}
-                                arrivalDate={flight.arriveDate}
-                                arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
-                                airlinesTitle={flight.provider.supplier.title}
-                                airlinesImg={flight.providerLogo}
-                                backDepTime={isRoundTrip ? flight.back_ticket?.depTime : undefined}
-                                backDepDate={isRoundTrip ? flight.back_ticket?.depDate : undefined}
-                                backDepAirport={isRoundTrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}
-                                backDepCity={isRoundTrip ? flight.back_ticket?.depCity.title : undefined}
-                                backArriveTime={isRoundTrip ? flight.back_ticket?.arriveTime : undefined}
-                                backArriveDate={isRoundTrip ? flight.back_ticket?.arriveDate : undefined}
-                                backArriveAirport={isRoundTrip ? `${flight.back_ticket?.arriveAirport.title}, ${flight.back_ticket?.arriveAirport.code}` : undefined}
-                                backArriveCity={isRoundTrip ? flight.back_ticket?.arriveCity.title : undefined}
-                                backFlightTime={isRoundTrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
-                                isRoundTrip={isRoundTrip}
-                                baggageInfo={flight.baggage}
-                                btnText={inCart ? "Remove from cart" : "Add to cart"}
-                                onPress={() => inCart ? removeFromCart(flight) : addToCart(flight)}
-                                favouriteIconPress={() => toggleFavorite(flight)}
-                                favouriteIconColor={inFavorites ? 'black' : 'white'}
-                                onCartScreen={false}
-                                showFavIcon={true}
-                            />
-                        </>
+                        <FlightCard
+                            key={flight.id}
+                            price={flight.price}
+                            flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
+                            depCity={flight.depCity.title}
+                            depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
+                            depTime={flight.depTime}
+                            depDate={flight.depDate}
+                            arrivalCity={flight.arriveCity.title}
+                            arrivalTime={flight.arriveTime}
+                            arrivalDate={flight.arriveDate}
+                            arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
+                            airlinesTitle={flight.provider.supplier.title}
+                            airlinesImg={flight.providerLogo}
+                            backDepTime={isRoundTrip ? flight.back_ticket?.depTime : undefined}
+                            backDepDate={isRoundTrip ? flight.back_ticket?.depDate : undefined}
+                            backDepAirport={isRoundTrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}
+                            backDepCity={isRoundTrip ? flight.back_ticket?.depCity.title : undefined}
+                            backArriveTime={isRoundTrip ? flight.back_ticket?.arriveTime : undefined}
+                            backArriveDate={isRoundTrip ? flight.back_ticket?.arriveDate : undefined}
+                            backArriveAirport={isRoundTrip ? `${flight.back_ticket?.arriveAirport.title}, ${flight.back_ticket?.arriveAirport.code}` : undefined}
+                            backArriveCity={isRoundTrip ? flight.back_ticket?.arriveCity.title : undefined}
+                            backFlightTime={isRoundTrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
+                            isRoundTrip={isRoundTrip}
+                            baggageInfo={flight.baggage}
+                            btnText={addLoading ? 'Loading' : 'Choose'}
+                            onPress={() => addToCart(flight)}
+                            favouriteIconPress={() => toggleFavorite(flight)}
+                            favouriteIconColor={inFavorites ? 'black' : 'white'}
+                            onCartScreen={false}
+                            showFavIcon={true}
+                        />
                     );
                 })}
 

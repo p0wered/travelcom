@@ -1,4 +1,4 @@
-import {Image, Platform, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {ActivityIndicator, Image, Platform, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import {FavoriteIcon} from "./icons/favorite-icon";
 import {CheckIcon} from "./icons/check-icon";
 
@@ -124,7 +124,14 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                     activeOpacity={0.8}
                     onPress={onPress}
                 >
-                    <Text style={styles.btnText}>{btnText}</Text>
+                    {
+                        btnText !== 'Loading' ? (
+                            <Text style={styles.btnText}>{btnText}</Text>
+                        ) : (
+                            <ActivityIndicator color="#ffffff"/>
+                        )
+                    }
+
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.chooseBtn, onCartScreen ? {display: 'flex'} : {display: 'none'}]}
