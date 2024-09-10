@@ -7,7 +7,7 @@ import {
     View,
     TouchableOpacity,
     TextInput,
-    ActivityIndicator,
+    ActivityIndicator
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {FlightCard} from "../components/flight-cards";
@@ -15,6 +15,7 @@ import {useFocusEffect} from "@react-navigation/native";
 import {Footer} from "../components/footer";
 import {DateInput} from "../components/input-date";
 import axios from "axios";
+import {GenderSelector} from "../components/roundtrip-selector";
 
 const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initialPassengerCount, passengerDetails}) => {
     const [formDataList, setFormDataList] = useState(initialFormDataList ||
@@ -78,10 +79,35 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
         }
     };
 
+    const getDateLimits = (passengerType) => {
+        const today = new Date();
+        let minDate, maxDate;
+
+        switch (passengerType) {
+            case 'Adult':
+                maxDate = new Date(today.getFullYear() - 12, today.getMonth(), today.getDate());
+                minDate = new Date(1900, 0, 1);
+                break;
+            case 'Child':
+                minDate = new Date(today.getFullYear() - 11, today.getMonth(), today.getDate());
+                maxDate = new Date(today.getFullYear() - 2, today.getMonth(), today.getDate());
+                break;
+            case 'Infant':
+                minDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+                maxDate = today;
+                break;
+            default:
+                minDate = new Date(1900, 0, 1);
+                maxDate = today;
+        }
+        return {minDate, maxDate};
+    };
+
     return (
         <ScrollView style={styles.formContainer}>
             {formDataList.map((formData, index) => {
                 const typeIndex = formDataList.filter((data, i) => data.type === formData.type && i < index).length + 1;
+                const {minDate, maxDate} = getDateLimits(formData.type);
                 return (
                     <View key={index} style={styles.personContainer}>
                         <View style={styles.personHeaderContainer}>
@@ -117,16 +143,16 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
                                 date={formData.birthDate}
                                 onlyNextDates={false}
                                 setDate={(date) => handleChange(index, 'birthDate', date)}
+                                minDate={minDate}
+                                maxDate={maxDate}
                             />
                         </View>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Gender"
-                            placeholderTextColor="#bebebe"
-                            value={formData.gender}
-                            onChangeText={(text) => handleChange(index, 'gender', text)}
-                            autoComplete='gender'
-                        />
+                        <View>
+                            <GenderSelector
+                                gender={formData.gender}
+                                setGender={(gender) => handleChange(index, 'gender', gender)}
+                            />
+                        </View>
                         <TextInput
                             style={styles.input}
                             placeholder="Passport"
@@ -134,14 +160,16 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
                             value={formData.passport}
                             onChangeText={(text) => handleChange(index, 'passport', text)}
                             keyboardType='number-pad'
+                            maxLength={9}
                         />
                         <View style={[styles.input, {justifyContent: 'center'}]}>
                             <DateInput
                                 inCheckout={true}
                                 onlyNextDates={true}
-                                placeholder='Date of expiracy'
+                                placeholder='Passport date of expiracy'
                                 date={formData.docExp}
                                 setDate={(date) => handleChange(index, 'docExp', date)}
+                                minDate={new Date()}
                             />
                         </View>
                     </View>
@@ -224,12 +252,15 @@ export default function CartScreen({navigation}) {
                 throw new Error('Authorization token not found');
             }
 
-            const response = await axios.post('https://travelcom.online/api/cart/delete', {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                },
-                data: {id: cartItemId}
-            });
+            const response = await axios.post('https://travelcom.online/api/cart/delete',
+                {id: cartItemId},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
 
             if (response.status === 200) {
                 const updatedCart = cartItems.filter(item => item.cartItemId !== cartItemId);
@@ -269,7 +300,7 @@ export default function CartScreen({navigation}) {
     };
 
     const handlePayment = async (flightId, formData) => {
-        const flight = cartItems.find(item => item.cartItemId === flightId);
+        const flight = cartItems.find(item => item.id === flightId);
         if (!flight) {
             console.error('Flight not found');
             return;
@@ -281,14 +312,20 @@ export default function CartScreen({navigation}) {
             totalPrice,
         };
 
+        const formatDate = (dateString) => {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        };
+
         const persons = formData.map(person => ({
             firstName: person.firstName,
             lastName: person.lastName,
             middleName: person.middleName,
-            birthDate: person.birthDate,
-            gender: person.gender,
+            birthDate: formatDate(person.birthDate),
+            gender: person.gender === 'Male' ? 'M' : 'F',
             passport: person.passport,
-            docExp: person.docExp
+            docExp: formatDate(person.docExp)
         }));
 
         const payloadData = {
@@ -501,5 +538,15 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    pickerContainer: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+        marginBottom: 10,
+    },
+    picker: {
+        height: 50,
+        width: '100%',
     },
 })

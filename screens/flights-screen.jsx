@@ -97,11 +97,15 @@ export default function FlightsScreen({route, navigation}) {
 
 
     const checkAuth = async () => {
+        console.log('Checking user data')
         try {
             const userString = await AsyncStorage.getItem('@user');
             if (userString) {
+                console.log(userString);
                 const user = JSON.parse(userString);
+                console.log(user)
                 setUserId(user.id);
+                console.log(userId)
             }
         } catch (error) {
             console.error('No user data', error);
@@ -348,33 +352,6 @@ export default function FlightsScreen({route, navigation}) {
             Alert.alert('Error', error.message || 'Failed to add flight to cart');
         }
         setAddLoading(false);
-    };
-
-    const removeFromCart = async (flight) => {
-        if (!userId) {
-            Alert.alert('Error', 'Please log in to remove flights from cart');
-            return;
-        }
-        try {
-            const response = await axios.post('https://travelcom.online/api/cart/delete', {
-                id: flight.id
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${await AsyncStorage.getItem('@token')}`
-                }
-            });
-
-            if (response.status === 200) {
-                const updatedCartItems = await loadCartItems();
-                setCartItems(updatedCartItems);
-                Alert.alert('Success', 'Flight removed from cart');
-            } else {
-                throw new Error('Failed to remove flight from cart');
-            }
-        } catch (error) {
-            console.error('Failed to remove flight from cart', error);
-            Alert.alert('Error', error.message || 'Failed to remove flight from cart');
-        }
     };
 
     const isInCart = (flight) => {

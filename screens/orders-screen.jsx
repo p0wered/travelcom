@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         padding: 15,
         borderRadius: 10,
-        marginBottom: 10
+        marginBottom: 15
     },
     largeText: {
         fontSize: Platform.OS === 'ios' ? 22 : 19,
