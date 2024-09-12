@@ -310,12 +310,16 @@ export default function FlightsScreen({route, navigation}) {
 
     const addToCart = async (flight) => {
         setAddLoading(true);
-        if (!userId) {
-            Alert.alert('Error', 'Please log in to add flights to cart');
-            setAddLoading(false);
-            return;
-        }
         try {
+            const userString = await AsyncStorage.getItem('@user');
+            if (!userString) {
+                Alert.alert('Error', 'Please log in to add flights to cart');
+                setAddLoading(false);
+                return;
+            }
+            const user = JSON.parse(userString);
+            const userId = user.id;
+
             const totalPassengers = passengers.adults + passengers.children + passengers.infants;
             const passengerDetailsList = [
                 ...Array(passengers.adults).fill('Adult'),
