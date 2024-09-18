@@ -158,7 +158,7 @@ export default function OrdersScreen({navigation}){
                         </TouchableOpacity>
                     </View>
                 )
-            } else if (item.ticket_link) {
+            } else if (item.status === 'Payed' || item.status === 'payed' && item.ticket_link) {
                 return(
                     <View style={item.admin !== 1 ? {paddingHorizontal: 15, paddingBottom: 15} : {paddingTop: 15}}>
                         <TouchableOpacity

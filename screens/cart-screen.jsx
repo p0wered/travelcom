@@ -32,6 +32,8 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
     );
     const [personCount, setPersonCount] = useState(initialPassengerCount);
     const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isFormValid, setIsFormValid] = useState(false);
 
     const handleChange = (index, name, value) => {
         const newFormDataList = [...formDataList];
@@ -41,41 +43,76 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
         newFormDataList[index] = { ...newFormDataList[index], [name]: value };
         setFormDataList(newFormDataList);
         setError('');
-        validateForm(newFormDataList);
     };
 
     useEffect(() => {
         onPersonCountChange(personCount, formDataList);
+        validateForm(formDataList);
     }, [personCount, formDataList]);
 
-    const validateForm = () => {
-        for (let i = 0; i < formDataList.length; i++) {
-            const person = formDataList[i];
+    const isValidBirthDate = (birthDate, passengerType) => {
+        const today = new Date();
+        const birthDateObj = new Date(birthDate);
+        const age = today.getFullYear() - birthDateObj.getFullYear();
+        const m = today.getMonth() - birthDateObj.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) {
+            age--;
+        }
+
+        switch (passengerType) {
+            case 'Adult':
+                return age >= 12;
+            case 'Child':
+                return age >= 2 && age < 12;
+            case 'Infant':
+                return age < 2;
+            default:
+                return false;
+        }
+    };
+
+    const validateForm = (dataList) => {
+        for (let i = 0; i < dataList.length; i++) {
+            const person = dataList[i];
             for (const key in person) {
                 if (key === 'birthDate' || key === 'docExp') {
                     if (person[key] === null || person[key] === '') {
                         setError(`Please select a ${key === 'birthDate' ? 'birth date' : 'document expiration date'} for Person ${i + 1}`);
-                        return false;
+                        setIsFormValid(false);
+                        return;
+                    }
+                    if (key === 'birthDate' && !isValidBirthDate(person[key], person.type)) {
+                        setError(`Invalid birth date for ${person.type} (Person ${i + 1})`);
+                        setIsFormValid(false);
+                        return;
                     }
                 } else {
                     if (typeof person[key] !== 'string' || person[key].trim() === '') {
                         setError(`Please fill in all fields for Person ${i + 1}`);
-                        return false;
+                        setIsFormValid(false);
+                        return;
                     }
                     if (key === 'passport' && person[key].length < 9) {
                         setError(`Passport number for Person ${i + 1} must be 9 digits`);
-                        return false;
+                        setIsFormValid(false);
+                        return;
                     }
                 }
             }
         }
-        return true;
+        setError('');
+        setIsFormValid(true);
     };
 
     const handleSubmit = () => {
-        if (validateForm()) {
+        if (isFormValid) {
             setError('');
-            onSubmit(formDataList);
+            setIsSubmitting(true);
+            onSubmit(formDataList).finally(() => {
+                setIsSubmitting(false);
+            });
+        } else {
+            validateForm(formDataList);
         }
     };
 
@@ -175,9 +212,18 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
                     </View>
                 );
             })}
-            <TouchableOpacity style={styles.payButton} onPress={handleSubmit}>
-                <Text style={styles.payButtonText}>Pay</Text>
+            <TouchableOpacity
+                style={[styles.payButton, !isFormValid && styles.disabledPayButton]}
+                onPress={handleSubmit}
+                disabled={isSubmitting || !isFormValid}
+            >
+                {isSubmitting ? (
+                    <ActivityIndicator color="#ffffff" />
+                ) : (
+                    <Text style={styles.payButtonText}>Pay</Text>
+                )}
             </TouchableOpacity>
+            {isSubmitting && <Text style={styles.waitText}>Please wait, it may take 10-15 seconds</Text>}
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
         </ScrollView>
     );
@@ -357,8 +403,15 @@ export default function CartScreen({navigation}) {
             const responseText = await response.text();
             console.log('Response text:', responseText);
 
-            if (response.status >= 400) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) {
+                let errorMessage;
+                try {
+                    const errorData = JSON.parse(responseText);
+                    errorMessage = errorData.message || 'Unknown error';
+                } catch (parseError) {
+                    errorMessage = 'Unknown error';
+                }
+                throw new Error(errorMessage);
             }
 
             if (responseText.startsWith('http')) {
@@ -375,12 +428,12 @@ export default function CartScreen({navigation}) {
                     }
                 } catch (parseError) {
                     console.error('Error parsing response:', parseError);
-                    Alert.alert('Error', 'Server returned an invalid response. Please try again later.');
+                    throw new Error('Invalid response from server');
                 }
             }
         } catch (error) {
             console.error('Payment error:', error);
-            Alert.alert('Error', 'Failed to process payment. Please try again later.');
+            Alert.alert('Error', error.message);
         }
     };
 
@@ -548,5 +601,11 @@ const styles = StyleSheet.create({
     picker: {
         height: 50,
         width: '100%',
+    },
+    waitText: {
+        fontFamily: 'Montserrat-Regular',
+        textAlign: 'center',
+        marginTop: 10,
+        color: 'black',
     },
 })
