@@ -5,7 +5,7 @@ import {useEffect, useRef, useState} from "react";
 
 export function AccordionItem({title, content}) {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [headerHeight, setHeaderHeight] = useState(0);
+    const [headerHeight, setHeaderHeight] = useState(100);
     const [contentHeight, setContentHeight] = useState(0);
     const animatedHeight = useRef(new Animated.Value(0)).current;
 
@@ -37,7 +37,7 @@ export function AccordionItem({title, content}) {
         <Animated.View style={[
             styles.accordionItem,
             isExpanded && styles.accordionItemActive,
-            {height: maxHeight, width: '100%', maxWidth: 600, marginHorizontal: 'auto'},
+            {width: '100%', maxWidth: 600, marginHorizontal: 'auto'},
         ]}>
             <Pressable onPress={toggleAccordion}>
                 <View
@@ -47,7 +47,7 @@ export function AccordionItem({title, content}) {
                         setHeaderHeight(height);
                     }}
                 >
-                    <Text style={[styles.mainText, { color: isExpanded ? 'white' : '#207FBF' }]}>{title}</Text>
+                    <Text style={[styles.mainText, { color: isExpanded ? 'white' : '#207FBF', marginRight: 15}]}>{title}</Text>
                     <View style={styles.arrowContainer}>
                         {isExpanded ? (
                             <ArrowActive color='white'/>
@@ -87,7 +87,7 @@ export function generateAccordionItems(faqData) {
 const styles = StyleSheet.create({
     mainText: {
         fontFamily: 'Montserrat-Bold',
-        fontSize: 14,
+        fontSize: 15,
         color: 'white'
     },
     faqText: {
@@ -101,11 +101,10 @@ const styles = StyleSheet.create({
         padding: 14
     },
     accordionItem: {
-        height: 51,
         borderWidth: 1,
         borderColor: '#207FBF',
         borderRadius: 10,
-        marginBottom: 12
+        marginBottom: 12,
     },
     accordionItemActive: {
         height: 'auto',
@@ -116,8 +115,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: 5,
-        margin: 15
+        margin: 15,
+        minHeight: 28,
     },
     separatorAccordion: {
         width: '100%',

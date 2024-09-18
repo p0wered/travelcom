@@ -74,7 +74,7 @@ export function AutoCompleteInput({ title, inputText, setInputText, suggestions,
 const styles = StyleSheet.create({
     locationInput: {
         color: '#207FBF',
-        fontSize: 16,
+        fontSize: 15,
         fontFamily: 'Montserrat-Bold',
         height: 64,
         borderTopLeftRadius: 10,
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
         borderColor: '#207FBF',
         borderBottomStartRadius: 10,
         borderBottomEndRadius: 10,
-        maxHeight: 218,
+        maxHeight: 216,
         overflow: 'hidden'
     }
 });

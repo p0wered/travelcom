@@ -3,10 +3,10 @@ import {FavoriteIcon} from "./icons/favorite-icon";
 import Arrow from "./icons/arrow-icon";
 import {useRef, useState} from "react";
 
-export function FlightDirection({ image, direction }) {
+export function FlightDirection({image, direction}) {
     const [isExpanded, setIsExpanded] = useState(false);
-    const animation = useRef(new Animated.Value(0)).current; // для анимации высоты
-    const rotateAnimation = useRef(new Animated.Value(0)).current; // для анимации поворота стрелки
+    const animation = useRef(new Animated.Value(0)).current;
+    const rotateAnimation = useRef(new Animated.Value(0)).current;
 
     const toggleExpand = () => {
         const initialValue = isExpanded ? 1 : 0;

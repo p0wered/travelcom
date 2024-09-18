@@ -32,10 +32,11 @@ export default function NewsScreen({navigation}) {
     };
 
     const formatDesc = (item) => {
-        if (item.text.length > 100) {
-            return processText(item.text.slice(0,110) + '...')
+        const processedText = processText(item.text);
+        if (processedText.length > 100) {
+            return processedText.slice(0, 100) + '...';
         } else {
-            return processText(item.text.slice(0,110))
+            return processedText;
         }
     }
 
@@ -57,7 +58,7 @@ export default function NewsScreen({navigation}) {
             <View style={styles.blogFlexbox}>
                 <View style={{display: 'flex', alignItems: 'center'}}>
                     <View>
-                        <Text style={[styles.mainText, {color: 'white'}]}>A BLOG FOR INSPIRATION</Text>
+                        <Text style={[styles.mainText, {color: 'white', marginTop: 18}]}>A BLOG FOR INSPIRATION</Text>
                     </View>
                 </View>
                 {[firstGroup, secondGroup, thirdGroup, fourthGroup].map((group, groupIndex) => (
@@ -67,10 +68,10 @@ export default function NewsScreen({navigation}) {
                             horizontal={true}
                             showsHorizontalScrollIndicator={false}
                             style={
-                            [
-                                {marginBottom: 18 , marginTop: 24},
-                                groupIndex === 0 ? {backgroundColor: '#207FBF'} : {backgroundColor: 'white'}
-                            ]}
+                                [
+                                    {paddingTop: 18, paddingBottom: 18},
+                                    groupIndex % 2 === 1 ? {backgroundColor: 'white'} : {backgroundColor: '#207FBF'}
+                                ]}
                         >
                             {group.map((item) => (
                                 <BlogItem
@@ -80,8 +81,8 @@ export default function NewsScreen({navigation}) {
                                     title={processText(item.name).toUpperCase()}
                                     desc={formatDesc(item)}
                                     date={new Date(item.created_at).toLocaleDateString()}
-                                    textColor='white'
-                                    img={{uri: item.mainImage}}
+                                    textColor={groupIndex % 2 === 1 ? 'black' : 'white'}
+                                    img={{uri: item.cover}}
                                     navigation={navigation}
                                 />
                             ))}
@@ -111,7 +112,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#207FBF',
         display: 'flex',
         flexDirection: 'column',
-        paddingVertical: 14
     },
     blogBtn: {
         position: 'absolute',

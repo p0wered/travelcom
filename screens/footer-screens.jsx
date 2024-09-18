@@ -10,7 +10,13 @@ import {useFocusEffect} from "@react-navigation/native";
 const fetchData = async (setData, setLoading) => {
     try {
         const response = await axios.get('https://travelcom.online/api/information/docs');
-        setData(response.data);
+        const cleanedData = {
+            ...response.data,
+            privacy_policy: cleanHtml(response.data.privacy_policy),
+            terms: cleanHtml(response.data.terms),
+            refunds: cleanHtml(response.data.refunds)
+        };
+        setData(cleanedData);
         setLoading(false);
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -43,6 +49,7 @@ const InfoScreen = ({title, content}) => {
                     <RenderHtml
                         contentWidth={width}
                         source={{html: data[content]}}
+                        tagsStyles={tagsStyles}
                     />
                 ) : (
                     <Text>{`Error fetching ${content}`}</Text>
@@ -51,6 +58,14 @@ const InfoScreen = ({title, content}) => {
             <Footer />
         </ScrollView>
     );
+};
+
+const cleanHtml = (html) => {
+    html = html.replace(/<p>\s*<\/p>/g, '');
+    html = html.replace(/<o:p>\s*<\/o:p>/g, '');
+    html = html.replace(/<br\s*\/?>/g, '');
+    html = html.replace(/<p>\s*<br\s*\/?>\s*<\/p>/g, '');
+    return html;
 };
 
 export function PrivacyScreen() {
@@ -144,3 +159,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 })
+
+const tagsStyles = {
+    p: {
+        marginTop: 0,
+        marginBottom: 3,
+    },
+    span: {
+        marginTop: 0,
+        marginBottom: 0,
+    }
+};
+

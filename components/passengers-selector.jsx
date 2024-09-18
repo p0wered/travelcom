@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
         padding: 10,
         borderTopWidth: 1,
         borderTopColor: '#207FBF',
-        height: 70
+        height: 65
     },
     passengerLabel: {
         color: '#207FBF',

@@ -83,7 +83,7 @@ export default function HotelsScreen() {
                 }
                 return prevDots + '.';
             });
-        }, 700);
+        }, 300);
 
         return () => clearInterval(interval);
     }, []);

@@ -102,7 +102,8 @@ const styles = StyleSheet.create({
         borderTopColor: '#207FBF',
     },
     merger: {
-        padding: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 13,
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',

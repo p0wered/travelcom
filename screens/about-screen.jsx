@@ -25,10 +25,17 @@ export default function AboutScreen() {
     const fetchData = async () => {
         try {
             const response = await axios.get('https://travelcom.online/api/information/docs');
-            setText(response.data.about);
+            setText(cleanHtml(response.data.about));
         } catch (error) {
             console.error('Error fetching data:', error);
         }
+    };
+
+    const cleanHtml = (html) => {
+        html = html.replace(/<p>\s*<\/p>/g, '');
+        html = html.replace(/<br\s*\/?>/g, '');
+        html = html.replace(/<p>\s*<br\s*\/?>\s*<\/p>/g, '');
+        return html;
     };
 
     useEffect(() => {
@@ -46,6 +53,7 @@ export default function AboutScreen() {
                 <RenderHtml
                     contentWidth={width}
                     source={{html: text}}
+                    tagsStyles={tagsStyles}
                 />
                 <View>
                     <View style={styles.merger}>
@@ -84,7 +92,7 @@ const styles = StyleSheet.create({
     aboutFlexbox: {
         backgroundColor: 'white',
         padding: 15,
-        gap: 20
+        gap: 16
     },
     aboutImage: {
         width: '100%',
@@ -96,8 +104,7 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
-        marginBottom: 14
+        gap: 10
     },
     blueText: {
         fontSize: 15,
@@ -111,3 +118,14 @@ const styles = StyleSheet.create({
         maxWidth: 300
     }
 })
+
+const tagsStyles = {
+    p: {
+        marginTop: 0,
+        marginBottom: 18,
+    },
+    span: {
+        marginTop: 0,
+        marginBottom: 0,
+    }
+};

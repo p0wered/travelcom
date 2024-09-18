@@ -122,14 +122,13 @@ export default function HomeScreen() {
 
     return (
         <ScrollView style={{flex: 1}}>
-            <ImageBackground source={{uri: mainImage}} style={{width: '100%', height: 'auto', paddingBottom: 140}}>
+            <ImageBackground source={{uri: mainImage}} style={{width: '100%', height: 'auto', paddingBottom: 100}}>
                 <View style={styles.offerTravel}>
                     <View style={styles.offerTitle}>
                         <Text numberOfLines={3} style={styles.offerTitleText}>Knows what you need</Text>
                     </View>
                     <View style={{backgroundColor: 'white'}}>
                         <View style={styles.flightsInputForm}>
-                            <Text style={[styles.mainBlueText, {textAlign: 'center'}]}>Search for flights</Text>
                             <AutoCompleteInput
                                 title='From'
                                 inputText={airportFrom}
@@ -191,9 +190,9 @@ function DirectionItem({item}) {
             style={styles.directionItem}
             onPress={() => navigation.navigate('DirectionItem', {item})}
         >
-            <Image source={{uri: item.mainImage}} style={{width: '100%', height: 222, padding: 15}}/>
+            <Image source={{uri: item.cover}} style={{width: '100%', height: 222, padding: 15}}/>
             <View style={styles.directionInner}>
-                <Text style={[styles.mainText, {textTransform: 'uppercase'}]}>
+                <Text style={[styles.mainText, {textTransform: 'uppercase', textShadowRadius: 4, textShadowColor: 'grey'}]}>
                     {item.name}⠀
                 </Text>
                 <Image source={{uri: item.icon}} style={{width: 20, height: 20}}/>
@@ -229,10 +228,11 @@ function BlogList({navigation, news}) {
     };
 
     const formatDesc = (item) => {
-        if (item.text.length > 100) {
-            return processText(item.text.slice(0,110) + '...')
+        const processedText = processText(item.text);
+        if (processedText.length > 100) {
+            return processedText.slice(0, 100) + '...';
         } else {
-            return processText(item.text.slice(0,110))
+            return processedText;
         }
     }
 
@@ -255,7 +255,7 @@ function BlogList({navigation, news}) {
                         desc={formatDesc(item)}
                         date={new Date(item.created_at).toLocaleDateString()}
                         textColor='white'
-                        img={{uri: item.mainImage}}
+                        img={{uri: item.cover}}
                         navigation={navigation}
                     />
                 ))}
@@ -281,13 +281,13 @@ const styles = StyleSheet.create({
         color: 'white'
     },
     offerTravel: {
-        paddingTop: 20,
+        paddingTop: 14,
     },
     offerTitle: {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20
+        marginBottom: 4
     },
     offerTitleText: {
         fontFamily: 'Montserrat-Bold',
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
         padding: 15,
         display: 'flex',
         flexDirection: 'column',
-        gap: 15,
+        gap: 8,
     },
     flexCenter: {
         display: 'flex',

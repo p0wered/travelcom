@@ -56,7 +56,7 @@ export default function FlightsScreen({route, navigation}) {
     const [filteredResults, setFilteredResults] = useState([]);
     const [favoriteItems, setFavoriteItems] = useState([]);
     const [errorMsg, setErrorMsg] = useState(undefined);
-    const [addLoading, setAddLoading] = useState(null);
+    const [addLoading, setAddLoading] = useState({});
 
     useEffect(() => {
         checkAuth();
@@ -309,12 +309,12 @@ export default function FlightsScreen({route, navigation}) {
     );
 
     const addToCart = async (flight) => {
-        setAddLoading(true);
+        setAddLoading(prev => ({ ...prev, [flight.id]: true }));
         try {
             const userString = await AsyncStorage.getItem('@user');
             if (!userString) {
                 Alert.alert('Error', 'Please log in to add flights to cart');
-                setAddLoading(false);
+                setAddLoading(prev => ({ ...prev, [flight.id]: false }));
                 return;
             }
             const user = JSON.parse(userString);
@@ -346,7 +346,7 @@ export default function FlightsScreen({route, navigation}) {
             if (response.status === 200) {
                 const updatedCartItems = await loadCartItems();
                 setCartItems(updatedCartItems);
-                setAddLoading(false);
+                setAddLoading(prev => ({ ...prev, [flight.id]: false }));
                 navigation.navigate('Cart')
             } else {
                 throw new Error('Failed to add flight to cart');
@@ -355,7 +355,7 @@ export default function FlightsScreen({route, navigation}) {
             console.error('Failed to add flight to cart', error);
             Alert.alert('Error', error.message || 'Failed to add flight to cart');
         }
-        setAddLoading(false);
+        setAddLoading(prev => ({ ...prev, [flight.id]: false }));
     };
 
     const isInCart = (flight) => {
@@ -582,7 +582,7 @@ export default function FlightsScreen({route, navigation}) {
                             backFlightTime={isRoundTrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
                             isRoundTrip={isRoundTrip}
                             baggageInfo={flight.baggage}
-                            btnText={addLoading ? 'Loading' : 'Choose'}
+                            btnText={addLoading[flight.id] ? 'Loading' : 'Choose'}
                             onPress={() => addToCart(flight)}
                             favouriteIconPress={() => toggleFavorite(flight)}
                             favouriteIconColor={inFavorites ? 'black' : 'white'}

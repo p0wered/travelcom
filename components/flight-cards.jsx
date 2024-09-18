@@ -228,7 +228,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 25,
         paddingVertical: 14,
         borderRadius: 10,
-        backgroundColor: '#207FBF'
+        backgroundColor: '#207FBF',
+        maxHeight: 43,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
     },
     chooseBtnWrap: {
         display: 'flex',
