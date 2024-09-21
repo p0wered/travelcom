@@ -190,7 +190,6 @@ export default function OrdersScreen({navigation}){
                         </View>
                         <Text style={styles.largeText} adjustsFontSizeToFit={true}>{flightPrice} €</Text>
                     </View>
-                    <ButtonAdmin item={item}/>
                 </View>
             )
         } else {
@@ -220,6 +219,7 @@ export default function OrdersScreen({navigation}){
                         backArriveCity={isRoundTrip ? flightData.back_ticket?.arriveCity.title : undefined}
                         backFlightTime={isRoundTrip ? `${flightData.back_ticket?.duration.flight.hour}h, ${flightData.back_ticket?.duration.flight.minute}min` : undefined}
                         isRoundTrip={isRoundTrip}
+                        baggageInfo={flightData.baggage}
                         onCartScreen={false}
                         showFavIcon={false}
                         onOrderScreen={true}

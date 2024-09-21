@@ -39,6 +39,7 @@ export default function FavouritesScreen() {
             setUserId(null);
         }
         setLoading(false);
+        console.log(favoriteItems)
     }, []);
 
     useFocusEffect(
@@ -128,6 +129,15 @@ export default function FavouritesScreen() {
                             arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
                             airlinesTitle={flight.provider.supplier.title}
                             airlinesImg={flight.providerLogo}
+                            backDepTime={flight.isRoundtrip ? flight.back_ticket?.depTime : undefined}
+                            backDepDate={flight.isRoundtrip ? flight.back_ticket?.depDate : undefined}
+                            backDepAirport={flight.isRoundtrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}
+                            backDepCity={flight.isRoundtrip ? flight.back_ticket?.depCity.title : undefined}
+                            backArriveTime={flight.isRoundtrip ? flight.back_ticket?.arriveTime : undefined}
+                            backArriveDate={flight.isRoundtrip ? flight.back_ticket?.arriveDate : undefined}
+                            backArriveAirport={flight.isRoundtrip ? `${flight.back_ticket?.arriveAirport.title}, ${flight.back_ticket?.arriveAirport.code}` : undefined}
+                            backArriveCity={flight.isRoundtrip ? flight.back_ticket?.arriveCity.title : undefined}
+                            backFlightTime={flight.isRoundtrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
                             isRoundTrip={flight.isRoundtrip}
                             baggageInfo={flight.baggage}
                             btnText={addingFlights[flight.id] ? "Loading" : "Choose"}

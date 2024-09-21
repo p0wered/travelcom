@@ -11,6 +11,7 @@ export function InAppBrowser({ route }) {
     const handleNavigationStateChange = (navState) => {
         if (navState.url === 'https://travelcom.online/cart' || navState.url === 'https://testpg.guavapay.com/payment/merchants/Test_merchant/null') {
             navigation.goBack();
+            navigation.goBack();
         }
     };
 

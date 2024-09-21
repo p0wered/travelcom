@@ -53,7 +53,7 @@ const CheckoutForm = ({onSubmit, onPersonCountChange, initialFormDataList, initi
     const isValidBirthDate = (birthDate, passengerType) => {
         const today = new Date();
         const birthDateObj = new Date(birthDate);
-        const age = today.getFullYear() - birthDateObj.getFullYear();
+        let age = today.getFullYear() - birthDateObj.getFullYear();
         const m = today.getMonth() - birthDateObj.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) {
             age--;

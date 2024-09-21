@@ -95,8 +95,8 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     scrollImage: {
-        width: 300,
-        height: 200,
+        width: 340,
+        height: 220,
         borderRadius: 10,
         marginLeft: 10,
     }

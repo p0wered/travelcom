@@ -41,6 +41,8 @@ import {InformationProvider} from "./contextProvider";
 import {NotificationProvider} from "./contextNotifications";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
 import {InAppBrowser} from "./components/in-app-browser";
+import HomeSearchScreen from "./screens/home-search-screen";
+import {GlobalProvider} from "./contextHome";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -155,7 +157,8 @@ function MainTabs(){
                 screenOptions={tabScreenOptions}>
                 <Tab.Screen name={'Travel'} component={HomeScreen}/>
                 <Tab.Screen name={'Hotels'} component={HotelsScreen}/>
-                <Tab.Screen name={'Flights'} component={FlightsScreen}/>
+                <Tab.Screen name={'Flights'} component={HomeSearchScreen}/>
+                <Tab.Screen name={'FlightResults'} component={FlightsScreen} options={{tabBarButton: () => null}}/>
                 <Tab.Screen name={'Chat'} component={ChatScreen} initialParams={{setIsInputFocused}}/>
                 <Tab.Screen name={'Profile'} component={ProfileScreen}/>
                 <Tab.Screen name={'Help'} component={HelpScreen} options={{tabBarButton: () => null}}/>
@@ -402,10 +405,12 @@ export default function App() {
                 <NavigationContainer>
                     <NotificationProvider>
                         <InformationProvider>
-                            <GestureHandlerRootView>
-                                <AppContent />
-                                <StatusBar barStyle='light-content' backgroundColor='#207fbf' />
-                            </GestureHandlerRootView>
+                            <GlobalProvider>
+                                <GestureHandlerRootView>
+                                    <AppContent/>
+                                    <StatusBar barStyle='light-content' backgroundColor='#207fbf' />
+                                </GestureHandlerRootView>
+                            </GlobalProvider>
                         </InformationProvider>
                     </NotificationProvider>
                 </NavigationContainer>

@@ -51,7 +51,7 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                 </View>
                 <View>
                     <Text style={styles.largeText} adjustsFontSizeToFit={true}>{price} €</Text>
-                    {onOrderScreen !== true ? renderBaggageInfo() : (<></>)}
+                    {renderBaggageInfo()}
                 </View>
             </View>
             <View style={[styles.cardBlock]}>

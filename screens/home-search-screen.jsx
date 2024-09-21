@@ -1,29 +1,58 @@
+import React, {useCallback, useEffect, useState} from "react";
+import {useFocusEffect, useNavigation} from "@react-navigation/native";
+import {generateAccordionItems} from "../components/accordion-list";
+import axios from "axios";
 import {
     ActivityIndicator,
-    FlatList,
-    Image,
     ImageBackground,
+    Platform,
     ScrollView,
     StyleSheet,
-    Text, TouchableOpacity,
+    Text,
+    TouchableOpacity,
     View
 } from "react-native";
-import {Footer} from "../components/footer";
-import {BlogItem} from "../components/blog-item";
-import {generateAccordionItems} from "../components/accordion-list";
+import {AutoCompleteInput} from "../components/autocomplete-input";
+import {RoundTripSelector} from "../components/roundtrip-selector";
+import {DateInput} from "../components/input-date";
+import {PassengerDropdown} from "../components/passengers-selector";
+import {SearchIcon} from "../components/icons/search-icon";
 import {QuestionForm} from "../components/question-form";
-import React, {useCallback, useEffect, useState} from "react";
-import axios from "axios";
-import {useFocusEffect, useNavigation} from "@react-navigation/native";
-import {decode} from "html-entities";
+import {Footer} from "../components/footer";
+import {BlogList, DirectionsList} from "./home-screen";
 import {useGlobalContext} from "../contextHome";
 
-export default function HomeScreen() {
-    const [loading, setLoading] = useState(true);
+export default function HomeSearchScreen() {
     const { mainImage, setMainImage, directions, setDirections, news, setNews, faqData, setFaqData } = useGlobalContext();
+    const [loading, setLoading] = useState(true);
     const [clearErrors, setClearErrors] = useState(false);
     const navigation = useNavigation();
     const accordionItems = generateAccordionItems(faqData);
+    const [airportFrom, setAirportFrom] = useState('');
+    const [fromSuggestions, setFromSuggestions] = useState([]);
+    const [airportTo, setAirportTo] = useState('');
+    const [whereSuggestions, setWhereSuggestions] = useState([]);
+    const [dateStart, setDateStart] = useState(new Date());
+    const [dateEnd, setDateEnd] = useState(new Date());
+    const [roundTrip, setRoundTrip] = useState(true);
+    const [passengers, setPassengers] = useState({
+        adults: 1,
+        children: 0,
+        infants: 0,
+    });
+
+    const handleSearch = () => {
+        const searchParams = {
+            airportFrom,
+            airportTo,
+            dateStart,
+            dateEnd,
+            roundTrip,
+            passengers
+        };
+        console.log('Sending to flight results screen', searchParams)
+        navigation.navigate('FlightResults', searchParams);
+    };
 
     const fetchMainImage = async () => {
         if (!mainImage) {
@@ -104,11 +133,44 @@ export default function HomeScreen() {
                         <Text numberOfLines={3} style={styles.offerTitleText}>Knows what you need</Text>
                     </View>
                     <View style={{backgroundColor: 'white'}}>
-                        <View style={{backgroundColor: 'white', flexDirection: 'row', justifyContent: 'center'}}>
-                            <Text style={[styles.formText, {paddingHorizontal: 10, fontSize: 18}]}>
-                                For travel arrangements, questions about locations and details, you can write in the chat
-                                and our managers will help
-                            </Text>
+                        <View style={styles.flightsInputForm}>
+                            <AutoCompleteInput
+                                title='From'
+                                inputText={airportFrom}
+                                setInputText={setAirportFrom}
+                                suggestions={fromSuggestions}
+                                setSuggestions={setFromSuggestions}
+                            />
+                            <AutoCompleteInput
+                                title='Where'
+                                inputText={airportTo}
+                                setInputText={setAirportTo}
+                                suggestions={whereSuggestions}
+                                setSuggestions={setWhereSuggestions}
+                            />
+                            <RoundTripSelector roundTrip={roundTrip} setRoundTrip={setRoundTrip} setBackDate={setDateEnd}/>
+                            <View style={[styles.selector, Platform.OS === 'ios' ? styles.selectorIOS : styles.selectorAndroid]}>
+                                <View style={{marginVertical: 7}}>
+                                    <DateInput inCheckout={false} onlyNextDates={true} date={dateStart} setDate={setDateStart}/>
+                                </View>
+                                <View style={[styles.separator, roundTrip ? {display: 'flex'} : {display: 'none'}, Platform.OS === 'ios' ? {marginRight: -10} : {marginRight: 0}]}/>
+                                <View style={[{marginVertical: 7}, roundTrip ? {display: 'flex'} : {display: 'none'}]}>
+                                    <DateInput inCheckout={false} onlyNextDates={true} date={dateEnd} setDate={setDateEnd}/>
+                                </View>
+                            </View>
+                            <PassengerDropdown passengers={passengers} setPassengers={setPassengers}/>
+                            <View style={styles.flexCenter}>
+                                <TouchableOpacity
+                                    activeOpacity={0.8}
+                                    style={[styles.searchBtn, styles.flexCenter]}
+                                    onPress={handleSearch}
+                                >
+                                    <View style={[styles.flexCenter, {gap: 4}]}>
+                                        <SearchIcon/>
+                                        <Text style={styles.btnText}>Search</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
                 </View>
@@ -123,98 +185,6 @@ export default function HomeScreen() {
             <Footer color='white'/>
         </ScrollView>
     )
-}
-
-export function DirectionItem({item}) {
-    const navigation = useNavigation();
-    return (
-        <TouchableOpacity
-            activeOpacity={0.8}
-            style={styles.directionItem}
-            onPress={() => navigation.navigate('DirectionItem', {item})}
-        >
-            <Image source={{uri: item.cover}} style={{width: '100%', height: 222, padding: 15}}/>
-            <View style={styles.directionInner}>
-                <Text style={[styles.mainText, {textTransform: 'uppercase', textShadowRadius: 4, textShadowColor: 'grey'}]}>
-                    {item.name}⠀
-                </Text>
-                <Image source={{uri: item.icon}} style={{width: 20, height: 20}}/>
-            </View>
-        </TouchableOpacity>
-    )
-}
-
-export function DirectionsList({navigation, directions}) {
-    return (
-        <View style={styles.directionFlexbox}>
-            <View style={{display: 'flex', alignItems: 'center'}}>
-                <View style={styles.directionTitle}>
-                    <Text style={styles.mainText}>TRENDING DIRECTIONS</Text>
-                </View>
-            </View>
-            <FlatList
-                scrollEnabled={false}
-                data={directions.slice(0, 3)}
-                renderItem={({item}) => <DirectionItem item={item} />}
-                keyExtractor={item => item.id.toString()}
-            />
-        </View>
-    );
-}
-
-export function BlogList({navigation, news}) {
-    const processText = (html) => {
-        let processedText = decode(html);
-        processedText = processedText.replace(/<[^>]+>/g, ' ').replace(/\n/g, ' ');
-        processedText = processedText.replace(/\s+/g, ' ').trim();
-        return processedText;
-    };
-
-    const formatDesc = (item) => {
-        const processedText = processText(item.text);
-        if (processedText.length > 100) {
-            return processedText.slice(0, 100) + '...';
-        } else {
-            return processedText;
-        }
-    }
-
-    return (
-        <View style={styles.blogFlexbox}>
-            <View style={{display: 'flex', alignItems: 'center'}}>
-                <View style={[styles.mainBtn, styles.blogBtn]}>
-                    <Text style={[styles.mainText, {color: '#207FBF'}]}>A BLOG FOR INSPIRATION</Text>
-                </View>
-            </View>
-            <ScrollView
-                horizontal={true}
-                showsHorizontalScrollIndicator={false}
-            >
-                {news.slice(0, 5).map((item) => (
-                    <BlogItem
-                        key={item.id}
-                        item={item}
-                        title={processText(item.name).toUpperCase()}
-                        desc={formatDesc(item)}
-                        date={new Date(item.created_at).toLocaleDateString()}
-                        textColor='white'
-                        img={{uri: item.cover}}
-                        navigation={navigation}
-                    />
-                ))}
-                <View style={{width: 12, height: 12}}/>
-            </ScrollView>
-            <View style={{display: 'flex', alignItems: 'center', paddingHorizontal: 10}}>
-                <TouchableOpacity
-                    activeOpacity={0.8}
-                    style={[styles.mainBtn, {backgroundColor: 'white', width: '100%', maxWidth: 500}]}
-                    onPress={() => navigation.navigate('News')}
-                >
-                    <Text style={[styles.mainText, {color: '#207FBF', textAlign: 'center'}]}>Know more</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
 }
 
 const styles = StyleSheet.create({

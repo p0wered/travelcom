@@ -3,9 +3,9 @@ import {Footer} from "../components/footer";
 import {decode} from "html-entities";
 import RenderHtml from "react-native-render-html";
 
-export function DirectionItemScreen({ route }) {
-    const { item } = route.params;
-    const { width } = useWindowDimensions();
+export function DirectionItemScreen({route}) {
+    const {item} = route.params;
+    const {width} = useWindowDimensions();
 
     const processHtml = (html) => {
         let processedHtml = decode(html);
@@ -27,22 +27,26 @@ export function DirectionItemScreen({ route }) {
     return (
         <ScrollView style={{backgroundColor: 'white'}}>
             <View style={styles.newsContainer}>
-                <View style={styles.image}>
-                    <Image
-                        source={{uri: item.mainImage}}
-                        style={{width: '100%', height: 222, borderRadius: 10}}
-                    />
+                <View style={{paddingHorizontal: 10}}>
+                    <View style={styles.image}>
+                        <Image
+                            source={{uri: item.mainImage}}
+                            style={{width: '100%', height: 222, borderRadius: 10}}
+                        />
+                    </View>
                 </View>
-                <View style={{flexDirection: 'column'}}>
+                <View style={{flexDirection: 'column', paddingHorizontal: 15}}>
                     <Text style={styles.titleText}>{decode(item.name)}</Text>
                 </View>
-                <RenderHtml
-                    contentWidth={width}
-                    source={{html: processedContent}}
-                    tagsStyles={{
-                        p: { ...styles.regularText, marginTop: 0, marginBottom: 6}
-                    }}
-                />
+                <View style={{paddingHorizontal: 15}}>
+                    <RenderHtml
+                        contentWidth={width}
+                        source={{html: processedContent}}
+                        tagsStyles={{
+                            p: { ...styles.regularText, marginTop: 0, marginBottom: 6}
+                        }}
+                    />
+                </View>
 
                 {imagesArray.length > 0 && (
                     <ScrollView
@@ -57,6 +61,7 @@ export function DirectionItemScreen({ route }) {
                                 style={styles.scrollImage}
                             />
                         ))}
+                        <View style={{width: 12, height: '100%'}}/>
                     </ScrollView>
                 )}
             </View>
@@ -74,8 +79,13 @@ const styles = StyleSheet.create({
         overflow: "hidden",
         position: 'relative'
     },
+    scrollImage: {
+        height: 200,
+        width: 300,
+        marginLeft: 12,
+        borderRadius: 10
+    },
     newsContainer: {
-        padding: 15,
         flexDirection: 'column',
         gap: 15
     },
@@ -85,7 +95,7 @@ const styles = StyleSheet.create({
     },
     titleText: {
         fontSize: 24,
-        marginBottom: 0,
+        marginBottom: -10,
         fontFamily: 'Montserrat-Bold',
         textTransform: 'uppercase'
     },

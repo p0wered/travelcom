@@ -19,9 +19,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import {ChatSendIcon} from "../components/icons/chat-send-icon";
 import {PaperclipIcon} from "../components/icons/paperclip-icon";
-import {useFocusEffect, useNavigation} from "@react-navigation/native";
+import {useNavigation} from "@react-navigation/native";
 import axios from "axios";
-import {useNotification} from "../contextNotifications";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MAX_IMAGE_WIDTH = SCREEN_WIDTH * 0.6;
@@ -133,23 +132,14 @@ export default function ChatScreen({navigation, route}){
     const [isPickerVisible, setIsPickerVisible] = useState(false);
     const [loggedIn, setLoggedIn] = useState(false);
     const [loading, setLoading] = useState(true);
-    const { notificationsEnabled, setNotificationsEnabled } = useNotification();
     const flatListRef = useRef();
     const {setIsInputFocused} = route.params;
-
-    useFocusEffect(
-        React.useCallback(() => {
-            setNotificationsEnabled(false);
-            return () => {
-                setNotificationsEnabled(true);
-            };
-        }, [notificationsEnabled]));
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
-            quality: 1,
+            quality: 1
         });
 
         if (!result.canceled && result.assets && result.assets.length > 0) {
