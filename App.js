@@ -43,11 +43,46 @@ import {GestureHandlerRootView} from "react-native-gesture-handler";
 import {InAppBrowser} from "./components/in-app-browser";
 import HomeSearchScreen from "./screens/home-search-screen";
 import {GlobalProvider} from "./contextHome";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 
 SplashScreen.preventAutoHideAsync();
 
 const Tab = createBottomTabNavigator();
 const {width} = Dimensions.get('window');
+
+
+const useUnreadMessagesCount = () => {
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    useEffect(() => {
+        const fetchUnreadCount = async () => {
+            try {
+                const token = await AsyncStorage.getItem('@token');
+                if (token) {
+                    const response = await axios.get('https://travelcom.online/api/notifications/count', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    });
+                    setUnreadCount(response.data);
+                } else {
+                    setUnreadCount(0);
+                }
+            } catch (error) {
+                console.error('Error fetching unread messages count:', error);
+                setUnreadCount(0);
+            }
+        };
+
+        fetchUnreadCount();
+        const interval = setInterval(fetchUnreadCount, 2000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    return unreadCount;
+};
 
 function MainTabs(){
     const navigation = useNavigation();
@@ -55,6 +90,7 @@ function MainTabs(){
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(width)).current;
     const [isInputFocused, setIsInputFocused] = useState(false);
+    const unreadCount = useUnreadMessagesCount();
 
     const toggleMenu = () => {
         if (menuVisible) {
@@ -116,7 +152,7 @@ function MainTabs(){
             } else if (routeName === 'Profile') {
                 iconName = 'profile-icon'
             }
-            return <TabIcons icon={iconName} color={color}/>
+            return <TabIcons icon={iconName} color={color} unreadCount={routeName === 'Chat' ? unreadCount : 0}/>
         },
         tabBarActiveTintColor: '#207FBF',
         tabBarInactiveTintColor: '#9B9B9A',
@@ -148,7 +184,7 @@ function MainTabs(){
             </TouchableOpacity>
         ),
         headerRightContainerStyle: {paddingBottom: 10},
-    }), [isInputFocused, toggleMenu]);
+    }), [isInputFocused, toggleMenu, unreadCount]);
 
     return(
         <>

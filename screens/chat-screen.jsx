@@ -19,7 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import {ChatSendIcon} from "../components/icons/chat-send-icon";
 import {PaperclipIcon} from "../components/icons/paperclip-icon";
-import {useNavigation} from "@react-navigation/native";
+import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import axios from "axios";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -134,6 +134,27 @@ export default function ChatScreen({navigation, route}){
     const [loading, setLoading] = useState(true);
     const flatListRef = useRef();
     const {setIsInputFocused} = route.params;
+
+    const fetchNotifications = async () => {
+        const token = await AsyncStorage.getItem('@token');
+
+        if (token){
+            try {
+                const response = await axios.get('https://travelcom.online/api/notifications/get', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            } catch (error) {
+                console.error('Error fetching notifications:', error);
+            }
+        }
+
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchNotifications();
+        }, [])
+    );
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
