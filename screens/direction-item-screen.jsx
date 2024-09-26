@@ -27,7 +27,7 @@ export function DirectionItemScreen({route}) {
     return (
         <ScrollView style={{backgroundColor: 'white'}}>
             <View style={styles.newsContainer}>
-                <View style={{paddingHorizontal: 10}}>
+                <View style={{paddingHorizontal: 10, paddingTop: 10}}>
                     <View style={styles.image}>
                         <Image
                             source={{uri: item.mainImage}}

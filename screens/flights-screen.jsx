@@ -137,13 +137,9 @@ export default function FlightsScreen({route, navigation}) {
         setSelectedAirlines([]);
 
         if (airportFrom === '' || airportTo === '') {
-            setErrorMsg('Please fill all fields');
-            setAvailableAirlines([]);
-            setVisibleFlights(0);
-        } else if (roundTrip && formatDate(dateStart) > formatDate(dateEnd)) {
-            setErrorMsg('Please select valid dates');
-            setAvailableAirlines([]);
-            setVisibleFlights(0);
+            Alert.alert('', 'Please fill all fields');
+        } else if (roundTrip && dateStart > dateEnd) {
+            Alert.alert('', 'Please select valid dates');
         } else {
             setIsLoading(true);
             try {
@@ -155,10 +151,10 @@ export default function FlightsScreen({route, navigation}) {
                     setVisibleFlights(0);
                     setAvailableAirlines([]);
                 } else {
+                    setErrorMsg(undefined)
                     setFlightResults(response.data);
                     setFilteredResults(response.data);
                     setVisibleFlights(12);
-                    console.log('response:', JSON.stringify(response.data, null, 2));
                     const airlines = [...new Set(response.data.map(flight => flight.provider.supplier.title))];
                     const logos = [...new Set(response.data.map(flight => flight.providerLogo))];
                     setAvailableAirlines(airlines);
@@ -213,11 +209,7 @@ export default function FlightsScreen({route, navigation}) {
         if (filtered.length === 0 && flightResults.length !== 0){
             setErrorMsg('Nothing found')
             setFilteredResults(filtered);
-            setVisibleFlights(12);
-        } else {
-            setErrorMsg(undefined)
-            setFilteredResults(filtered);
-            setVisibleFlights(12);
+            setVisibleFlights(0);
         }
     };
 
@@ -435,11 +427,23 @@ export default function FlightsScreen({route, navigation}) {
                     <RoundTripSelector roundTrip={roundTrip} setRoundTrip={setRoundTrip} setBackDate={setDateEnd}/>
                     <View style={[styles.selector, Platform.OS === 'ios' ? styles.selectorIOS : styles.selectorAndroid]}>
                         <View style={{marginVertical: 7}}>
-                            <DateInput inCheckout={false} onlyNextDates={true} date={dateStart} setDate={setDateStart}/>
+                            <DateInput
+                                inCheckout={false}
+                                onlyNextDates={true}
+                                date={dateStart}
+                                setDate={setDateStart}
+                                minDate={new Date()}
+                            />
                         </View>
                         <View style={[styles.separator, roundTrip ? {display: 'flex'} : {display: 'none'}, Platform.OS === 'ios' ? {marginRight: -10} : {marginRight: 0}]}/>
                         <View style={[{marginVertical: 7}, roundTrip ? {display: 'flex'} : {display: 'none'}]}>
-                            <DateInput inCheckout={false} onlyNextDates={true} date={dateEnd} setDate={setDateEnd}/>
+                            <DateInput
+                                inCheckout={false}
+                                onlyNextDates={true}
+                                date={dateEnd}
+                                setDate={setDateEnd}
+                                minDate={new Date()}
+                            />
                         </View>
                     </View>
                     <PassengerDropdown passengers={passengers} setPassengers={setPassengers}/>

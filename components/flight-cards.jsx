@@ -26,7 +26,7 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                     </View>
                 ) : (<></>)
                 }
-                {baggageInfo.weight !== null ? (
+                {baggageInfo.weight !== null && baggageInfo.weight > 0 ? (
                     <View style={{flexDirection: 'row', gap: 3, justifyContent: 'flex-end', alignItems: 'center', marginTop: 2}}>
                         <Text adjustsFontSizeToFit={true} style={[styles.greyText, {textAlign: 'right', maxWidth: 128}]}>Baggage up to {baggageInfo.weight} kg</Text>
                     </View>

@@ -151,11 +151,23 @@ export default function HomeSearchScreen() {
                             <RoundTripSelector roundTrip={roundTrip} setRoundTrip={setRoundTrip} setBackDate={setDateEnd}/>
                             <View style={[styles.selector, Platform.OS === 'ios' ? styles.selectorIOS : styles.selectorAndroid]}>
                                 <View style={{marginVertical: 7}}>
-                                    <DateInput inCheckout={false} onlyNextDates={true} date={dateStart} setDate={setDateStart}/>
+                                    <DateInput
+                                        inCheckout={false}
+                                        onlyNextDates={true}
+                                        date={dateStart}
+                                        setDate={setDateStart}
+                                        minDate={new Date()}
+                                    />
                                 </View>
                                 <View style={[styles.separator, roundTrip ? {display: 'flex'} : {display: 'none'}, Platform.OS === 'ios' ? {marginRight: -10} : {marginRight: 0}]}/>
                                 <View style={[{marginVertical: 7}, roundTrip ? {display: 'flex'} : {display: 'none'}]}>
-                                    <DateInput inCheckout={false} onlyNextDates={true} date={dateEnd} setDate={setDateEnd}/>
+                                    <DateInput
+                                        inCheckout={false}
+                                        onlyNextDates={true}
+                                        date={dateEnd}
+                                        setDate={setDateEnd}
+                                        minDate={new Date()}
+                                    />
                                 </View>
                             </View>
                             <PassengerDropdown passengers={passengers} setPassengers={setPassengers}/>

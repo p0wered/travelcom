@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
         borderColor: '#207FBF',
         borderBottomStartRadius: 10,
         borderBottomEndRadius: 10,
-        maxHeight: 216,
+        maxHeight: 218,
         overflow: 'hidden'
     }
 });
