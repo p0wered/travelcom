@@ -360,28 +360,39 @@ export default function FlightsScreen({route, navigation}) {
             return;
         }
         try {
-            const favoriteKey = `@favorites_${userId}`;
-            let updatedFavorites;
-            const totalPassengers = passengers.adults + passengers.children + passengers.infants;
+            const passengerTypes = [
+                ...Array(passengers.adults).fill('Adult'),
+                ...Array(passengers.children).fill('Child'),
+                ...Array(passengers.infants).fill('Infant')
+            ];
+
             const flightWithPassengers = {
                 ...flight,
-                passengers: totalPassengers,
-                passengerDetails: {
-                    adults: passengers.adults,
-                    children: passengers.children,
-                    infants: passengers.infants
-                }
+                passengers: passengerTypes.length,
+                passengerDetails: passengerTypes,
+                isRoundtrip: roundTrip
             };
-            if (isInFavorites(flight)) {
-                updatedFavorites = favoriteItems.filter(item => item.id !== flight.id);
+
+            const response = await axios.post('https://travelcom.online/api/favourite/create', {
+                item: JSON.stringify(flightWithPassengers)
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${await AsyncStorage.getItem('@token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 201) {
+                const updatedFavorites = [...favoriteItems, flightWithPassengers];
+                setFavoriteItems(updatedFavorites);
+                navigation.navigate('Favourites');
             } else {
-                updatedFavorites = [...favoriteItems, flightWithPassengers];
+                throw new Error('Failed to add flight to favorites');
             }
-            await AsyncStorage.setItem(favoriteKey, JSON.stringify(updatedFavorites));
-            setFavoriteItems(updatedFavorites);
+
         } catch (error) {
             console.error('Failed to update favorites', error);
-            Alert.alert('Error', 'Failed to update favorites');
+            Alert.alert('Error', error.message || 'Failed to update favorites');
         }
     };
 
@@ -589,7 +600,7 @@ export default function FlightsScreen({route, navigation}) {
                             btnText={addLoading[flight.id] ? 'Loading' : 'Choose'}
                             onPress={() => addToCart(flight)}
                             favouriteIconPress={() => toggleFavorite(flight)}
-                            favouriteIconColor={inFavorites ? 'black' : 'white'}
+                            favouriteIconColor='white'
                             onCartScreen={false}
                             showFavIcon={true}
                         />

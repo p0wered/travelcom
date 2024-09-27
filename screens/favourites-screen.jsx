@@ -8,38 +8,49 @@ import axios from "axios";
 
 export default function FavouritesScreen() {
     const [favoriteItems, setFavoriteItems] = useState([]);
-    const [userId, setUserId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [addingFlights, setAddingFlights] = useState({});
     const navigation = useNavigation();
 
     const loadFavoriteItems = useCallback(async () => {
+        setLoading(true);
         try {
-            const userString = await AsyncStorage.getItem('@user');
-            if (userString) {
-                const user = JSON.parse(userString);
-                setUserId(user.id);
-                const favoriteKey = `@favorites_${user.id}`;
-
-                const favoriteString = await AsyncStorage.getItem(favoriteKey);
-
-                if (favoriteString) {
-                    const loadedFavorites = JSON.parse(favoriteString);
-                    setFavoriteItems(loadedFavorites);
-                } else {
-                    setFavoriteItems([]);
-                }
-            } else {
+            const token = await AsyncStorage.getItem('@token');
+            if (!token) {
+                Alert.alert('Error', 'Please log in to view favorites');
                 setFavoriteItems([]);
-                setUserId(null);
+                return;
+            }
+
+            const response = await axios.get('https://travelcom.online/api/favourite/my', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 200) {
+                const parsedFavorites = response.data.map(favorite => {
+                    try {
+                        return {
+                            ...favorite,
+                            flightData: JSON.parse(favorite.item)
+                        };
+                    } catch (error) {
+                        console.error('Error parsing favorite item:', error, favorite);
+                        return null;
+                    }
+                }).filter(item => item !== null);
+                setFavoriteItems(parsedFavorites);
+            } else {
+                throw new Error('Failed to load favorite items');
             }
         } catch (error) {
             console.error('Failed to load favorite items', error);
+            Alert.alert('Error', error.message || 'Failed to load favorite items');
             setFavoriteItems([]);
-            setUserId(null);
         }
         setLoading(false);
-        console.log(favoriteItems)
     }, []);
 
     useFocusEffect(
@@ -48,41 +59,46 @@ export default function FavouritesScreen() {
         }, [loadFavoriteItems])
     );
 
-    const removeFromFavorites = async (flightId) => {
+    const removeFromFavorites = async (favoriteId) => {
         try {
-            const updatedFavorites = favoriteItems.filter(item => item.id !== flightId);
-            const favoriteKey = `@favorites_${userId}`;
-            await AsyncStorage.setItem(favoriteKey, JSON.stringify(updatedFavorites));
-            setFavoriteItems(updatedFavorites);
+            const token = await AsyncStorage.getItem('@token');
+            if (!token) {
+                Alert.alert('Error', 'Please log in to manage favorites');
+                return;
+            }
+
+            const response = await axios.post(`https://travelcom.online/api/favourite/delete/${favoriteId}`, {}, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 200) {
+                setFavoriteItems(prevItems => prevItems.filter(item => item.id !== favoriteId));
+            } else {
+                throw new Error('Failed to remove flight from favorites');
+            }
         } catch (error) {
             console.error('Failed to remove flight from favorites', error);
-            Alert.alert('Error', 'Failed to remove flight from favorites');
+            Alert.alert('Error', error.message || 'Failed to remove flight from favorites');
         }
     };
 
     const addToCart = async (flight) => {
-        if (!userId) {
-            Alert.alert('Error', 'Please log in to add flights to cart');
-            return;
-        }
         setAddingFlights(prev => ({ ...prev, [flight.id]: true }));
         try {
-            const itemToAdd = {
-                ...flight,
-                personCount: flight.passengers,
-                personDetails: [
-                    ...Array(flight.passengerDetails.adults).fill('Adult'),
-                    ...Array(flight.passengerDetails.children).fill('Child'),
-                    ...Array(flight.passengerDetails.infants).fill('Infant')
-                ],
-                isRoundtrip: flight.isRoundtrip
-            };
+            const token = await AsyncStorage.getItem('@token');
+            if (!token) {
+                Alert.alert('Error', 'Please log in to add flights to cart');
+                return;
+            }
 
             const response = await axios.post('https://travelcom.online/api/cart/add', {
-                item: JSON.stringify(itemToAdd)
+                item: JSON.stringify(flight)
             }, {
                 headers: {
-                    'Authorization': `Bearer ${await AsyncStorage.getItem('@token')}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -102,7 +118,7 @@ export default function FavouritesScreen() {
     if (loading) {
         return (
             <View style={styles.centered}>
-                <ActivityIndicator size="large" color="#207FBF" />
+                <ActivityIndicator size="large" color="#207FBF"/>
             </View>
         );
     }
@@ -114,39 +130,42 @@ export default function FavouritesScreen() {
                 {favoriteItems.length === 0 ? (
                     <Text style={[styles.mainText, {paddingBottom: 100}]}>You have no favorite flights</Text>
                 ) : (
-                    [...favoriteItems].reverse().map((flight) => (
-                        <FlightCard
-                            key={flight.id}
-                            price={flight.price}
-                            flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
-                            depCity={flight.depCity.title}
-                            depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
-                            depTime={flight.depTime}
-                            depDate={flight.depDate}
-                            arrivalCity={flight.arriveCity.title}
-                            arrivalTime={flight.arriveTime}
-                            arrivalDate={flight.arriveDate}
-                            arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
-                            airlinesTitle={flight.provider.supplier.title}
-                            airlinesImg={flight.providerLogo}
-                            backDepTime={flight.isRoundtrip ? flight.back_ticket?.depTime : undefined}
-                            backDepDate={flight.isRoundtrip ? flight.back_ticket?.depDate : undefined}
-                            backDepAirport={flight.isRoundtrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}
-                            backDepCity={flight.isRoundtrip ? flight.back_ticket?.depCity.title : undefined}
-                            backArriveTime={flight.isRoundtrip ? flight.back_ticket?.arriveTime : undefined}
-                            backArriveDate={flight.isRoundtrip ? flight.back_ticket?.arriveDate : undefined}
-                            backArriveAirport={flight.isRoundtrip ? `${flight.back_ticket?.arriveAirport.title}, ${flight.back_ticket?.arriveAirport.code}` : undefined}
-                            backArriveCity={flight.isRoundtrip ? flight.back_ticket?.arriveCity.title : undefined}
-                            backFlightTime={flight.isRoundtrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
-                            isRoundTrip={flight.isRoundtrip}
-                            baggageInfo={flight.baggage}
-                            btnText={addingFlights[flight.id] ? "Loading" : "Choose"}
-                            onPress={() => addToCart(flight)}
-                            favouriteIconColor='black'
-                            favouriteIconPress={() => removeFromFavorites(flight.id)}
-                            showFavIcon={true}
-                        />
-                    ))
+                    favoriteItems.reverse().map((favorite) => {
+                        const flight = favorite.flightData;
+                        return (
+                            <FlightCard
+                                key={favorite.id}
+                                price={flight.price}
+                                flightTime={flight.duration ? `${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min` : 'N/A'}
+                                depCity={flight.depCity.title}
+                                depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
+                                depTime={flight.depTime}
+                                depDate={flight.depDate}
+                                arrivalCity={flight.arriveCity.title}
+                                arrivalTime={flight.arriveTime}
+                                arrivalDate={flight.arriveDate}
+                                arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
+                                airlinesTitle={flight.provider.supplier.title}
+                                airlinesImg={flight.providerLogo}
+                                backDepTime={flight.isRoundtrip ? flight.back_ticket?.depTime : undefined}
+                                backDepDate={flight.isRoundtrip ? flight.back_ticket?.depDate : undefined}
+                                backDepAirport={flight.isRoundtrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}
+                                backDepCity={flight.isRoundtrip ? flight.back_ticket?.depCity.title : undefined}
+                                backArriveTime={flight.isRoundtrip ? flight.back_ticket?.arriveTime : undefined}
+                                backArriveDate={flight.isRoundtrip ? flight.back_ticket?.arriveDate : undefined}
+                                backArriveAirport={flight.isRoundtrip ? `${flight.back_ticket?.arriveAirport.title}, ${flight.back_ticket?.arriveAirport.code}` : undefined}
+                                backArriveCity={flight.isRoundtrip ? flight.back_ticket?.arriveCity.title : undefined}
+                                backFlightTime={flight.isRoundtrip && flight.back_ticket?.duration ? `${flight.back_ticket.duration.flight.hour}h, ${flight.back_ticket.duration.flight.minute}min` : undefined}
+                                isRoundTrip={flight.isRoundtrip}
+                                baggageInfo={flight.baggage}
+                                btnText={addingFlights[flight.id] ? "Loading" : "Choose"}
+                                onPress={() => addToCart(flight)}
+                                favouriteIconColor='#207FBF'
+                                favouriteIconPress={() => removeFromFavorites(favorite.id)}
+                                showFavIcon={true}
+                            />
+                        );
+                    })
                 )}
             </View>
             <Footer/>
