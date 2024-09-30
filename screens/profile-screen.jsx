@@ -24,6 +24,8 @@ import {PasswordIcon} from "../components/icons/password-icon";
 import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import {PersonIcon} from "../components/icons/person-icon";
 import {PhoneIcon} from "../components/icons/phone-icon";
+import {useNotification} from "../contextNotifications";
+import {usePushNotifications} from "../usePushNotifications";
 
 export default function ProfileScreen ({navigation}){
     const navigate = useNavigation();
@@ -42,6 +44,9 @@ export default function ProfileScreen ({navigation}){
     const [isEditing, setIsEditing] = useState(false);
     const [hasUnread, setHasUnread] = useState(false);
     const [editableUser, setEditableUser] = useState(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const { expoPushToken } = usePushNotifications(isAuthenticated);
+    const { notificationsEnabled, setNotificationsEnabled } = useNotification();
     const [lastRecoverySent, setLastRecoverySent] = useState(0);
     const RECOVERY_COOLDOWN = 60000;
 
@@ -150,6 +155,8 @@ export default function ProfileScreen ({navigation}){
         try {
             await AsyncStorage.setItem('@user', JSON.stringify(userData));
             await AsyncStorage.setItem('@token', userToken);
+            setIsAuthenticated(true);
+            setNotificationsEnabled(true);
         } catch (e) {
             console.error('Failed to save user data', e);
         }
@@ -285,6 +292,8 @@ export default function ProfileScreen ({navigation}){
         setToken(null);
         setEmail('');
         setPassword('');
+        setIsAuthenticated(false);
+        setNotificationsEnabled(false);
         try {
             await AsyncStorage.removeItem('@user');
             await AsyncStorage.removeItem('@token');

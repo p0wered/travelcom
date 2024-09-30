@@ -47,7 +47,7 @@ export default function FavouritesScreen() {
             }
         } catch (error) {
             console.error('Failed to load favorite items', error);
-            Alert.alert('Error', error.message || 'Failed to load favorite items');
+            Alert.alert('Error','Failed to load favorite items');
             setFavoriteItems([]);
         }
         setLoading(false);
@@ -59,7 +59,7 @@ export default function FavouritesScreen() {
         }, [loadFavoriteItems])
     );
 
-    const removeFromFavorites = async (favoriteId) => {
+    const removeFromFavorites = async (favorite) => {
         try {
             const token = await AsyncStorage.getItem('@token');
             if (!token) {
@@ -67,21 +67,23 @@ export default function FavouritesScreen() {
                 return;
             }
 
-            const response = await axios.post(`https://travelcom.online/api/favourite/delete/${favoriteId}`, {}, {
+            const response = await axios.post('https://travelcom.online/api/favourite/create', {
+                item: favorite.item
+            }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
 
-            if (response.status === 200) {
-                setFavoriteItems(prevItems => prevItems.filter(item => item.id !== favoriteId));
+            if (response.status === 204) {
+                setFavoriteItems(prevItems => prevItems.filter(item => item.id !== favorite.id));
             } else {
-                throw new Error('Failed to remove flight from favorites');
+                throw new Error('Failed to update favorites');
             }
         } catch (error) {
             console.error('Failed to remove flight from favorites', error);
-            Alert.alert('Error', error.message || 'Failed to remove flight from favorites');
+            Alert.alert('Error', 'Failed to remove flight from favorites');
         }
     };
 
@@ -110,7 +112,7 @@ export default function FavouritesScreen() {
             }
         } catch (error) {
             console.error('Failed to add flight to cart', error);
-            Alert.alert('Error', error.message || 'Failed to add flight to cart');
+            Alert.alert('Error', 'Failed to add flight to cart');
         }
         setAddingFlights(prev => ({ ...prev, [flight.id]: false }));
     };
@@ -161,7 +163,7 @@ export default function FavouritesScreen() {
                                 btnText={addingFlights[flight.id] ? "Loading" : "Choose"}
                                 onPress={() => addToCart(flight)}
                                 favouriteIconColor='#207FBF'
-                                favouriteIconPress={() => removeFromFavorites(favorite.id)}
+                                favouriteIconPress={() => removeFromFavorites(favorite)}
                                 showFavIcon={true}
                             />
                         );

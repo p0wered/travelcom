@@ -264,29 +264,68 @@ export default function FlightsScreen({route, navigation}) {
 
     const loadFavoriteItems = useCallback(async () => {
         try {
-            const userString = await AsyncStorage.getItem('@user');
-            if (userString) {
-                const user = JSON.parse(userString);
-                setUserId(user.id);
-                const favoriteKey = `@favorites_${user.id}`;
-                const favoriteString = await AsyncStorage.getItem(favoriteKey);
-                if (favoriteString) {
-                    const loadedFavorites = JSON.parse(favoriteString);
-                    setFavoriteItems(loadedFavorites);
-                    console.log(loadedFavorites);
-                } else {
-                    setFavoriteItems([]);
+            const token = await AsyncStorage.getItem('@token');
+            if (token) {
+                const response = await axios.get('https://travelcom.online/api/favourite/my', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+                if (response.data && Array.isArray(response.data)) {
+                    setFavoriteItems(response.data);
                 }
-            } else {
-                setFavoriteItems([]);
-                setUserId(null);
             }
         } catch (error) {
             console.error('Failed to load favorite items', error);
-            setFavoriteItems([]);
-            setUserId(null);
         }
     }, []);
+
+    const isInFavorites = useCallback((flight) => {
+        return favoriteItems.some(item => {
+            const itemData = JSON.parse(item.item);
+            return itemData.id === flight.id;
+        });
+    }, [favoriteItems]);
+
+    const toggleFavorite = async (flight) => {
+        const token = await AsyncStorage.getItem('@token');
+        if (!token) {
+            Alert.alert('Error', 'Please log in to manage favorites');
+            return;
+        }
+        try {
+            const passengerTypes = [
+                ...Array(passengers.adults).fill('Adult'),
+                ...Array(passengers.children).fill('Child'),
+                ...Array(passengers.infants).fill('Infant')
+            ];
+
+            const flightWithPassengers = {
+                ...flight,
+                personCount: passengerTypes.length,
+                personDetails: passengerTypes,
+                isRoundtrip: roundTrip
+            };
+
+            const response = await axios.post('https://travelcom.online/api/favourite/create', {
+                item: JSON.stringify(flightWithPassengers)
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 201 || response.status === 204) {
+                await loadFavoriteItems();
+            } else {
+                throw new Error('Failed to update favorites');
+            }
+        } catch (error) {
+            console.error('Failed to update favorites', error);
+            Alert.alert('Error', error.message || 'Failed to update favorites');
+        }
+    };
 
     useFocusEffect(
         useCallback(() => {
@@ -352,52 +391,6 @@ export default function FlightsScreen({route, navigation}) {
 
     const isInCart = (flight) => {
         return cartItems.some(item => item.item.id === flight.id);
-    };
-
-    const toggleFavorite = async (flight) => {
-        if (!userId) {
-            Alert.alert('Error', 'Please log in to manage favorites');
-            return;
-        }
-        try {
-            const passengerTypes = [
-                ...Array(passengers.adults).fill('Adult'),
-                ...Array(passengers.children).fill('Child'),
-                ...Array(passengers.infants).fill('Infant')
-            ];
-
-            const flightWithPassengers = {
-                ...flight,
-                passengers: passengerTypes.length,
-                passengerDetails: passengerTypes,
-                isRoundtrip: roundTrip
-            };
-
-            const response = await axios.post('https://travelcom.online/api/favourite/create', {
-                item: JSON.stringify(flightWithPassengers)
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${await AsyncStorage.getItem('@token')}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.status === 201) {
-                const updatedFavorites = [...favoriteItems, flightWithPassengers];
-                setFavoriteItems(updatedFavorites);
-                navigation.navigate('Favourites');
-            } else {
-                throw new Error('Failed to add flight to favorites');
-            }
-
-        } catch (error) {
-            console.error('Failed to update favorites', error);
-            Alert.alert('Error', error.message || 'Failed to update favorites');
-        }
-    };
-
-    const isInFavorites = (flight) => {
-        return favoriteItems.some(item => item.id === flight.id);
     };
 
     const handleShowMore = () => {
@@ -571,6 +564,7 @@ export default function FlightsScreen({route, navigation}) {
                     const inCart = isInCart(flight);
                     const inFavorites = isInFavorites(flight);
                     const isRoundTrip = flight.isRoundtrip || false;
+                    console.log('asa', inFavorites)
                     return (
                         <FlightCard
                             key={flight.id}
@@ -600,7 +594,7 @@ export default function FlightsScreen({route, navigation}) {
                             btnText={addLoading[flight.id] ? 'Loading' : 'Choose'}
                             onPress={() => addToCart(flight)}
                             favouriteIconPress={() => toggleFavorite(flight)}
-                            favouriteIconColor='white'
+                            favouriteIconColor={inFavorites ? '#207fbf' : 'white'}
                             onCartScreen={false}
                             showFavIcon={true}
                         />
