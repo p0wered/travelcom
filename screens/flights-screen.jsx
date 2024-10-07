@@ -568,7 +568,6 @@ export default function FlightsScreen({route, navigation}) {
                     const inCart = isInCart(flight);
                     const inFavorites = isInFavorites(flight);
                     const isRoundTrip = flight.isRoundtrip || false;
-                    console.log('asa', inFavorites)
                     return (
                         <FlightCard
                             key={flight.id}

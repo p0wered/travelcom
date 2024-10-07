@@ -16,4 +16,7 @@
 * ### Configure the project - eas build:configure
 * ### Build for your platform - eas build --platform *your_platform*
 #
-![img.png](img.png)
+![preview_1.jpg](preview_1.jpg)
+![preview_2.jpg](preview_2.jpg)
+![preview_3.jpg](preview_3.jpg)
+![preview_4.jpg](preview_4.jpg)
