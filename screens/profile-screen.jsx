@@ -24,7 +24,6 @@ import {PasswordIcon} from "../components/icons/password-icon";
 import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import {PersonIcon} from "../components/icons/person-icon";
 import {PhoneIcon} from "../components/icons/phone-icon";
-import {useNotification} from "../contextNotifications";
 import {usePushNotifications} from "../usePushNotifications";
 
 export default function ProfileScreen ({navigation}){
@@ -44,9 +43,7 @@ export default function ProfileScreen ({navigation}){
     const [isEditing, setIsEditing] = useState(false);
     const [hasUnread, setHasUnread] = useState(false);
     const [editableUser, setEditableUser] = useState(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const { expoPushToken } = usePushNotifications(isAuthenticated);
-    const { notificationsEnabled, setNotificationsEnabled } = useNotification();
+    const {expoPushToken, savePushTokenToServer} = usePushNotifications();
     const [lastRecoverySent, setLastRecoverySent] = useState(0);
     const RECOVERY_COOLDOWN = 60000;
 
@@ -62,6 +59,12 @@ export default function ProfileScreen ({navigation}){
             fetchNotifications();
         }, [])
     );
+
+    const updatePushNotificationToken = async (userId) => {
+        if (expoPushToken) {
+            await savePushTokenToServer(expoPushToken);
+        }
+    };
 
     const loadUserData = async () => {
         try {
@@ -155,8 +158,6 @@ export default function ProfileScreen ({navigation}){
         try {
             await AsyncStorage.setItem('@user', JSON.stringify(userData));
             await AsyncStorage.setItem('@token', userToken);
-            setIsAuthenticated(true);
-            setNotificationsEnabled(true);
         } catch (e) {
             console.error('Failed to save user data', e);
         }
@@ -203,6 +204,7 @@ export default function ProfileScreen ({navigation}){
                         setUser(response.data.user);
                         setToken(response.data.success.token);
                         await saveUserData(response.data.user, response.data.success.token);
+                        await updatePushNotificationToken(user.id);
                     }
                     setErrorMsg(undefined);
                 } else {
@@ -210,7 +212,6 @@ export default function ProfileScreen ({navigation}){
                     Alert.alert('Error', 'User data or token not found in response');
                 }
             } catch (error) {
-                console.error('Error response:', error.response?.data);
                 if (error.response && error.response.data) {
                     if (error.response.data.success === false) {
                         setErrorMsg(error.response.data.message);
@@ -232,6 +233,21 @@ export default function ProfileScreen ({navigation}){
                 }
             }
             setIsLoading(false);
+        }
+    };
+
+    const handleLogout = async () => {
+        setUser(null);
+        setToken(null);
+        setErrorMsg(undefined);
+        setEmail('');
+        setPassword('');
+        try {
+            await AsyncStorage.removeItem('@user');
+            await AsyncStorage.removeItem('@token');
+            await updatePushNotificationToken(null);
+        } catch (e) {
+            console.error('Failed to remove user data', e);
         }
     };
 
@@ -285,21 +301,6 @@ export default function ProfileScreen ({navigation}){
             }
         }
         setIsLoading(false);
-    };
-
-    const handleLogout = async () => {
-        setUser(null);
-        setToken(null);
-        setEmail('');
-        setPassword('');
-        setIsAuthenticated(false);
-        setNotificationsEnabled(false);
-        try {
-            await AsyncStorage.removeItem('@user');
-            await AsyncStorage.removeItem('@token');
-        } catch (e) {
-            console.error('Failed to remove user data', e);
-        }
     };
 
     const resetForm = () => {

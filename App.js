@@ -76,7 +76,7 @@ const useUnreadMessagesCount = () => {
         };
 
         fetchUnreadCount();
-        const interval = setInterval(fetchUnreadCount, 3000);
+        const interval = setInterval(fetchUnreadCount, 3500);
 
         return () => clearInterval(interval);
     }, []);

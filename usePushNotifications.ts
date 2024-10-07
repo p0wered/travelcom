@@ -1,25 +1,26 @@
 import { useState, useEffect, useRef } from "react";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
-import { Platform } from "react-native";
+import {Alert, Platform} from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNotification} from "./contextNotifications";
 
 export interface PushNotificationState {
     expoPushToken?: Notifications.ExpoPushToken;
     notification?: Notifications.Notification;
+    savePushTokenToServer: (token: Notifications.ExpoPushToken) => Promise<void>;
 }
 
 const PUSH_TOKEN_STORAGE_KEY = '@PushToken';
 
-export const usePushNotifications = (isAuthenticated: boolean): PushNotificationState => {
+export const usePushNotifications = (): PushNotificationState => {
     const { notificationsEnabled } = useNotification();
 
     Notifications.setNotificationHandler({
         handleNotification: async () => ({
-            shouldPlaySound: notificationsEnabled && isAuthenticated,
-            shouldShowAlert: notificationsEnabled && isAuthenticated,
-            shouldSetBadge: notificationsEnabled && isAuthenticated,
+            shouldPlaySound: notificationsEnabled,
+            shouldShowAlert: notificationsEnabled,
+            shouldSetBadge: notificationsEnabled,
             sound: 'default'
         }),
     });
@@ -35,125 +36,97 @@ export const usePushNotifications = (isAuthenticated: boolean): PushNotification
     const notificationListener = useRef<Notifications.Subscription>();
     const responseListener = useRef<Notifications.Subscription>();
 
-    const registerForPushNotificationsAsync = async () => {
+    async function registerForPushNotificationsAsync() {
         let token;
         if (Device.isDevice) {
-            const { status: existingStatus } = await Notifications.getPermissionsAsync();
+            const { status: existingStatus } =
+                await Notifications.getPermissionsAsync();
             let finalStatus = existingStatus;
-            if (existingStatus !== 'granted') {
+
+            if (existingStatus !== "granted") {
                 const { status } = await Notifications.requestPermissionsAsync();
                 finalStatus = status;
             }
-            if (finalStatus !== 'granted') {
-                console.log('Failed to get push token for push notification!');
+            if (finalStatus !== "granted") {
+                console.log("Failed to get push token for push notification");
                 return;
             }
-            token = (await Notifications.getExpoPushTokenAsync()).data;
+
+            token = await Notifications.getExpoPushTokenAsync({
+                projectId: 'e4df6cb8-b629-4ea9-80f0-ba9c2c4d8abd',
+            });
         } else {
-            console.log('Must use physical device for Push Notifications');
+            console.log("Must be using a physical device for Push notifications");
         }
 
-        if (Platform.OS === 'android') {
-            Notifications.setNotificationChannelAsync('default', {
-                name: 'default',
+        if (Platform.OS === "android") {
+            Notifications.setNotificationChannelAsync("default", {
+                name: "default",
                 importance: Notifications.AndroidImportance.MAX,
                 vibrationPattern: [0, 250, 250, 250],
-                lightColor: '#FF231F7C',
+                lightColor: "#FF231F7C",
             });
         }
 
         return token;
-    };
+    }
 
-    const savePushTokenToStorage = async (token: Notifications.ExpoPushToken) => {
+    async function savePushTokenToStorage(token: Notifications.ExpoPushToken) {
         try {
             await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, JSON.stringify(token));
-        } catch (e) {
-            console.error('Failed to save push token to AsyncStorage', e);
+            console.log('Push token saved to AsyncStorage');
+        } catch (error) {
+            console.error('Error saving push token to AsyncStorage:', error);
         }
-    };
+    }
 
-    const getPushTokenFromStorage = async (): Promise<Notifications.ExpoPushToken | null> => {
+    async function getPushTokenFromStorage(): Promise<Notifications.ExpoPushToken | null> {
         try {
-            const value = await AsyncStorage.getItem(PUSH_TOKEN_STORAGE_KEY);
-            return value ? JSON.parse(value) : null;
-        } catch (e) {
-            console.error('Failed to get push token from AsyncStorage', e);
-            return null;
-        }
-    };
-
-    async function savePushTokenToServer(token: Notifications.ExpoPushToken, userId: string, authToken: string) {
-        const maxRetries = 3;
-        for (let i = 0; i < maxRetries; i++) {
-            try {
-                const response = await fetch('https://travelcom.online/api/push/save', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({
-                        push_token: token.data,
-                        user_id: userId
-                    }),
-                });
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`Failed to save push token: ${errorData.message}`);
-                }
-                console.log('Push token saved successfully to server');
-                return;
-            } catch (error) {
-                console.error(`Error saving push token to server (attempt ${i + 1}):`, error);
-                if (i === maxRetries - 1) {
-                    console.error('Failed to save push token after multiple attempts');
-                }
+            const tokenString = await AsyncStorage.getItem(PUSH_TOKEN_STORAGE_KEY);
+            if (tokenString) {
+                return JSON.parse(tokenString);
             }
+        } catch (error) {
+            console.error('Error getting push token from AsyncStorage:', error);
+        }
+        return null;
+    }
+
+    async function savePushTokenToServer(token: Notifications.ExpoPushToken) {
+        try {
+            const response = await fetch('https://travelcom.online/api/push/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({token: token.data}),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to save push token');
+            }
+            console.log('Push token saved successfully to server');
+        } catch (error) {
+            console.error('Error saving push token to server:', error);
         }
     }
 
     useEffect(() => {
         async function setupPushNotifications() {
-            if (isAuthenticated) {
-                const authToken = await AsyncStorage.getItem('@token');
-                if (!authToken) {
-                    console.error('No authentication token found');
-                    return;
-                }
-
-                const userDataString = await AsyncStorage.getItem('@user');
-                if (!userDataString) {
-                    console.error('No user data found');
-                    return;
-                }
-
-                const userData = JSON.parse(userDataString);
-                const userId = userData.id;
-
-                if (!userId) {
-                    console.error('User ID not found in stored user data');
-                    return;
-                }
-
-                const storedToken = await getPushTokenFromStorage();
-                if (storedToken) {
-                    setExpoPushToken(storedToken);
-                    await savePushTokenToServer(storedToken, userId, authToken);
-                } else {
-                    const newToken = await registerForPushNotificationsAsync();
-                    if (newToken) {
-                        setExpoPushToken(newToken);
-                        await savePushTokenToStorage(newToken);
-                        await savePushTokenToServer(newToken, userId, authToken);
-                    }
+            const storedToken = await getPushTokenFromStorage();
+            if (storedToken) {
+                setExpoPushToken(storedToken);
+            } else {
+                const newToken = await registerForPushNotificationsAsync();
+                if (newToken) {
+                    setExpoPushToken(newToken);
+                    savePushTokenToStorage(newToken);
                 }
             }
         }
 
         setupPushNotifications();
 
-        if (notificationsEnabled && isAuthenticated) {
+        if (notificationsEnabled) {
             notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
                 setNotification(notification);
             });
@@ -178,10 +151,11 @@ export const usePushNotifications = (isAuthenticated: boolean): PushNotification
                 Notifications.removeNotificationSubscription(responseListener.current);
             }
         };
-    }, [notificationsEnabled, isAuthenticated]);
+    }, [notificationsEnabled]);
 
     return {
         expoPushToken,
         notification,
+        savePushTokenToServer
     };
 };

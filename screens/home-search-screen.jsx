@@ -59,7 +59,7 @@ export default function HomeSearchScreen() {
             setLoading(true);
             try {
                 const response = await axios.get("https://travelcom.online/api/images/get");
-                setMainImage(response.data.mainImage);
+                setMainImage(response.data.mainImage3);
             } catch (error) {
                 console.error(error);
             }

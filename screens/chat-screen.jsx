@@ -10,7 +10,7 @@ import {
     Linking,
     Platform,
     StyleSheet,
-    KeyboardAvoidingView, ActivityIndicator
+    KeyboardAvoidingView, ActivityIndicator, Keyboard
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Pusher from 'pusher-js/react-native';
@@ -360,6 +360,19 @@ export default function ChatScreen({navigation, route}){
         }
     };
 
+    useEffect(() => {
+        const keyboardDidHideListener = Keyboard.addListener(
+            'keyboardDidHide',
+            () => {
+                setIsInputFocused(false);
+            }
+        );
+
+        return () => {
+            keyboardDidHideListener.remove();
+        };
+    }, []);
+
     const formatTime = (dateString) => {
         const date = new Date(dateString);
         return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
@@ -416,8 +429,8 @@ export default function ChatScreen({navigation, route}){
                             placeholderTextColor='#d0d0d0'
                             multiline={true}
                             numberOfLines={2}
-                            onFocus={Platform.OS === 'android' ? () => setIsInputFocused(true) : undefined}
-                            onBlur={Platform.OS === 'android' ? () => setIsInputFocused(false) : undefined}
+                            onFocus={() => setIsInputFocused(true)}
+                            onBlur={() => setIsInputFocused(false)}
                         />
                         <TouchableOpacity style={styles.attachButton} onPress={togglePicker}>
                             <View>

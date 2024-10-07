@@ -190,6 +190,20 @@ export default function OrdersScreen({navigation}){
                         </View>
                         <Text style={styles.largeText} adjustsFontSizeToFit={true}>{flightPrice} €</Text>
                     </View>
+                    {
+                        item.status === 'payed' || item.status === 'Payed' ? (
+                            <TouchableOpacity
+                                style={[styles.chooseBtn, {marginTop: 8}]}
+                                activeOpacity={0.8}
+                                onPress={() => navigation.navigate('Chat')}
+                            >
+                                <Text style={styles.btnText}>Go to chat</Text>
+                            </TouchableOpacity>
+                        ) : (
+                            <></>
+                        )
+                    }
+
                 </View>
             )
         } else {

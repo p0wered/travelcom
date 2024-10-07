@@ -206,10 +206,14 @@ export default function FlightsScreen({route, navigation}) {
         if (selectedAirlines.length > 0) {
             filtered = filtered.filter(flight => selectedAirlines.includes(flight.provider.supplier.title));
         }
-        if (filtered.length === 0 && flightResults.length !== 0){
-            setErrorMsg('Nothing found')
-            setFilteredResults(filtered);
-            setVisibleFlights(0);
+
+        setFilteredResults(filtered);
+        setVisibleFlights(Math.min(12, filtered.length));
+
+        if (filtered.length === 0 && flightResults.length !== 0) {
+            setErrorMsg('Nothing found');
+        } else {
+            setErrorMsg(undefined);
         }
     };
 
