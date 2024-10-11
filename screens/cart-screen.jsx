@@ -606,6 +606,6 @@ const styles = StyleSheet.create({
         fontFamily: 'Montserrat-Regular',
         textAlign: 'center',
         marginTop: 10,
-        color: 'black',
+        color: '#878787',
     },
 })

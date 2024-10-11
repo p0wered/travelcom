@@ -146,7 +146,7 @@ export default function OrdersScreen({navigation}){
         const paymentDisabled = isPaymentDisabled();
 
         function ButtonAdmin({item}) {
-            if (item.status === 'Created' || item.status === 'created' && !paymentDisabled) {
+            if (item.status.toLowerCase() === 'created' && !paymentDisabled) {
                 return(
                     <View style={[item.admin !== 1 ? {paddingHorizontal: 15, marginBottom: 15} : {marginBottom: 10}]}>
                         <TouchableOpacity
@@ -158,7 +158,7 @@ export default function OrdersScreen({navigation}){
                         </TouchableOpacity>
                     </View>
                 )
-            } else if (item.status === 'Payed' || item.status === 'payed' && item.ticket_link) {
+            } else if (item.status.toLowerCase() === 'payed' && item.ticket_link) {
                 return(
                     <View style={item.admin !== 1 ? {paddingHorizontal: 15, paddingBottom: 15} : {paddingTop: 15}}>
                         <TouchableOpacity
@@ -191,7 +191,7 @@ export default function OrdersScreen({navigation}){
                         <Text style={styles.largeText} adjustsFontSizeToFit={true}>{flightPrice} €</Text>
                     </View>
                     {
-                        item.status === 'payed' || item.status === 'Payed' ? (
+                        (item.status.toLowerCase() === 'payed') ? (
                             <TouchableOpacity
                                 style={[styles.chooseBtn, {marginTop: 8}]}
                                 activeOpacity={0.8}
@@ -199,11 +199,18 @@ export default function OrdersScreen({navigation}){
                             >
                                 <Text style={styles.btnText}>Go to chat</Text>
                             </TouchableOpacity>
+                        ) : (item.status.toLowerCase() === 'created') ? (
+                            <TouchableOpacity
+                                style={[styles.chooseBtn, {marginTop: 8}]}
+                                activeOpacity={0.8}
+                                onPress={handlePayPress}
+                            >
+                                <Text style={styles.btnText}>Pay</Text>
+                            </TouchableOpacity>
                         ) : (
                             <></>
                         )
                     }
-
                 </View>
             )
         } else {
