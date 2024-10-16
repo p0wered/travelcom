@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
-import {Alert, Platform} from "react-native";
+import {Platform} from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNotification} from "./contextNotifications";
 
@@ -62,9 +62,16 @@ export const usePushNotifications = (): PushNotificationState => {
         if (Platform.OS === "android") {
             Notifications.setNotificationChannelAsync("default", {
                 name: "default",
+                description: "default",
                 importance: Notifications.AndroidImportance.MAX,
                 vibrationPattern: [0, 250, 250, 250],
                 lightColor: "#FF231F7C",
+                sound: 'default',
+                enableVibrate: true,
+                enableLights: true,
+                showBadge: true,
+                lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+                bypassDnd: true,
             });
         }
 
@@ -126,21 +133,18 @@ export const usePushNotifications = (): PushNotificationState => {
 
         setupPushNotifications();
 
-        if (notificationsEnabled) {
-            notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
-                setNotification(notification);
-            });
+        notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
+            setNotification(notification);
+        });
 
-            responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-                console.log(response);
-            });
-        } else {
-            if (notificationListener.current) {
-                Notifications.removeNotificationSubscription(notificationListener.current);
-            }
-            if (responseListener.current) {
-                Notifications.removeNotificationSubscription(responseListener.current);
-            }
+        responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
+            console.log(response);
+        });
+        if (notificationListener.current) {
+            Notifications.removeNotificationSubscription(notificationListener.current);
+        }
+        if (responseListener.current) {
+            Notifications.removeNotificationSubscription(responseListener.current);
         }
 
         return () => {
