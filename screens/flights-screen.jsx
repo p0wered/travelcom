@@ -52,6 +52,11 @@ export default function FlightsScreen({route, navigation}) {
     const [maxPrice, setMaxPrice] = useState('');
     const [selectedAirlines, setSelectedAirlines] = useState([]);
     const [availableAirlines, setAvailableAirlines] = useState([]);
+    const [availableArriveAirports, setAvailableArriveAirports] = useState([]);
+    const [availableDepAirports, setAvailableDepAirports] = useState([]);
+    const [selectedArriveAirports, setSelectedArriveAirports] = useState([]);
+    const [selectedDepAirports, setSelectedDepAirports] = useState([]);
+    const [flightClass, setFlightClass] = useState('Economy');
     const [airlinesLogos, setAirlinesLogos] = useState([]);
     const [filteredResults, setFilteredResults] = useState([]);
     const [favoriteItems, setFavoriteItems] = useState([]);
@@ -121,7 +126,8 @@ export default function FlightsScreen({route, navigation}) {
             children: passengers.children,
             dateStart: formatDate(dateStart),
             infants: passengers.infants,
-            isRoundtrip: roundTrip
+            isRoundtrip: roundTrip,
+            flightClass: flightClass
         };
 
         if (roundTrip) {
@@ -135,6 +141,8 @@ export default function FlightsScreen({route, navigation}) {
         setMinPrice('');
         setMaxPrice('');
         setSelectedAirlines([]);
+        setAvailableArriveAirports([]);
+        setAvailableDepAirports(Object.values({}));
 
         if (airportFrom === '' || airportTo === '') {
             Alert.alert('', 'Please fill all fields');
@@ -150,15 +158,19 @@ export default function FlightsScreen({route, navigation}) {
                     setFilteredResults([]);
                     setVisibleFlights(0);
                     setAvailableAirlines([]);
+                    setAvailableArriveAirports([]);
+                    setAvailableDepAirports(Object.values({}));
                 } else {
                     setErrorMsg(undefined)
-                    setFlightResults(response.data);
-                    setFilteredResults(response.data);
+                    setFlightResults(response.data.data);
+                    setFilteredResults(response.data.data);
                     setVisibleFlights(12);
-                    const airlines = [...new Set(response.data.map(flight => flight.provider.supplier.title))];
-                    const logos = [...new Set(response.data.map(flight => flight.providerLogo))];
+                    const airlines = [...new Set(response.data.data.map(flight => flight.provider.supplier.title))];
+                    const logos = [...new Set(response.data.data.map(flight => flight.providerLogo))];
                     setAvailableAirlines(airlines);
                     setAirlinesLogos(logos);
+                    setAvailableArriveAirports(response.data.arriveAirports || []);
+                    setAvailableDepAirports(Object.values(response.data.depAirports || {}));
                 }
             } catch (error) {
                 if (error.response) {
@@ -185,6 +197,7 @@ export default function FlightsScreen({route, navigation}) {
 
     const applyFilters = () => {
         let filtered = [...flightResults];
+
         if (dayFlightsOnly || nightFlightsOnly) {
             filtered = filtered.filter(flight => {
                 const depHour = parseInt(flight.depTime.split(':')[0]);
@@ -197,6 +210,7 @@ export default function FlightsScreen({route, navigation}) {
                 }
             });
         }
+
         if (minPrice !== '') {
             filtered = filtered.filter(flight => flight.price >= parseFloat(minPrice));
         }
@@ -205,6 +219,16 @@ export default function FlightsScreen({route, navigation}) {
         }
         if (selectedAirlines.length > 0) {
             filtered = filtered.filter(flight => selectedAirlines.includes(flight.provider.supplier.title));
+        }
+        if (selectedArriveAirports.length > 0) {
+            filtered = filtered.filter(flight =>
+                selectedArriveAirports.includes(flight.arriveAirport.code)
+            );
+        }
+        if (selectedDepAirports.length > 0) {
+            filtered = filtered.filter(flight =>
+                selectedDepAirports.includes(flight.depAirport.code)
+            );
         }
 
         setFilteredResults(filtered);
@@ -219,7 +243,16 @@ export default function FlightsScreen({route, navigation}) {
 
     useEffect(() => {
         applyFilters();
-    }, [dayFlightsOnly, nightFlightsOnly, minPrice, maxPrice, selectedAirlines, flightResults]);
+    }, [
+        dayFlightsOnly,
+        nightFlightsOnly,
+        minPrice,
+        maxPrice,
+        selectedAirlines,
+        selectedArriveAirports,
+        selectedDepAirports,
+        flightResults
+    ]);
 
     const toggleAirline = (airline) => {
         setSelectedAirlines(prevSelected =>
@@ -342,6 +375,16 @@ export default function FlightsScreen({route, navigation}) {
             loadFavoriteItems();
         }, [loadFavoriteItems])
     );
+
+    const handleFlightClassChange = (newClass) => {
+        if (flightClass !== newClass) {
+            setFlightClass(newClass);
+        }
+    };
+
+    useEffect(() => {
+        handleSearch();
+    }, [flightClass]);
 
     const addToCart = async (flight) => {
         setAddLoading(prev => ({ ...prev, [flight.id]: true }));
@@ -561,48 +604,127 @@ export default function FlightsScreen({route, navigation}) {
                                 }
                             </View>
                         </View>
+                        <View style={{ gap: 15 }}>
+                            <Text style={styles.mainBlueText}>Flight Class</Text>
+                            <View>
+                                {['Economy', 'Business', 'First'].map((option) => (
+                                    <TouchableOpacity
+                                        style={styles.filtersFlexbox}
+                                        key={option}
+                                        onPress={() => handleFlightClassChange(option)}
+                                    >
+                                        <Text style={styles.mainText}>{option}</Text>
+                                        <CheckIcon
+                                            color={flightClass === option ? '#207FBF' : 'grey'}
+                                            width={24}
+                                            height={24}
+                                        />
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </View>
+                        <View style={{gap: 15}}>
+                            <Text style={styles.mainBlueText}>Departure Airports</Text>
+                            <View>
+                                {availableDepAirports.length > 0 ? (
+                                    availableDepAirports.map((airport) => (
+                                        <TouchableOpacity
+                                            style={styles.filtersFlexbox}
+                                            key={airport}
+                                            onPress={() => setSelectedDepAirports((prev) =>
+                                                prev.includes(airport)
+                                                    ? prev.filter(a => a !== airport)
+                                                    : [...prev, airport]
+                                            )}
+                                        >
+                                            <Text style={styles.mainText}>{airport}</Text>
+                                            <CheckIcon
+                                                color={selectedDepAirports.includes(airport) ? '#207FBF' : 'grey'}
+                                                width={24}
+                                                height={24}
+                                            />
+                                        </TouchableOpacity>
+                                    ))
+                                ) : (
+                                    <Text style={styles.smallText}>No available airports</Text>
+                                )}
+                            </View>
+                        </View>
+                        <View style={{gap: 15}}>
+                            <Text style={styles.mainBlueText}>Arrival Airports</Text>
+                            <View>
+                                {availableArriveAirports.length > 0 ? (
+                                    availableArriveAirports.map((airport) => (
+                                        <TouchableOpacity
+                                            style={styles.filtersFlexbox}
+                                            key={airport}
+                                            onPress={() => setSelectedArriveAirports((prev) =>
+                                                prev.includes(airport)
+                                                    ? prev.filter(a => a !== airport)
+                                                    : [...prev, airport]
+                                            )}
+                                        >
+                                            <Text style={styles.mainText}>{airport}</Text>
+                                            <CheckIcon
+                                                color={selectedArriveAirports.includes(airport) ? '#207FBF' : 'grey'}
+                                                width={24}
+                                                height={24}
+                                            />
+                                        </TouchableOpacity>
+                                    ))
+                                ) : (
+                                    <Text style={styles.smallText}>No available airports</Text>
+                                )}
+                            </View>
+                        </View>
                     </View>
                 )}
 
-                {filteredResults.slice(0, visibleFlights).map((flight, index) => {
-                    const inCart = isInCart(flight);
-                    const inFavorites = isInFavorites(flight);
-                    const isRoundTrip = flight.isRoundtrip || false;
-                    return (
-                        <FlightCard
-                            key={flight.id}
-                            price={flight.price}
-                            flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
-                            depCity={flight.depCity.title}
-                            depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
-                            depTime={flight.depTime}
-                            depDate={flight.depDate}
-                            arrivalCity={flight.arriveCity.title}
-                            arrivalTime={flight.arriveTime}
-                            arrivalDate={flight.arriveDate}
-                            arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
-                            airlinesTitle={flight.provider.supplier.title}
-                            airlinesImg={flight.providerLogo}
-                            backDepTime={isRoundTrip ? flight.back_ticket?.depTime : undefined}
-                            backDepDate={isRoundTrip ? flight.back_ticket?.depDate : undefined}
-                            backDepAirport={isRoundTrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}
-                            backDepCity={isRoundTrip ? flight.back_ticket?.depCity.title : undefined}
-                            backArriveTime={isRoundTrip ? flight.back_ticket?.arriveTime : undefined}
-                            backArriveDate={isRoundTrip ? flight.back_ticket?.arriveDate : undefined}
-                            backArriveAirport={isRoundTrip ? `${flight.back_ticket?.arriveAirport.title}, ${flight.back_ticket?.arriveAirport.code}` : undefined}
-                            backArriveCity={isRoundTrip ? flight.back_ticket?.arriveCity.title : undefined}
-                            backFlightTime={isRoundTrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
-                            isRoundTrip={isRoundTrip}
-                            baggageInfo={flight.baggage}
-                            btnText={addLoading[flight.id] ? 'Loading' : 'Choose'}
-                            onPress={() => addToCart(flight)}
-                            favouriteIconPress={() => toggleFavorite(flight)}
-                            favouriteIconColor={inFavorites ? '#207fbf' : 'white'}
-                            onCartScreen={false}
-                            showFavIcon={true}
-                        />
-                    );
-                })}
+                {isLoading ? (
+                    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 20}}>
+                        <ActivityIndicator size="large" color="#207FBF" />
+                    </View>
+                ) : (
+                    filteredResults.slice(0, visibleFlights).map((flight, index) => {
+                        const inCart = isInCart(flight);
+                        const inFavorites = isInFavorites(flight);
+                        const isRoundTrip = flight.isRoundtrip || false;
+                        return (
+                            <FlightCard
+                                key={flight.id}
+                                price={flight.price}
+                                flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
+                                depCity={flight.depCity.title}
+                                depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
+                                depTime={flight.depTime}
+                                depDate={flight.depDate}
+                                arrivalCity={flight.arriveCity.title}
+                                arrivalTime={flight.arriveTime}
+                                arrivalDate={flight.arriveDate}
+                                arrivalAirport={`${flight.arriveAirport.title}, ${flight.arriveAirport.code}`}
+                                airlinesTitle={flight.provider.supplier.title}
+                                airlinesImg={flight.providerLogo}
+                                backDepTime={isRoundTrip ? flight.back_ticket?.depTime : undefined}
+                                backDepDate={isRoundTrip ? flight.back_ticket?.depDate : undefined}
+                                backDepAirport={isRoundTrip ? `${flight.back_ticket?.depAirport.title}, ${flight.back_ticket?.depAirport.code}` : undefined}
+                                backDepCity={isRoundTrip ? flight.back_ticket?.depCity.title : undefined}
+                                backArriveTime={isRoundTrip ? flight.back_ticket?.arriveTime : undefined}
+                                backArriveDate={isRoundTrip ? flight.back_ticket?.arriveDate : undefined}
+                                backArriveAirport={isRoundTrip ? `${flight.back_ticket?.arriveAirport.title}, ${flight.back_ticket?.arriveAirport.code}` : undefined}
+                                backArriveCity={isRoundTrip ? flight.back_ticket?.arriveCity.title : undefined}
+                                backFlightTime={isRoundTrip ? `${flight.back_ticket?.duration.flight.hour}h, ${flight.back_ticket?.duration.flight.minute}min` : undefined}
+                                isRoundTrip={isRoundTrip}
+                                baggageInfo={flight.baggage}
+                                btnText={addLoading[flight.id] ? 'Loading' : 'Choose'}
+                                onPress={() => addToCart(flight)}
+                                favouriteIconPress={() => toggleFavorite(flight)}
+                                favouriteIconColor={inFavorites ? '#207fbf' : 'white'}
+                                onCartScreen={false}
+                                showFavIcon={true}
+                            />
+                        );
+                    })
+                )}
 
                 {errorMsg ? (
                     <Text style={[styles.mainText, {textAlign: 'center', color: '#cd3737', marginTop: 10}]}>{errorMsg}</Text>
@@ -610,7 +732,7 @@ export default function FlightsScreen({route, navigation}) {
                     <></>
                 )}
 
-                {visibleFlights < filteredResults.length && !errorMsg && (
+                {visibleFlights < filteredResults.length && !errorMsg && !isLoading &&(
                     <TouchableOpacity
                         activeOpacity={0.8}
                         style={[styles.showMoreBtn, {paddingVertical: 18}]}

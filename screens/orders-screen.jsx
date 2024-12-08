@@ -13,6 +13,7 @@ import React, {useEffect, useState} from "react";
 import {FlightCard} from "../components/flight-cards";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {Footer} from "../components/footer";
+import {BasketIcon} from "../components/icons/basket-icon";
 
 
 export default function OrdersScreen({navigation}){
@@ -124,6 +125,33 @@ export default function OrdersScreen({navigation}){
             }
         };
 
+        const deleteOrder = async (orderId) => {
+            try {
+                const token = await AsyncStorage.getItem('@token');
+                if (!token) {
+                    alert('Please log in');
+                    return;
+                }
+
+                const response = await fetch('https://travelcom.online/api/order/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({id: orderId}),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete order');
+                }
+
+                setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
+            } catch (error) {
+                console.error('Error deleting order:', error);
+            }
+        };
+
         const downloadTicket = () => {
             if (item.ticket_link) {
                 Linking.openURL(item.ticket_link);
@@ -148,7 +176,7 @@ export default function OrdersScreen({navigation}){
         function ButtonAdmin({item}) {
             if (item.status.toLowerCase() === 'created' && !paymentDisabled) {
                 return(
-                    <View style={[item.admin !== 1 ? {paddingHorizontal: 15, marginBottom: 15} : {marginBottom: 10}]}>
+                    <View style={[item.admin !== 1 ? {paddingHorizontal: 15, marginBottom: 15} : {marginBottom: 10}, styles.payButton]}>
                         <TouchableOpacity
                             style={styles.chooseBtn}
                             activeOpacity={0.8}
@@ -156,17 +184,23 @@ export default function OrdersScreen({navigation}){
                         >
                             <Text style={styles.btnText}>Pay</Text>
                         </TouchableOpacity>
+                        <TouchableOpacity style={{padding: 10}} onPress={() => deleteOrder(item.id)}>
+                            <BasketIcon/>
+                        </TouchableOpacity>
                     </View>
                 )
             } else if (item.status.toLowerCase() === 'payed' && item.ticket_link) {
                 return(
-                    <View style={item.admin !== 1 ? {paddingHorizontal: 15, paddingBottom: 15} : {paddingTop: 15}}>
+                    <View style={[item.admin !== 1 ? {paddingHorizontal: 15, paddingBottom: 15} : {paddingTop: 15}, styles.payButton]}>
                         <TouchableOpacity
                             style={styles.chooseBtn}
                             activeOpacity={0.8}
                             onPress={downloadTicket}
                         >
                             <Text style={styles.btnText}>Download ticket</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={{padding: 10}} onPress={() => deleteOrder(item.id)}>
+                            <BasketIcon/>
                         </TouchableOpacity>
                     </View>
                 )
@@ -192,21 +226,32 @@ export default function OrdersScreen({navigation}){
                     </View>
                     {
                         (item.status.toLowerCase() === 'payed') ? (
-                            <TouchableOpacity
-                                style={[styles.chooseBtn, {marginTop: 8}]}
-                                activeOpacity={0.8}
-                                onPress={() => navigation.navigate('Chat')}
-                            >
-                                <Text style={styles.btnText}>Go to chat</Text>
-                            </TouchableOpacity>
+                            <View style={{display: 'flex', flexDirection: 'row', alignItems: 'center',  marginTop: 8}}>
+                                <TouchableOpacity
+                                    style={styles.chooseBtn}
+                                    activeOpacity={0.8}
+                                    onPress={() => navigation.navigate('Chat')}
+                                >
+                                    <Text style={styles.btnText}>Go to chat</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={{padding: 10}} onPress={() => deleteOrder(item.id)}>
+                                    <BasketIcon/>
+                                </TouchableOpacity>
+                            </View>
                         ) : (item.status.toLowerCase() === 'created') ? (
-                            <TouchableOpacity
-                                style={[styles.chooseBtn, {marginTop: 8}]}
-                                activeOpacity={0.8}
-                                onPress={handlePayPress}
-                            >
-                                <Text style={styles.btnText}>Pay</Text>
-                            </TouchableOpacity>
+                            <View style={{display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 8}}>
+                                <TouchableOpacity
+                                    style={styles.chooseBtn}
+                                    activeOpacity={0.8}
+                                    onPress={handlePayPress}
+                                >
+                                    <Text style={styles.btnText}>Pay</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={{padding: 10}} onPress={() => deleteOrder(item.id)}>
+                                    <BasketIcon/>
+                                </TouchableOpacity>
+                            </View>
+
                         ) : (
                             <></>
                         )
@@ -260,9 +305,20 @@ export default function OrdersScreen({navigation}){
                                 ))
                             ) : (<></>)
                         }
-                        <View style={{marginBottom: 8, flexDirection: 'row'}}>
-                            <Text style={[styles.clientInfoText, {fontFamily: 'Montserrat-Bold'}]}>Status:  </Text>
-                            <Text style={styles.clientInfoText}>{item.status}</Text>
+                        <View style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', position: 'relative'}}>
+                            <View style={{marginBottom: 8, flexDirection: 'row'}}>
+                                <Text style={[styles.clientInfoText, {fontFamily: 'Montserrat-Bold'}]}>Status:  </Text>
+                                <Text style={styles.clientInfoText}>{item.status}</Text>
+                            </View>
+                            {
+                                (item.status.toLowerCase() === 'created' && paymentDisabled) ? (
+                                    <TouchableOpacity style={{position: 'absolute', right: -5, bottom: 0, padding: 10}} onPress={() => deleteOrder(item.id)}>
+                                        <BasketIcon/>
+                                    </TouchableOpacity>
+                                ) : (
+                                    <></>
+                                )
+                            }
                         </View>
                     </View>
                     <ButtonAdmin item={item}/>
@@ -356,12 +412,13 @@ const styles = StyleSheet.create({
         backgroundColor: '#207FBF',
     },
     btnText: {
+        width: '100%',
         fontFamily: 'Montserrat-Bold',
         color: 'white',
         textAlign: 'center'
     },
     chooseBtn: {
-        width: '100%',
+        width: '87%',
         paddingHorizontal: 25,
         paddingVertical: 14,
         borderRadius: 10,
@@ -382,5 +439,10 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'row',
         justifyContent: 'space-between',
+    },
+    payButton: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center'
     }
 });

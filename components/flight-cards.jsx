@@ -40,9 +40,9 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
         <View style={styles.flightsCard}>
             <View style={[styles.cardBlock, {marginBottom: 16}]}>
                 <View>
-                    <View style={{marginBottom: 10}}>
-                        <Text style={[styles.mainText, {fontSize: 14}]}>{depCity} - {arrivalCity}</Text>
-                        <Text style={[styles.greyText, {marginTop: 5}]}>{flightTime} on the way there</Text>
+                    <View style={{marginBottom: 10, maxWidth: 180}}>
+                        <Text style={[styles.mainText, {fontSize: 14}]} adjustsFontSizeToFit={true}>{depCity} - {arrivalCity}</Text>
+                        <Text style={[styles.greyText, {marginTop: 5}]} adjustsFontSizeToFit={true}>{flightTime} on the way there</Text>
                     </View>
                     <View style={styles.textMerger}>
                         <Image style={styles.airlinesImg} source={{uri: airlinesImg}}/>

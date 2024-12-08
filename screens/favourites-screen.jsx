@@ -78,6 +78,7 @@ export default function FavouritesScreen() {
 
             if (response.status === 204) {
                 setFavoriteItems(prevItems => prevItems.filter(item => item.id !== favorite.id));
+                favoriteItems.reverse();
             } else {
                 throw new Error('Failed to update favorites');
             }

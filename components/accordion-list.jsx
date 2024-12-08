@@ -47,7 +47,7 @@ export function AccordionItem({title, content}) {
                         setHeaderHeight(height);
                     }}
                 >
-                    <Text style={[styles.mainText, { color: isExpanded ? 'white' : '#207FBF', marginRight: 15}]}>{title}</Text>
+                    <Text style={[styles.mainText, {color: isExpanded ? 'white' : '#207FBF', width: '90%'}]}>{title}</Text>
                     <View style={styles.arrowContainer}>
                         {isExpanded ? (
                             <ArrowActive color='white'/>
