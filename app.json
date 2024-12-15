@@ -2,7 +2,7 @@
   "expo": {
     "name": "Travelcom",
     "slug": "travelcom",
-    "version": "1.2.4",
+    "version": "1.2.5",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "travelcom",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "UIBackgroundModes": [
@@ -26,7 +26,7 @@
       }
     },
     "android": {
-      "versionCode": 2,
+      "versionCode": 3,
       "permissions": [
         "NOTIFICATIONS",
         "WAKE_LOCK",

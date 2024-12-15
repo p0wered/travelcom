@@ -139,6 +139,7 @@ export default function FavouritesScreen() {
                             <FlightCard
                                 key={favorite.id}
                                 price={flight.price}
+                                flightClass={flight.class}
                                 flightTime={flight.duration ? `${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min` : 'N/A'}
                                 depCity={flight.depCity.title}
                                 depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}

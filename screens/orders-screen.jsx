@@ -264,6 +264,7 @@ export default function OrdersScreen({navigation}){
                     <FlightCard
                         key={flightData.id}
                         price={flightData.price || flightPrice}
+                        flightClass={flightData.class}
                         flightTime={`${flightData.duration.flight.hour}h, ${flightData.duration.flight.minute}min`}
                         depCity={flightData.depCity.title}
                         depAirport={`${flightData.depAirport.title}, ${flightData.depAirport.code}`}

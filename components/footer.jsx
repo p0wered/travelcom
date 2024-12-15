@@ -13,21 +13,21 @@ export function FooterRaw({color, navigation}) {
     if (error) return <Text>Error loading footer information</Text>;
     if (!information) return null;
 
+    const renderSocialButton = (url, Icon) => {
+        return url ? (
+            <TouchableOpacity onPress={() => Linking.openURL(url)}>
+                <Icon />
+            </TouchableOpacity>
+        ) : null;
+    };
+
     return (
         <View style={[styles.footerMain, { backgroundColor: color }]}>
             <View style={styles.iconRow}>
-                <TouchableOpacity onPress={() => Linking.openURL(information.instagram)}>
-                    <InstagramIcon />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => Linking.openURL(information.facebook)}>
-                    <FacebookIcon />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => Linking.openURL(information.twitter)}>
-                    <TwitterIcon />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => Linking.openURL(information.linkedin)}>
-                    <LinkedinIcon />
-                </TouchableOpacity>
+                {renderSocialButton(information.instagram, InstagramIcon)}
+                {renderSocialButton(information.facebook, FacebookIcon)}
+                {renderSocialButton(information.twitter, TwitterIcon)}
+                {renderSocialButton(information.linkedin, LinkedinIcon)}
             </View>
             <Logo color='#207FBF' width={140} height={60} />
             <View>

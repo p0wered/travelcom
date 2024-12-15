@@ -7,7 +7,7 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
                                onCheckoutPress, checkoutBtnText, showFavIcon, favouriteIconPress, favouriteIconColor,
                                isRoundTrip, backDepTime, backDepDate, backArriveTime, backArriveDate, backDepAirport,
                                backArriveAirport, backDepCity, backArriveCity, backFlightTime, personCount, baggageInfo,
-                               onOrderScreen})
+                               onOrderScreen, flightClass})
 {
     let btnShow;
     btnText === undefined ? btnShow = false : btnShow = true;
@@ -15,12 +15,12 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
     function renderBaggageInfo(){
         return(
             <>
-                <View style={{flexDirection: 'row', gap: 3, justifyContent: 'flex-end', alignItems: 'center', marginTop: 2}}>
-                    <Text adjustsFontSizeToFit={true} style={[styles.greyText, {textAlign: 'right'}]}>Carry-on luggage</Text>
+                <View style={{flexDirection: 'row', gap: 4, justifyContent: 'flex-end', alignItems: 'center', marginTop: 2}}>
+                    <Text adjustsFontSizeToFit={true} style={[styles.greyText, {textAlign: 'right', width: 60}]}>Carry-on luggage</Text>
                     <CheckIcon color='#207fbf' width={18} height={18}/>
                 </View>
                 {baggageInfo.piece !== undefined ? (
-                    <View style={{flexDirection: 'row', gap: 3, justifyContent: 'flex-end', alignItems: 'center', marginTop: 2}}>
+                    <View style={{flexDirection: 'row', gap: 4, justifyContent: 'flex-end', alignItems: 'center', marginTop: 2}}>
                         <Text adjustsFontSizeToFit={true} style={[styles.greyText, {textAlign: 'right', maxWidth: 128}]}>Baggage</Text>
                         <CheckIcon color={baggageInfo.piece !== 0 && baggageInfo.piece ? '#207fbf' : 'grey'} width={18} height={18}/>
                     </View>
@@ -39,8 +39,9 @@ export function FlightCard({price, airlinesTitle, airlinesImg, depCity, arrivalC
     return(
         <View style={styles.flightsCard}>
             <View style={[styles.cardBlock, {marginBottom: 16}]}>
-                <View>
-                    <View style={{marginBottom: 10, maxWidth: 180}}>
+                <View style={{width: '62%'}}>
+                    <Text style={[styles.greyText, {marginBottom: 5}]}>{flightClass}</Text>
+                    <View style={{marginBottom: 10}}>
                         <Text style={[styles.mainText, {fontSize: 14}]} adjustsFontSizeToFit={true}>{depCity} - {arrivalCity}</Text>
                         <Text style={[styles.greyText, {marginTop: 5}]} adjustsFontSizeToFit={true}>{flightTime} on the way there</Text>
                     </View>
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
         color: 'black'
     },
     largeText: {
-        fontSize: Platform.OS === 'ios' ? 22 : 19,
+        fontSize: 19,
         fontFamily: 'Montserrat-Bold',
         textAlign: 'right',
     },

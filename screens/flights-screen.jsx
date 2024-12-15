@@ -57,6 +57,11 @@ export default function FlightsScreen({route, navigation}) {
     const [selectedArriveAirports, setSelectedArriveAirports] = useState([]);
     const [selectedDepAirports, setSelectedDepAirports] = useState([]);
     const [flightClass, setFlightClass] = useState('Economy');
+    const flightClassMapping = {
+        'Economy': 'Economy',
+        'Business Class': 'Business',
+        'First Class': 'First',
+    };
     const [airlinesLogos, setAirlinesLogos] = useState([]);
     const [filteredResults, setFilteredResults] = useState([]);
     const [favoriteItems, setFavoriteItems] = useState([]);
@@ -604,18 +609,18 @@ export default function FlightsScreen({route, navigation}) {
                                 }
                             </View>
                         </View>
-                        <View style={{ gap: 15 }}>
+                        <View style={{gap: 6}}>
                             <Text style={styles.mainBlueText}>Flight Class</Text>
                             <View>
-                                {['Economy', 'Business', 'First'].map((option) => (
+                                {Object.keys(flightClassMapping).map((option) => (
                                     <TouchableOpacity
                                         style={styles.filtersFlexbox}
                                         key={option}
-                                        onPress={() => handleFlightClassChange(option)}
+                                        onPress={() => handleFlightClassChange(flightClassMapping[option])}
                                     >
                                         <Text style={styles.mainText}>{option}</Text>
                                         <CheckIcon
-                                            color={flightClass === option ? '#207FBF' : 'grey'}
+                                            color={flightClass === flightClassMapping[option] ? '#207FBF' : 'grey'}
                                             width={24}
                                             height={24}
                                         />
@@ -623,7 +628,7 @@ export default function FlightsScreen({route, navigation}) {
                                 ))}
                             </View>
                         </View>
-                        <View style={{gap: 15}}>
+                        <View style={{gap: 6}}>
                             <Text style={styles.mainBlueText}>Departure Airports</Text>
                             <View>
                                 {availableDepAirports.length > 0 ? (
@@ -650,7 +655,7 @@ export default function FlightsScreen({route, navigation}) {
                                 )}
                             </View>
                         </View>
-                        <View style={{gap: 15}}>
+                        <View style={{gap: 6}}>
                             <Text style={styles.mainBlueText}>Arrival Airports</Text>
                             <View>
                                 {availableArriveAirports.length > 0 ? (
@@ -693,6 +698,7 @@ export default function FlightsScreen({route, navigation}) {
                             <FlightCard
                                 key={flight.id}
                                 price={flight.price}
+                                flightClass={flight.class}
                                 flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
                                 depCity={flight.depCity.title}
                                 depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}

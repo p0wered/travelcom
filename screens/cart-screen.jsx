@@ -456,6 +456,7 @@ export default function CartScreen({navigation}) {
                         <View key={flight.id}>
                             <FlightCard
                                 price={flight.price}
+                                flightClass={flight.class}
                                 flightTime={`${flight.duration.flight.hour}h, ${flight.duration.flight.minute}min`}
                                 depCity={flight.depCity.title}
                                 depAirport={`${flight.depAirport.title}, ${flight.depAirport.code}`}
