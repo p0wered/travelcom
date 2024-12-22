@@ -56,11 +56,12 @@ export default function FlightsScreen({route, navigation}) {
     const [availableDepAirports, setAvailableDepAirports] = useState([]);
     const [selectedArriveAirports, setSelectedArriveAirports] = useState([]);
     const [selectedDepAirports, setSelectedDepAirports] = useState([]);
-    const [flightClass, setFlightClass] = useState('Economy');
+    const [flightClass, setFlightClass] = useState('All');
     const flightClassMapping = {
         'Economy': 'Economy',
-        'Business Class': 'Business',
-        'First Class': 'First',
+        'Comfort': 'Comfort',
+        'Business Class': 'Business class',
+        'First Class': 'First class',
     };
     const [airlinesLogos, setAirlinesLogos] = useState([]);
     const [filteredResults, setFilteredResults] = useState([]);
@@ -382,9 +383,7 @@ export default function FlightsScreen({route, navigation}) {
     );
 
     const handleFlightClassChange = (newClass) => {
-        if (flightClass !== newClass) {
-            setFlightClass(newClass);
-        }
+        setFlightClass(flightClass === newClass ? 'All' : newClass);
     };
 
     useEffect(() => {
@@ -609,12 +608,14 @@ export default function FlightsScreen({route, navigation}) {
                                 }
                             </View>
                         </View>
-                        <View style={{gap: 6}}>
+                        <View style={{ gap: 6 }}>
                             <Text style={styles.mainBlueText}>Flight Class</Text>
                             <View>
                                 {Object.keys(flightClassMapping).map((option) => (
                                     <TouchableOpacity
-                                        style={styles.filtersFlexbox}
+                                        style={[
+                                            styles.filtersFlexbox
+                                        ]}
                                         key={option}
                                         onPress={() => handleFlightClassChange(flightClassMapping[option])}
                                     >

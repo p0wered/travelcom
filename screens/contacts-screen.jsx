@@ -23,6 +23,15 @@ export default function ContactsScreen({navigation}) {
         }, [])
     );
 
+    const renderSocialButton = (url, Icon) => {
+        return url ? (
+            <TouchableOpacity onPress={() => Linking.openURL(url)}>
+                <Icon />
+            </TouchableOpacity>
+        ) : null;
+    };
+
+
     return(
         <ScrollView>
             <View style={styles.info}>
@@ -49,18 +58,10 @@ export default function ContactsScreen({navigation}) {
                 </View>
                 <Text style={styles.blueText}>Follow us</Text>
                 <View style={styles.iconRow}>
-                    <TouchableOpacity onPress={() => Linking.openURL(information.instagram)}>
-                        <InstagramIcon />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => Linking.openURL(information.facebook)}>
-                        <FacebookIcon />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => Linking.openURL(information.twitter)}>
-                        <TwitterIcon />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => Linking.openURL(information.linkedin)}>
-                        <LinkedinIcon />
-                    </TouchableOpacity>
+                    {renderSocialButton(information.instagram, InstagramIcon)}
+                    {renderSocialButton(information.facebook, FacebookIcon)}
+                    {renderSocialButton(information.twitter, TwitterIcon)}
+                    {renderSocialButton(information.linkedin, LinkedinIcon)}
                 </View>
                 <View>
                     <TouchableOpacity onPress={() => navigation.navigate('Privacy')}>
