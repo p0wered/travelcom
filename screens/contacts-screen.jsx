@@ -9,6 +9,7 @@ import {QuestionForm} from "../components/question-form";
 import {useInformationContext} from "../contextProvider";
 import {useCallback, useState} from "react";
 import {useFocusEffect} from "@react-navigation/native";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
 
 export default function ContactsScreen({navigation}) {
     const {information, error} = useInformationContext();
@@ -33,7 +34,11 @@ export default function ContactsScreen({navigation}) {
 
 
     return(
-        <ScrollView>
+        <KeyboardAwareScrollView
+            extraScrollHeight={10}
+            enableOnAndroid={true}
+            keyboardShouldPersistTaps="handled"
+        >
             <View style={styles.info}>
                 <Text style={[styles.blueTextSmall, {fontSize: 18}]}>
                     {information.site_name}
@@ -79,7 +84,7 @@ export default function ContactsScreen({navigation}) {
                 </View>
             </View>
             <QuestionForm title='Any other question? Write to us!' clearErrors={clearErrors}/>
-        </ScrollView>
+        </KeyboardAwareScrollView>
     )
 }
 
